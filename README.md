@@ -1,94 +1,116 @@
-# 10x Astro Starter
+# Bookkeeper
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+![Node](https://img.shields.io/badge/node-22.14.0-339933?logo=node.js&logoColor=white)
+![Astro](https://img.shields.io/badge/Astro-5-FF5D01?logo=astro&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111827)
 
-## Tech Stack
+Bookkeeper is a responsive web application designed to help readers retain and recall plot details, character arcs, and key events from the books they read. It pairs a focused note-taking workflow (optimized for short “key event” lists) with a Retrieval-Augmented Generation (RAG) chat interface that answers questions **using your own notes**.
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+**Docs:**
+- PRD: `.ai/prd.md`
+- Tech stack rationale: `.ai/tech-stack.md`
 
-## Prerequisites
+## Table of contents
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+- [Project description](#project-description)
+- [Tech stack](#tech-stack)
+- [Getting started locally](#getting-started-locally)
+- [Available scripts](#available-scripts)
+- [Project scope](#project-scope)
+- [Project status](#project-status)
+- [License](#license)
 
-## Getting Started
+## Project description
 
-1. Clone the repository:
+Readers often “forget earlier chapters” in dense books and long series. Bookkeeper aims to reduce that memory leak by combining:
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+- **Structured library**: Series → Book → Chapter organization
+- **Notes designed for recall**: short, manual entries (roughly 500–1000 characters recommended) that can be reviewed and searched later
+- **RAG chat over your notes**: ask natural-language questions and get answers with **citations** back to the relevant book/chapter
+- **Reading sessions & progress tracking (MVP)**: start/stop timer and update current page progress
 
-2. Install dependencies:
+## Tech stack
+
+- **Astro 5**: routing/layouts with an “islands” model for interactive UI
+- **React 19**: interactive app surfaces (CRUD forms, note editor, chat UI, timers)
+- **TypeScript 5**: type safety for schema-heavy entities and UI logic
+- **Tailwind CSS 4**: consistent, responsive styling
+- **shadcn/ui**: accessible component primitives/patterns (Radix + Tailwind)
+- **Supabase (Postgres)**: Auth + database (with **Row Level Security (RLS)** for per-user isolation)
+- **pgvector**: vector storage + similarity search for retrieval
+- **OpenRouter**: embeddings + chat completions for RAG
+- **GitHub Actions / Cloudflare Pages**: recommended CI/CD + hosting approach (see `.ai/tech-stack.md`)
+
+## Getting started locally
+
+### Prerequisites
+
+- **Node.js**: `22.14.0` (see `.nvmrc`)
+- **npm**: comes with Node.js (this repo includes a `package-lock.json`)
+
+### Install
 
 ```bash
 npm install
 ```
 
-3. Run the development server:
+### Configure environment variables
+
+This project declares the following required environment variables in `src/env.d.ts`:
+
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `OPENROUTER_API_KEY`
+
+Create a `.env` file (or provide these variables via your shell/hosting provider) before running the app.
+
+### Run the dev server
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+### Build and preview
 
 ```bash
 npm run build
+npm run preview
 ```
 
-## Available Scripts
+## Available scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+- **`npm run dev`**: start the Astro dev server
+- **`npm run build`**: build the production site
+- **`npm run preview`**: preview the production build locally
+- **`npm run astro`**: run the Astro CLI
+- **`npm run lint`**: run ESLint across the repo
+- **`npm run lint:fix`**: run ESLint and auto-fix where possible
+- **`npm run format`**: format files with Prettier
 
-## Project Structure
+## Project scope
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+### In scope (MVP)
 
-## AI Development Support
+- **User account system**: email/password sign-up and login
+- **Private data isolation**: per-user `user_id` with Row Level Security (RLS)
+- **Library management**: CRUD for Series, Books, Chapters, Notes
+- **AI search (RAG)**: chat Q&A over your notes with citations to book/chapter; book- or series-scoped search
+- **Low-confidence handling**: if similarity is below a threshold, return a “not sure based on your notes” style response
+- **Progress tracking**: reading session timer + manual page progress entry with percentage visualization
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+### Out of scope (MVP)
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+- Social sharing / public profiles
+- Audiobook tracking or playback
+- Audio voice notes (transcription)
+- OCR/scanning physical pages
+- Automated book metadata fetching from external APIs (manual entry for MVP)
+- “Test Book” / onboarding interactive tutorial
 
-### Cursor IDE
+## Project status
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
-
-### GitHub Copilot
-
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
-
-### Windsurf
-
-The `.windsurfrules` file contains AI configuration for Windsurf.
-
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+**MVP in progress.** The PRD and tech-stack documents describe the target scope and architecture; some backend/AI pieces (Supabase schema, RLS policies, pgvector setup, and OpenRouter wiring) may still be under active development.
 
 ## License
 
-MIT
+This project is licensed under MIT license.
