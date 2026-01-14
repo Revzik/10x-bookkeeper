@@ -2,15 +2,14 @@
 
 ## Assumptions / Scope Notes
 - This API is intended to run as **server-side endpoints** (Astro `src/pages/api/*` and/or Supabase Edge Functions) so **secrets stay off the client** (per tech stack recommendation).
-- Authentication is handled via **Supabase Auth** (JWT). API endpoints trust the validated user context and never accept `user_id` from clients.
-- Database RLS enforces per-user isolation, but the API still applies **defense-in-depth** checks (e.g., ownership checks and consistent error handling).
+- **Authentication is temporarily disabled** for this iteration. API endpoints do NOT require a Bearer token.
+- **RLS is bypassed** or simplified for now; the API will operate on all data (or a single default user context if needed for DB schemas).
 - Vectors are generated via OpenRouter-compatible embeddings, but the database schema references OpenAI’s `text-embedding-3-small` dimensionality (1536). We assume the embedding model used returns **1536 dims**.
 - “Chat” responses are treated as **non-persisted by default** (unless you later add a `chat_messages` table); **search logs** are persisted via `search_logs`.
 
 ---
 
 ## 1. Resources
-- **Profile** → `public.profiles`
 - **Series** → `public.series`
 - **Book** → `public.books`
 - **Chapter** → `public.chapters`
@@ -18,6 +17,8 @@
 - **NoteEmbedding** (internal) → `public.note_embeddings`
 - **ReadingSession** → `public.reading_sessions`
 - **SearchLog** (internal/metrics) → `public.search_logs`
+- **EmbeddingErrorLog** (internal) → `public.embedding_errors`
+- **SearchErrorLog** (internal) → `public.search_errors`
 - **AI Query (RAG)** (virtual resource) → implemented via DB RPC `match_notes` + LLM completion
 
 ---
@@ -28,13 +29,13 @@
 - **Base path**: `/api/v1`
 - **Paths below**: listed **relative** to `/api/v1` (e.g., `POST /books` means `POST /api/v1/books`)
 - **Content type**: `application/json; charset=utf-8`
-- **Auth**: `Authorization: Bearer <supabase_jwt>`
+- **Auth**: None (disabled for MVP iteration).
 - **Timestamps**: ISO8601 strings
 - **IDs**: UUID strings
 - **Pagination (lists)**:
-  - `limit` (default 20, max 100)
-  - `cursor` (opaque string) OR `offset` (discouraged for large tables; prefer cursor)
-  - Response includes `page` object: `{ "limit": number, "next_cursor": string | null }`
+  - `page` (default 1)
+  - `size` (default 10, max 100)
+  - Response includes `meta` object: `{ "current_page": number, "page_size": number, "total_items": number, "total_pages": number }`
 - **Sorting (lists)**:
   - `sort` field name (whitelist per resource)
   - `order` = `asc|desc` (default `desc`)
@@ -51,7 +52,6 @@
 ```
 
 Common error codes:
-- `401 UNAUTHORIZED` → `AUTH_REQUIRED`
 - `403 FORBIDDEN` → `NOT_ALLOWED`
 - `404 NOT FOUND` → `NOT_FOUND`
 - `409 CONFLICT` → `CONFLICT`
@@ -94,13 +94,12 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `422 VALIDATION_ERROR` (missing title)
 
 #### GET `/series`
 - **Description**: List series.
 - **Query params**:
-  - `limit`, `cursor`
+  - `page`, `size`
   - `q` (search in title; optional)
   - `sort` in `created_at|updated_at|title`
   - `order` in `asc|desc`
@@ -109,14 +108,13 @@ Common error codes:
 ```json
 {
   "series": [ { "id": "uuid", "title": "string", "created_at": "iso", "updated_at": "iso" } ],
-  "page": { "limit": 20, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
 
 #### GET `/series/:seriesId`
 - **Description**: Fetch one series (optionally include counts).
@@ -134,7 +132,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### PATCH `/series/:seriesId`
@@ -153,7 +150,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
   - `422 VALIDATION_ERROR` (empty title if provided)
 
@@ -166,7 +162,6 @@ Common error codes:
 - **Success codes**:
   - `204 NO CONTENT`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 ---
@@ -213,14 +208,13 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `422 VALIDATION_ERROR` (missing title/author/total_pages; invalid status; total_pages <= 0)
-  - `404 NOT_FOUND` (series_id provided but not found/owned)
+  - `404 NOT_FOUND` (series_id provided but not found)
 
 #### GET `/books`
 - **Description**: List books (library view).
 - **Query params**:
-  - `limit`, `cursor`
+  - `page`, `size`
   - `series_id` (filter)
   - `status` (filter: `want_to_read|reading|completed`)
   - `q` (search in title/author)
@@ -242,14 +236,13 @@ Common error codes:
       "updated_at": "iso"
     }
   ],
-  "page": { "limit": 20, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
 
 #### GET `/books/:bookId`
 - **Description**: Get a book with optional aggregates.
@@ -270,7 +263,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### PATCH `/books/:bookId`
@@ -294,9 +286,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `422 VALIDATION_ERROR` (current_page < 0, total_pages <= 0, current_page > total_pages)
-  - `404 NOT_FOUND` (book or new series not found/owned)
+  - `404 NOT_FOUND` (book or new series not found)
 
 #### POST `/books/:bookId/progress`
 > PRD: “Manual entry of current page number… progress bar updates”
@@ -316,7 +307,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
   - `422 VALIDATION_ERROR` (out of bounds)
 
@@ -326,7 +316,6 @@ Common error codes:
 - **Success codes**:
   - `204 NO CONTENT`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 ---
@@ -351,14 +340,13 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
-  - `404 NOT_FOUND` (book not found/owned)
+  - `404 NOT_FOUND` (book not found)
   - `422 VALIDATION_ERROR` (missing title)
 
 #### GET `/books/:bookId/chapters`
 - **Description**: List chapters for a book.
 - **Query params**:
-  - `limit`, `cursor`
+  - `page`, `size`
   - `sort` in `order|created_at|updated_at|title` (default `order asc`)
   - `order` in `asc|desc`
 - **Response 200**:
@@ -366,14 +354,13 @@ Common error codes:
 ```json
 {
   "chapters": [ { "id": "uuid", "book_id": "uuid", "title": "string", "order": 1, "updated_at": "iso" } ],
-  "page": { "limit": 50, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### GET `/chapters/:chapterId`
@@ -382,7 +369,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### PATCH `/chapters/:chapterId`
@@ -397,7 +383,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
   - `422 VALIDATION_ERROR`
 
@@ -407,7 +392,6 @@ Common error codes:
 - **Success codes**:
   - `204 NO CONTENT`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 ---
@@ -445,14 +429,13 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
-  - `404 NOT_FOUND` (chapter not found/owned)
+  - `404 NOT_FOUND` (chapter not found)
   - `422 VALIDATION_ERROR` (missing/empty content; optional max length enforcement)
 
 #### GET `/notes`
 - **Description**: List notes (supports “View Book Notes” grouped by chapter on client).
 - **Query params**:
-  - `limit`, `cursor`
+  - `page`, `size`
   - `book_id` (filter via join)
   - `chapter_id` (filter)
   - `series_id` (filter via join)
@@ -466,14 +449,13 @@ Common error codes:
   "notes": [
     { "id": "uuid", "chapter_id": "uuid", "content": "string", "embedding_status": "completed", "created_at": "iso", "updated_at": "iso" }
   ],
-  "page": { "limit": 20, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
 
 #### GET `/notes/:noteId`
 - **Description**: Get a note (optionally include chapter/book context).
@@ -491,7 +473,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### PATCH `/notes/:noteId`
@@ -512,7 +493,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
   - `422 VALIDATION_ERROR`
 
@@ -522,7 +502,6 @@ Common error codes:
 - **Success codes**:
   - `204 NO CONTENT`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 ---
@@ -556,9 +535,8 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `409 CONFLICT` (`ACTIVE_SESSION_EXISTS`)
-  - `404 NOT_FOUND` (book not found/owned)
+  - `404 NOT_FOUND` (book not found)
 
 #### POST `/reading-sessions/:sessionId/stop`
 - **Description**: Stop a running session; optionally record `end_page` and update book progress.
@@ -580,7 +558,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
   - `409 CONFLICT` (`SESSION_ALREADY_ENDED`)
   - `422 VALIDATION_ERROR` (end_page < 0; end_page > total_pages if `update_book_progress`)
@@ -590,7 +567,7 @@ Common error codes:
 - **Query params**:
   - `book_id` (filter)
   - `started_after`, `started_before` (ISO)
-  - `limit`, `cursor`
+  - `page`, `size`
   - `sort` in `started_at|ended_at`
   - `order` in `asc|desc`
 - **Response 200**:
@@ -600,14 +577,13 @@ Common error codes:
   "reading_sessions": [
     { "id": "uuid", "book_id": "uuid", "started_at": "iso", "ended_at": "iso|null", "end_page": 42 }
   ],
-  "page": { "limit": 20, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
 
 #### GET `/reading-sessions/:sessionId`
 - **Description**: Get a session.
@@ -615,7 +591,6 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 #### DELETE `/reading-sessions/:sessionId`
@@ -624,7 +599,6 @@ Common error codes:
 - **Success codes**:
   - `204 NO CONTENT`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `404 NOT_FOUND`
 
 ---
@@ -694,9 +668,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
   - `422 VALIDATION_ERROR` (missing query_text; both scope ids provided but invalid combination if you choose to disallow)
-  - `404 NOT_FOUND` (scope references not found/owned)
+  - `404 NOT_FOUND` (scope references not found)
   - `429 RATE_LIMITED`
 
 **Implementation detail (server-side)**:
@@ -715,41 +688,157 @@ Common error codes:
 #### GET `/search-logs`
 - **Description**: Admin/user-visible query history (optional for MVP).
 - **Query params**:
-  - `limit`, `cursor`
+  - `page`, `size`
   - `started_after`, `started_before`
 - **Response 200**:
 
 ```json
 {
   "search_logs": [ { "id": "uuid", "query_text": "string", "created_at": "iso" } ],
-  "page": { "limit": 50, "next_cursor": "string|null" }
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
 
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `401 AUTH_REQUIRED`
+
+---
+
+### 2.10 Embedding Errors (debug; optional to expose)
+> Schema: `embedding_errors(error_message text not null, note_id uuid null, created_at default now)`
+
+#### GET `/embedding-errors`
+- **Description**: List embedding failures for the current user (useful for debugging and support).
+- **Query params**:
+  - `page`, `size`
+  - `note_id` (optional filter)
+  - `sort` in `created_at`
+  - `order` in `asc|desc` (default `desc`)
+- **Response 200**:
+
+```json
+{
+  "embedding_errors": [
+    {
+      "id": "uuid",
+      "note_id": "uuid|null",
+      "error_message": "string",
+      "created_at": "iso"
+    }
+  ],
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
+}
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+
+#### GET `/embedding-errors/:embeddingErrorId`
+- **Description**: Get a single embedding error log entry.
+- **Response 200**:
+
+```json
+{
+  "embedding_error": {
+    "id": "uuid",
+    "note_id": "uuid|null",
+    "error_message": "string",
+    "created_at": "iso"
+  }
+}
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+  - `404 NOT_FOUND`
+
+#### DELETE `/embedding-errors/:embeddingErrorId`
+- **Description**: Delete an embedding error log entry (user-scoped cleanup).
+- **Response 204**
+- **Success codes**:
+  - `204 NO CONTENT`
+- **Error codes**:
+  - `404 NOT_FOUND`
+
+---
+
+### 2.11 Search Errors (debug; optional to expose)
+> Schema: `search_errors(source error_source not null, error_message text not null, search_log_id uuid null, created_at default now)`
+
+#### GET `/search-errors`
+- **Description**: List RAG/search failures for the current user.
+- **Query params**:
+  - `page`, `size`
+  - `source` (optional filter: `embedding|llm|database|unknown`)
+  - `search_log_id` (optional filter)
+  - `sort` in `created_at`
+  - `order` in `asc|desc` (default `desc`)
+- **Response 200**:
+
+```json
+{
+  "search_errors": [
+    {
+      "id": "uuid",
+      "search_log_id": "uuid|null",
+      "source": "embedding|llm|database|unknown",
+      "error_message": "string",
+      "created_at": "iso"
+    }
+  ],
+  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
+}
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+
+#### GET `/search-errors/:searchErrorId`
+- **Description**: Get a single search error log entry.
+- **Response 200**:
+
+```json
+{
+  "search_error": {
+    "id": "uuid",
+    "search_log_id": "uuid|null",
+    "source": "embedding|llm|database|unknown",
+    "error_message": "string",
+    "created_at": "iso"
+  }
+}
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+  - `404 NOT_FOUND`
+
+#### DELETE `/search-errors/:searchErrorId`
+- **Description**: Delete a search error log entry (user-scoped cleanup).
+- **Response 204**
+- **Success codes**:
+  - `204 NO CONTENT`
+- **Error codes**:
+  - `404 NOT_FOUND`
 
 ---
 
 ## 3. Authentication and Authorization
 
 ### Authentication
-- **Mechanism**: Supabase Auth JWT (Bearer token).
-- **Where validated**:
-  - Astro API routes: validate the JWT server-side using Supabase Admin/Server client.
-  - Supabase Edge Functions: validate `Authorization` token using Supabase runtime helpers.
-- **Session**: use refresh tokens client-side or via optional `/auth/*` endpoints.
+- **Mechanism**: Disabled for this stage. No JWT validation required.
+- **Context**: API acts as a single-user system or operates on global data for testing simplicity.
 
-### Authorization (per-user isolation)
-> Schema plan: “Every core entity is strictly associated with a `user_id` … RLS enabled on all tables … using (user_id = auth.uid())”
-- Enforce **Row Level Security** on `series`, `books`, `chapters`, `notes`, `note_embeddings`, `reading_sessions`, `search_logs`.
-- Profiles policy uses `id = auth.uid()`.
+### Authorization
+- **RLS**: Temporarily disabled or permissive.
+- **Per-user isolation**: Skipped for now.
 - API layer rules:
-  - Never accept `user_id` from client payloads.
-  - All queries are scoped to the authenticated user (and/or rely on RLS).
-  - Return `404 NOT_FOUND` for missing or not-owned resources (avoid leaking existence).
+  - Return `404 NOT_FOUND` for missing resources.
 
 ### Data security
 - Store OpenRouter keys only server-side.
@@ -760,12 +849,6 @@ Common error codes:
 ## 4. Validation and Business Logic
 
 ### 4.1 Validation rules by resource (schema + PRD)
-
-#### Profiles (`profiles`)
-- **Constraints**:
-  - `id` must equal `auth.users.id`
-- **API validation**:
-  - none beyond auth; profile is created automatically on signup.
 
 #### Series (`series`)
 - **Schema**: `title text not null`
@@ -815,6 +898,8 @@ Common error codes:
 - **Schema**:
   - `chunk_content text not null`
   - `embedding vector(1536) not null`
+- **Types note**:
+  - In `src/db/database.types.ts`, pgvector values are represented as `string` (including `note_embeddings.embedding` and the `match_notes.query_embedding` argument).
 - **API validation**:
   - not directly writable by clients
   - embedding generation validates vector length = 1536
@@ -835,6 +920,23 @@ Common error codes:
   - `query_text text not null`
 - **API validation**:
   - `query_text` required, non-empty; consider max length (e.g., 500 chars)
+
+#### Embedding error logs (`embedding_errors`) (server-managed)
+- **Schema**:
+  - `error_message text not null`
+  - `note_id uuid nullable`
+- **API validation**:
+  - not directly writable by clients
+  - write only from embedding pipeline on failures
+
+#### Search error logs (`search_errors`) (server-managed)
+- **Schema**:
+  - `source error_source not null`
+  - `error_message text not null`
+  - `search_log_id uuid nullable`
+- **API validation**:
+  - not directly writable by clients
+  - write only from AI query pipeline on failures
 
 ---
 
@@ -876,7 +978,7 @@ Common error codes:
 
 ## Security and Performance Considerations (from schema/PRD/stack)
 - **Strict data isolation**: use RLS on all tables and JWT auth context.
-- **Cascade deletes**: rely on FK `ON DELETE CASCADE` from `profiles` and child tables; `books.series_id` rely on FK `ON DELETE SET NULL`, but the API also supports a `cascade` option.
+- **Cascade deletes**: rely on FK `user_id → auth.users(id) ON DELETE CASCADE` on all core tables; deleting the auth user deletes all user-owned rows. `books.series_id` relies on FK `ON DELETE SET NULL` (and the API may also support an explicit “cascade delete series content” option if desired).
 - **Vector search performance**: use pgvector HNSW index on `note_embeddings(embedding)` with `vector_cosine_ops`; keep `match_count` capped (e.g., max 20).
 - **Input hardening**: request body size limits (especially notes), content sanitization if rendering markdown in UI, and consistent 404-on-not-owned behavior.
 

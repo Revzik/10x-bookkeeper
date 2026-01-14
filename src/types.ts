@@ -1,103 +1,99 @@
+import type { Database, Enums, Json, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
+
 /**
- * Shared types for backend and frontend (Entities, DTOs, Command Models)
- *
- * Design goals:
- * - DTOs are derived from database row types (`Tables<...>`) so they stay in sync with schema.
- * - Command Models represent request payloads (and some query models) from `.ai/api-plan.md`.
- * - API never accepts `user_id` from clients; DTOs generally omit `user_id`.
+ * Shared primitives
+ * Note: Supabase generated types model UUIDs + timestamps as `string`.
  */
-
-import type { Database, Enums, Tables } from "./db/database.types";
-
-// -------------------------------------------------------------------------------------------------
-// DB entity aliases (Row types)
-// -------------------------------------------------------------------------------------------------
-
-export type ProfileEntity = Tables<"profiles">;
-export type SeriesEntity = Tables<"series">;
-export type BookEntity = Tables<"books">;
-export type ChapterEntity = Tables<"chapters">;
-export type NoteEntity = Tables<"notes">;
-export type NoteEmbeddingEntity = Tables<"note_embeddings">;
-export type ReadingSessionEntity = Tables<"reading_sessions">;
-export type SearchLogEntity = Tables<"search_logs">;
-
-export type BookStatus = Enums<"book_status">;
-export type EmbeddingStatus = Enums<"embedding_status">;
-
-// -------------------------------------------------------------------------------------------------
-// Common API shapes
-// -------------------------------------------------------------------------------------------------
-
-export type IsoTimestamp = string;
 export type Uuid = string;
+export type IsoDateTimeString = string;
+
+/**
+ * Shared API shapes
+ */
+export interface PaginationMetaDto {
+  current_page: number;
+  page_size: number;
+  total_items: number;
+  total_pages: number;
+}
+
+export type SortOrderDto = "asc" | "desc";
 
 export type ApiErrorCode =
-  | "AUTH_REQUIRED"
   | "NOT_ALLOWED"
   | "NOT_FOUND"
   | "CONFLICT"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
   | "INTERNAL_ERROR"
-  // reading session specific (per plan)
+  // endpoint-specific conflicts (documented in the API plan)
   | "ACTIVE_SESSION_EXISTS"
   | "SESSION_ALREADY_ENDED";
 
 export interface ApiErrorDto {
-  error: {
-    code: ApiErrorCode | (string & {});
-    message: string;
-    details?: Record<string, unknown> | null;
-  };
+  code: ApiErrorCode;
+  message: string;
+  /**
+   * Intended to carry validation errors, underlying error payloads, etc.
+   * Kept broad while still being JSON-serializable.
+   */
+  details?: Json;
 }
 
-export interface PageDto {
-  limit: number;
-  next_cursor: string | null;
+export interface ApiErrorResponseDto {
+  error: ApiErrorDto;
 }
 
-export type SortOrder = "asc" | "desc";
+/**
+ * Database-derived entity aliases
+ * These keep DTOs “connected” to the underlying schema without re-declaring fields.
+ */
+export type SeriesEntity = Tables<"series">;
+export type BookEntity = Tables<"books">;
+export type ChapterEntity = Tables<"chapters">;
+export type NoteEntity = Tables<"notes">;
+export type ReadingSessionEntity = Tables<"reading_sessions">;
+export type SearchLogEntity = Tables<"search_logs">;
+export type EmbeddingErrorEntity = Tables<"embedding_errors">;
+export type SearchErrorEntity = Tables<"search_errors">;
+export type NoteEmbeddingEntity = Tables<"note_embeddings">;
 
-// -------------------------------------------------------------------------------------------------
-// Profiles
-// -------------------------------------------------------------------------------------------------
+/**
+ * Enums (derived from DB enums)
+ */
+export type BookStatus = Enums<"book_status">;
+export type EmbeddingStatus = Enums<"embedding_status">;
+export type ErrorSource = Enums<"error_source">;
 
-// Minimal profile DTO (schema is just `id`)
-export type ProfileDto = Pick<ProfileEntity, "id">;
+/**
+ * SERIES
+ */
+export type SeriesDto = Pick<
+  SeriesEntity,
+  "id" | "title" | "description" | "cover_image_url" | "created_at" | "updated_at"
+>;
 
-// -------------------------------------------------------------------------------------------------
-// Series
-// -------------------------------------------------------------------------------------------------
+export type SeriesListItemDto = Pick<SeriesEntity, "id" | "title" | "created_at" | "updated_at">;
 
-export type SeriesDto = Omit<SeriesEntity, "user_id">;
+export type CreateSeriesCommand = Pick<TablesInsert<"series">, "title"> &
+  Partial<Pick<TablesInsert<"series">, "description" | "cover_image_url">>;
 
-export type SeriesListItemDto = Pick<SeriesDto, "id" | "title" | "created_at" | "updated_at">;
+export type UpdateSeriesCommand = Partial<Pick<TablesUpdate<"series">, "title" | "description" | "cover_image_url">>;
 
-export interface SeriesMetaDto {
-  books_count?: number;
-}
-
-export type CreateSeriesCommand = Pick<SeriesEntity, "title"> &
-  Partial<Pick<SeriesEntity, "description" | "cover_image_url">>;
-
-export type UpdateSeriesCommand = Partial<Pick<SeriesEntity, "title" | "description" | "cover_image_url">>;
-
-export interface ListSeriesQuery {
-  limit?: number;
-  cursor?: string;
+export interface SeriesListQueryDto {
+  page?: number;
+  size?: number;
   q?: string;
   sort?: "created_at" | "updated_at" | "title";
-  order?: SortOrder;
+  order?: SortOrderDto;
 }
 
-export interface GetSeriesQuery {
+export interface SeriesGetQueryDto {
   include?: "books_count";
 }
 
-export interface DeleteSeriesQuery {
-  /** If true/1, deletes all books/chapters/notes/note_embeddings/reading_sessions under this series (dangerous). */
-  cascade?: boolean;
+export interface SeriesGetMetaDto {
+  books_count: number;
 }
 
 export interface CreateSeriesResponseDto {
@@ -105,65 +101,76 @@ export interface CreateSeriesResponseDto {
 }
 export interface ListSeriesResponseDto {
   series: SeriesListItemDto[];
-  page: PageDto;
+  meta: PaginationMetaDto;
 }
 export interface GetSeriesResponseDto {
   series: SeriesDto;
-  meta?: SeriesMetaDto;
+  meta?: SeriesGetMetaDto;
 }
 export interface UpdateSeriesResponseDto {
   series: SeriesDto;
 }
 
-// -------------------------------------------------------------------------------------------------
-// Books
-// -------------------------------------------------------------------------------------------------
-
-export type BookDto = Omit<BookEntity, "user_id">;
+/**
+ * BOOKS
+ */
+export type BookDto = Pick<
+  BookEntity,
+  | "id"
+  | "series_id"
+  | "title"
+  | "author"
+  | "total_pages"
+  | "current_page"
+  | "status"
+  | "series_order"
+  | "cover_image_url"
+  | "created_at"
+  | "updated_at"
+>;
 
 export type BookListItemDto = Pick<
-  BookDto,
+  BookEntity,
   "id" | "series_id" | "title" | "author" | "status" | "total_pages" | "current_page" | "updated_at"
 >;
 
-export interface BookProgressMetaDto {
-  /** Percent is typically computed server-side: floor(current_page / total_pages * 100) */
-  percent: number;
-}
-
-export interface BookActiveSessionMetaDto {
-  id: ReadingSessionEntity["id"];
-  started_at: ReadingSessionEntity["started_at"];
-}
-
-export interface BookMetaDto {
-  progress?: BookProgressMetaDto;
-  chapters_count?: number;
-  notes_count?: number;
-  active_session?: BookActiveSessionMetaDto;
-}
-
-export type CreateBookCommand = Pick<BookEntity, "title" | "author" | "total_pages"> &
-  Partial<Pick<BookEntity, "series_id" | "series_order" | "status" | "cover_image_url">>;
+export type CreateBookCommand = Pick<TablesInsert<"books">, "title" | "author" | "total_pages"> &
+  Partial<Pick<TablesInsert<"books">, "series_id" | "series_order" | "status" | "cover_image_url">>;
 
 export type UpdateBookCommand = Partial<
   Pick<
-    BookEntity,
+    TablesUpdate<"books">,
     "title" | "author" | "total_pages" | "current_page" | "status" | "series_id" | "series_order" | "cover_image_url"
   >
 >;
 
-/** Purpose-built endpoint command: POST `/books/:bookId/progress` */
 export type UpdateBookProgressCommand = Pick<BookEntity, "current_page"> & Partial<Pick<BookEntity, "status">>;
 
-export interface ListBooksQuery {
-  limit?: number;
-  cursor?: string;
+export interface BooksListQueryDto {
+  page?: number;
+  size?: number;
   series_id?: BookEntity["series_id"];
   status?: BookStatus;
   q?: string;
   sort?: "updated_at" | "created_at" | "title" | "author" | "status";
-  order?: SortOrder;
+  order?: SortOrderDto;
+}
+
+export interface BookProgressMetaDto {
+  percent: number;
+}
+
+export type BookActiveSessionMetaDto = Pick<ReadingSessionEntity, "id" | "started_at">;
+
+export interface BookGetMetaDto {
+  progress: BookProgressMetaDto;
+  chapters_count: number;
+  notes_count: number;
+  /**
+   * Nullable when there is no running session.
+   * (The API plan shows an object in the example, but real data can be absent.)
+   */
+  active_session: BookActiveSessionMetaDto | null;
 }
 
 export interface CreateBookResponseDto {
@@ -171,42 +178,36 @@ export interface CreateBookResponseDto {
 }
 export interface ListBooksResponseDto {
   books: BookListItemDto[];
-  page: PageDto;
+  meta: PaginationMetaDto;
 }
 export interface GetBookResponseDto {
   book: BookDto;
-  meta?: BookMetaDto;
+  meta: BookGetMetaDto;
 }
 export interface UpdateBookResponseDto {
   book: BookDto;
 }
 export interface UpdateBookProgressResponseDto {
-  book: Pick<BookDto, "id" | "current_page" | "total_pages" | "status" | "updated_at">;
+  book: Pick<BookEntity, "id" | "current_page" | "total_pages" | "status" | "updated_at">;
 }
 
-// -------------------------------------------------------------------------------------------------
-// Chapters
-// -------------------------------------------------------------------------------------------------
+/**
+ * CHAPTERS
+ */
+export type ChapterDto = Pick<ChapterEntity, "id" | "book_id" | "title" | "order" | "created_at" | "updated_at">;
 
-export type ChapterDto = Omit<ChapterEntity, "user_id">;
+export type ChapterListItemDto = Pick<ChapterEntity, "id" | "book_id" | "title" | "order" | "updated_at">;
 
-export type ChapterListItemDto = Pick<ChapterDto, "id" | "book_id" | "title" | "book_order" | "updated_at">;
+export type CreateChapterCommand = Pick<TablesInsert<"chapters">, "title"> &
+  Partial<Pick<TablesInsert<"chapters">, "order">>;
 
-export interface CreateChapterCommand {
-  title: ChapterEntity["title"];
-  book_order?: ChapterEntity["book_order"];
-}
+export type UpdateChapterCommand = Partial<Pick<TablesUpdate<"chapters">, "title" | "order">>;
 
-export type UpdateChapterCommand = Partial<{
-  title: ChapterEntity["title"];
-  book_order: ChapterEntity["book_order"];
-}>;
-
-export interface ListChaptersQuery {
-  limit?: number;
-  cursor?: string;
-  sort?: "book_order" | "created_at" | "updated_at" | "title";
-  order?: SortOrder;
+export interface ChaptersListQueryDto {
+  page?: number;
+  size?: number;
+  sort?: "order" | "created_at" | "updated_at" | "title";
+  order?: SortOrderDto;
 }
 
 export interface CreateChapterResponseDto {
@@ -214,7 +215,7 @@ export interface CreateChapterResponseDto {
 }
 export interface ListChaptersResponseDto {
   chapters: ChapterListItemDto[];
-  page: PageDto;
+  meta: PaginationMetaDto;
 }
 export interface GetChapterResponseDto {
   chapter: ChapterDto;
@@ -223,40 +224,41 @@ export interface UpdateChapterResponseDto {
   chapter: ChapterDto;
 }
 
-// -------------------------------------------------------------------------------------------------
-// Notes
-// -------------------------------------------------------------------------------------------------
-
-export type NoteDto = Omit<NoteEntity, "user_id">;
+/**
+ * NOTES
+ */
+export type NoteDto = Pick<
+  NoteEntity,
+  "id" | "chapter_id" | "content" | "embedding_status" | "embedding_duration" | "created_at" | "updated_at"
+>;
 
 export type NoteListItemDto = Pick<
-  NoteDto,
+  NoteEntity,
   "id" | "chapter_id" | "content" | "embedding_status" | "created_at" | "updated_at"
 >;
 
-export type CreateNoteCommand = Pick<NoteEntity, "content">;
-export type UpdateNoteCommand = Pick<NoteEntity, "content">;
+export type CreateNoteCommand = Pick<TablesInsert<"notes">, "content">;
+export type UpdateNoteCommand = Pick<TablesUpdate<"notes">, "content">;
 
-export interface NotesContextDto {
-  book_id: BookEntity["id"];
-  book_title: BookEntity["title"];
-  chapter_id: ChapterEntity["id"];
-  chapter_title: ChapterEntity["title"];
-}
-
-export interface ListNotesQuery {
-  limit?: number;
-  cursor?: string;
-  book_id?: BookEntity["id"];
-  chapter_id?: ChapterEntity["id"];
-  series_id?: SeriesEntity["id"];
+export interface NotesListQueryDto {
+  page?: number;
+  size?: number;
+  book_id?: Uuid;
+  chapter_id?: NoteEntity["chapter_id"];
+  series_id?: Uuid;
   embedding_status?: EmbeddingStatus;
   sort?: "created_at" | "updated_at";
-  order?: SortOrder;
+  order?: SortOrderDto;
 }
 
-export interface GetNoteQuery {
+export interface NoteGetQueryDto {
   include?: "context";
+}
+
+export interface NoteContextDto {
+  book_id: Uuid;
+  book_title: BookEntity["title"];
+  chapter_title: ChapterEntity["title"];
 }
 
 export interface CreateNoteResponseDto {
@@ -264,115 +266,67 @@ export interface CreateNoteResponseDto {
 }
 export interface ListNotesResponseDto {
   notes: NoteListItemDto[];
-  page: PageDto;
+  meta: PaginationMetaDto;
 }
 export interface GetNoteResponseDto {
   note: NoteDto;
-  context?: NotesContextDto;
+  context?: NoteContextDto;
 }
 export interface UpdateNoteResponseDto {
-  note: Pick<NoteDto, "id" | "content" | "embedding_status" | "updated_at">;
+  note: Pick<NoteEntity, "id" | "content" | "embedding_status" | "updated_at">;
 }
 
-// -------------------------------------------------------------------------------------------------
-// Reading sessions
-// -------------------------------------------------------------------------------------------------
+/**
+ * READING SESSIONS
+ */
+export type ReadingSessionDto = Pick<ReadingSessionEntity, "id" | "book_id" | "started_at" | "ended_at" | "end_page">;
 
-export type ReadingSessionDto = Omit<ReadingSessionEntity, "user_id">;
-
-export type ReadingSessionListItemDto = Pick<
-  ReadingSessionDto,
-  "id" | "book_id" | "started_at" | "ended_at" | "end_page"
->;
-
-/** Start session: POST `/books/:bookId/reading-sessions` (empty JSON body in plan). */
 export type StartReadingSessionCommand = Record<never, never>;
 
 export interface StopReadingSessionCommand {
-  ended_at?: IsoTimestamp;
-  end_page?: number;
+  ended_at?: IsoDateTimeString;
+  // DB column is `number | null`; client payload should be a concrete number when provided.
+  end_page?: Exclude<ReadingSessionEntity["end_page"], null>;
   update_book_progress?: boolean;
 }
 
-export interface ListReadingSessionsQuery {
-  limit?: number;
-  cursor?: string;
-  book_id?: BookEntity["id"];
-  started_after?: IsoTimestamp;
-  started_before?: IsoTimestamp;
+export interface ReadingSessionsListQueryDto {
+  page?: number;
+  size?: number;
+  book_id?: ReadingSessionEntity["book_id"];
+  started_after?: IsoDateTimeString;
+  started_before?: IsoDateTimeString;
   sort?: "started_at" | "ended_at";
-  order?: SortOrder;
+  order?: SortOrderDto;
 }
 
 export interface StartReadingSessionResponseDto {
   reading_session: ReadingSessionDto;
 }
+
 export interface StopReadingSessionResponseDto {
-  reading_session: Pick<ReadingSessionDto, "id" | "ended_at" | "end_page">;
-  book?: Pick<BookDto, "id" | "current_page" | "status">;
+  reading_session: Pick<ReadingSessionEntity, "id" | "ended_at" | "end_page">;
+  book: Pick<BookEntity, "id" | "current_page" | "status">;
 }
+
 export interface ListReadingSessionsResponseDto {
-  reading_sessions: ReadingSessionListItemDto[];
-  page: PageDto;
+  reading_sessions: ReadingSessionDto[];
+  meta: PaginationMetaDto;
 }
 export interface GetReadingSessionResponseDto {
   reading_session: ReadingSessionDto;
 }
 
-// -------------------------------------------------------------------------------------------------
-// Search logs (metrics)
-// -------------------------------------------------------------------------------------------------
-
-export type SearchLogDto = Omit<SearchLogEntity, "user_id">;
-
-export interface ListSearchLogsQuery {
-  limit?: number;
-  cursor?: string;
-  started_after?: IsoTimestamp;
-  started_before?: IsoTimestamp;
-}
-
-export interface ListSearchLogsResponseDto {
-  search_logs: SearchLogDto[];
-  page: PageDto;
-}
-
-// -------------------------------------------------------------------------------------------------
-// AI Search (RAG Chat)
-// -------------------------------------------------------------------------------------------------
-
-export interface AiQueryScopeDto {
-  book_id?: BookEntity["id"] | null;
-  series_id?: SeriesEntity["id"] | null;
-}
-
-export interface AiQueryRetrievalDto {
-  match_threshold?: number;
-  match_count?: number;
-}
-
-export interface AiQueryCommand {
-  query_text: string;
-  scope?: AiQueryScopeDto;
-  retrieval?: AiQueryRetrievalDto;
-}
+/**
+ * AI SEARCH (RAG)
+ */
+export type MatchNotesRpcRow = Database["public"]["Functions"]["match_notes"]["Returns"][number];
 
 /**
- * Source rows for citations come from the DB RPC `match_notes`.
- * We re-shape `id` → `note_embedding_id` to match the API plan response.
+ * API plan calls this field `note_embedding_id`, but the RPC returns `id`.
+ * This type performs a “rename” while still being fully derived from the RPC return type.
  */
-export type MatchNotesRow = Database["public"]["Functions"]["match_notes"]["Returns"][number];
-
-export interface AiCitationDto {
-  note_embedding_id: MatchNotesRow["id"];
-  note_id: MatchNotesRow["note_id"];
-  book_id: MatchNotesRow["book_id"];
-  book_title: MatchNotesRow["book_title"];
-  chapter_id: MatchNotesRow["chapter_id"];
-  chapter_title: MatchNotesRow["chapter_title"];
-  chunk_content: MatchNotesRow["chunk_content"];
-  similarity: MatchNotesRow["similarity"];
-}
+export type AiCitationDto = Omit<MatchNotesRpcRow, "id"> & { note_embedding_id: MatchNotesRpcRow["id"] };
 
 export interface AiAnswerDto {
   text: string;
@@ -385,8 +339,87 @@ export interface AiUsageDto {
   latency_ms: number;
 }
 
+export interface AiQueryScopeDto {
+  book_id?: Uuid | null;
+  series_id?: Uuid | null;
+}
+
+export type AiQueryRetrievalDto = Pick<
+  Database["public"]["Functions"]["match_notes"]["Args"],
+  "match_threshold" | "match_count"
+>;
+
+export interface AiQueryCommand {
+  query_text: SearchLogEntity["query_text"];
+  scope: AiQueryScopeDto;
+  retrieval: AiQueryRetrievalDto;
+}
+
 export interface AiQueryResponseDto {
   answer: AiAnswerDto;
   citations: AiCitationDto[];
   usage: AiUsageDto;
+}
+
+/**
+ * SEARCH LOGS (optional exposure)
+ */
+export type SearchLogDto = Pick<SearchLogEntity, "id" | "query_text" | "created_at">;
+
+export interface SearchLogsListQueryDto {
+  page?: number;
+  size?: number;
+  started_after?: IsoDateTimeString;
+  started_before?: IsoDateTimeString;
+}
+
+export interface ListSearchLogsResponseDto {
+  search_logs: SearchLogDto[];
+  meta: PaginationMetaDto;
+}
+
+/**
+ * EMBEDDING ERRORS (optional exposure)
+ */
+export type EmbeddingErrorDto = Pick<EmbeddingErrorEntity, "id" | "note_id" | "error_message" | "created_at">;
+
+export interface EmbeddingErrorsListQueryDto {
+  page?: number;
+  size?: number;
+  note_id?: EmbeddingErrorEntity["note_id"];
+  sort?: "created_at";
+  order?: SortOrderDto;
+}
+
+export interface ListEmbeddingErrorsResponseDto {
+  embedding_errors: EmbeddingErrorDto[];
+  meta: PaginationMetaDto;
+}
+export interface GetEmbeddingErrorResponseDto {
+  embedding_error: EmbeddingErrorDto;
+}
+
+/**
+ * SEARCH ERRORS (optional exposure)
+ */
+export type SearchErrorDto = Pick<
+  SearchErrorEntity,
+  "id" | "search_log_id" | "source" | "error_message" | "created_at"
+>;
+
+export interface SearchErrorsListQueryDto {
+  page?: number;
+  size?: number;
+  source?: ErrorSource;
+  search_log_id?: SearchErrorEntity["search_log_id"];
+  sort?: "created_at";
+  order?: SortOrderDto;
+}
+
+export interface ListSearchErrorsResponseDto {
+  search_errors: SearchErrorDto[];
+  meta: PaginationMetaDto;
+}
+export interface GetSearchErrorResponseDto {
+  search_error: SearchErrorDto;
 }
