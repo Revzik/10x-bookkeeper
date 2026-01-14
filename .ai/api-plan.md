@@ -52,10 +52,10 @@
 ```
 
 Common error codes:
+- `400 BAD REQUEST` → `VALIDATION_ERROR`
 - `403 FORBIDDEN` → `NOT_ALLOWED`
 - `404 NOT FOUND` → `NOT_FOUND`
 - `409 CONFLICT` → `CONFLICT`
-- `422 UNPROCESSABLE ENTITY` → `VALIDATION_ERROR`
 - `429 TOO MANY REQUESTS` → `RATE_LIMITED`
 - `500 INTERNAL SERVER ERROR` → `INTERNAL_ERROR`
 
@@ -94,7 +94,7 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `422 VALIDATION_ERROR` (missing title)
+  - `400 VALIDATION_ERROR` (missing title)
 
 #### GET `/series`
 - **Description**: List series.
@@ -150,8 +150,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
+  - `400 VALIDATION_ERROR` (empty title if provided)
   - `404 NOT_FOUND`
-  - `422 VALIDATION_ERROR` (empty title if provided)
 
 #### DELETE `/series/:seriesId`
 - **Description**: Delete a series. By default, books with `series_id` are set to null (`ON DELETE SET NULL`).  
@@ -208,7 +208,7 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
-  - `422 VALIDATION_ERROR` (missing title/author/total_pages; invalid status; total_pages <= 0)
+  - `400 VALIDATION_ERROR` (missing title/author/total_pages; invalid status; total_pages <= 0)
   - `404 NOT_FOUND` (series_id provided but not found)
 
 #### GET `/books`
@@ -286,7 +286,7 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `422 VALIDATION_ERROR` (current_page < 0, total_pages <= 0, current_page > total_pages)
+  - `400 VALIDATION_ERROR` (current_page < 0, total_pages <= 0, current_page > total_pages)
   - `404 NOT_FOUND` (book or new series not found)
 
 #### POST `/books/:bookId/progress`
@@ -307,8 +307,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
+  - `400 VALIDATION_ERROR` (out of bounds)
   - `404 NOT_FOUND`
-  - `422 VALIDATION_ERROR` (out of bounds)
 
 #### DELETE `/books/:bookId`
 - **Description**: Delete a book. Cascades to chapters, notes, embeddings, sessions.
@@ -340,8 +340,8 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
+  - `400 VALIDATION_ERROR` (missing title)
   - `404 NOT_FOUND` (book not found)
-  - `422 VALIDATION_ERROR` (missing title)
 
 #### GET `/books/:bookId/chapters`
 - **Description**: List chapters for a book.
@@ -383,8 +383,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
+  - `400 VALIDATION_ERROR`
   - `404 NOT_FOUND`
-  - `422 VALIDATION_ERROR`
 
 #### DELETE `/chapters/:chapterId`
 - **Description**: Delete chapter; cascades to notes/embeddings.
@@ -429,8 +429,8 @@ Common error codes:
 - **Success codes**:
   - `201 CREATED`
 - **Error codes**:
+  - `400 VALIDATION_ERROR` (missing/empty content; optional max length enforcement)
   - `404 NOT_FOUND` (chapter not found)
-  - `422 VALIDATION_ERROR` (missing/empty content; optional max length enforcement)
 
 #### GET `/notes`
 - **Description**: List notes (supports “View Book Notes” grouped by chapter on client).
@@ -493,8 +493,8 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
+  - `400 VALIDATION_ERROR`
   - `404 NOT_FOUND`
-  - `422 VALIDATION_ERROR`
 
 #### DELETE `/notes/:noteId`
 - **Description**: Delete note; cascades to `note_embeddings`.
@@ -558,9 +558,9 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
+  - `400 VALIDATION_ERROR` (end_page < 0; end_page > total_pages if `update_book_progress`)
   - `404 NOT_FOUND`
   - `409 CONFLICT` (`SESSION_ALREADY_ENDED`)
-  - `422 VALIDATION_ERROR` (end_page < 0; end_page > total_pages if `update_book_progress`)
 
 #### GET `/reading-sessions`
 - **Description**: List sessions (history).
@@ -668,7 +668,7 @@ Common error codes:
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `422 VALIDATION_ERROR` (missing query_text; both scope ids provided but invalid combination if you choose to disallow)
+  - `400 VALIDATION_ERROR` (missing query_text; both scope ids provided but invalid combination if you choose to disallow)
   - `404 NOT_FOUND` (scope references not found)
   - `429 RATE_LIMITED`
 
