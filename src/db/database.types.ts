@@ -71,39 +71,32 @@ export interface Database {
             referencedRelation: "series";
             referencedColumns: ["id"];
           },
-          {
-            foreignKeyName: "books_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
         ];
       };
       chapters: {
         Row: {
           book_id: string;
-          book_order: number;
           created_at: string;
           id: string;
+          order: number;
           title: string;
           updated_at: string;
           user_id: string;
         };
         Insert: {
           book_id: string;
-          book_order?: number;
           created_at?: string;
           id?: string;
+          order?: number;
           title: string;
           updated_at?: string;
           user_id: string;
         };
         Update: {
           book_id?: string;
-          book_order?: number;
           created_at?: string;
           id?: string;
+          order?: number;
           title?: string;
           updated_at?: string;
           user_id?: string;
@@ -116,11 +109,36 @@ export interface Database {
             referencedRelation: "books";
             referencedColumns: ["id"];
           },
+        ];
+      };
+      embedding_errors: {
+        Row: {
+          created_at: string;
+          error_message: string;
+          id: string;
+          note_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          error_message: string;
+          id?: string;
+          note_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          error_message?: string;
+          id?: string;
+          note_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
           {
-            foreignKeyName: "chapters_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: "embedding_errors_note_id_fkey";
+            columns: ["note_id"];
             isOneToOne: false;
-            referencedRelation: "profiles";
+            referencedRelation: "notes";
             referencedColumns: ["id"];
           },
         ];
@@ -156,13 +174,6 @@ export interface Database {
             columns: ["note_id"];
             isOneToOne: false;
             referencedRelation: "notes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "note_embeddings_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -206,26 +217,7 @@ export interface Database {
             referencedRelation: "chapters";
             referencedColumns: ["id"];
           },
-          {
-            foreignKeyName: "notes_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
         ];
-      };
-      profiles: {
-        Row: {
-          id: string;
-        };
-        Insert: {
-          id: string;
-        };
-        Update: {
-          id?: string;
-        };
-        Relationships: [];
       };
       reading_sessions: {
         Row: {
@@ -260,11 +252,39 @@ export interface Database {
             referencedRelation: "books";
             referencedColumns: ["id"];
           },
+        ];
+      };
+      search_errors: {
+        Row: {
+          created_at: string;
+          error_message: string;
+          id: string;
+          search_log_id: string | null;
+          source: Database["public"]["Enums"]["error_source"];
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          error_message: string;
+          id?: string;
+          search_log_id?: string | null;
+          source: Database["public"]["Enums"]["error_source"];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          error_message?: string;
+          id?: string;
+          search_log_id?: string | null;
+          source?: Database["public"]["Enums"]["error_source"];
+          user_id?: string;
+        };
+        Relationships: [
           {
-            foreignKeyName: "reading_sessions_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: "search_errors_search_log_id_fkey";
+            columns: ["search_log_id"];
             isOneToOne: false;
-            referencedRelation: "profiles";
+            referencedRelation: "search_logs";
             referencedColumns: ["id"];
           },
         ];
@@ -288,18 +308,11 @@ export interface Database {
           query_text?: string;
           user_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "search_logs_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       series: {
         Row: {
+          book_count: number;
           cover_image_url: string | null;
           created_at: string;
           description: string | null;
@@ -309,6 +322,7 @@ export interface Database {
           user_id: string;
         };
         Insert: {
+          book_count?: number;
           cover_image_url?: string | null;
           created_at?: string;
           description?: string | null;
@@ -318,6 +332,7 @@ export interface Database {
           user_id: string;
         };
         Update: {
+          book_count?: number;
           cover_image_url?: string | null;
           created_at?: string;
           description?: string | null;
@@ -326,15 +341,7 @@ export interface Database {
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "series_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
     };
     Views: Record<never, never>;
@@ -361,6 +368,7 @@ export interface Database {
     Enums: {
       book_status: "want_to_read" | "reading" | "completed";
       embedding_status: "pending" | "processing" | "completed" | "failed";
+      error_source: "embedding" | "llm" | "database" | "unknown";
     };
     CompositeTypes: Record<never, never>;
   };
@@ -483,6 +491,7 @@ export const Constants = {
     Enums: {
       book_status: ["want_to_read", "reading", "completed"],
       embedding_status: ["pending", "processing", "completed", "failed"],
+      error_source: ["embedding", "llm", "database", "unknown"],
     },
   },
 } as const;

@@ -18,37 +18,34 @@ create type book_status as enum ('want_to_read', 'reading', 'completed');
 
 -- Embedding job status
 create type embedding_status as enum ('pending', 'processing', 'completed', 'failed');
+
+-- Error source for search/AI
+create type error_source as enum ('embedding', 'llm', 'database', 'unknown');
 ```
 
 ## 3. Tables
 
-### 3.1. Profiles (`public.profiles`)
-Extends the default Supabase Auth user.
-
-| Column | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | `uuid` | PK, FK `auth.users.id`, ON DELETE CASCADE | Matches Auth User ID. |
-
-### 3.2. Series (`public.series`)
+### 3.1. Series (`public.series`)
 Groups books together.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner of the series. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner of the series. |
 | `title` | `text` | not null | Name of the series. |
 | `description` | `text` | | Optional description. |
 | `cover_image_url` | `text` | | Optional cover image. |
+| `book_count` | `int` | default 0, not null | Cached count of books in series. |
 | `created_at` | `timestamptz` | default `now()`, not null | |
 | `updated_at` | `timestamptz` | default `now()`, not null | |
 
-### 3.3. Books (`public.books`)
+### 3.2. Books (`public.books`)
 Core entity for tracking reading material.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `series_id` | `uuid` | FK `series.id`, ON DELETE SET NULL | Optional link to a series. |
 | `title` | `text` | not null | Book title. |
 | `author` | `text` | not null | Book author. |
@@ -63,26 +60,26 @@ Core entity for tracking reading material.
 **Table Constraints:**
 - `check_progress`: `current_page <= total_pages`
 
-### 3.4. Chapters (`public.chapters`)
+### 3.3. Chapters (`public.chapters`)
 Structural unit for organizing notes.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `book_id` | `uuid` | FK `books.id`, ON DELETE CASCADE, not null | Parent book. |
 | `title` | `text` | not null | Chapter title or "Chapter 1". |
 | `order` | `int` | default 0 | Sorting order. |
 | `created_at` | `timestamptz` | default `now()`, not null | |
 | `updated_at` | `timestamptz` | default `now()`, not null | |
 
-### 3.5. Notes (`public.notes`)
+### 3.4. Notes (`public.notes`)
 User-authored content.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `chapter_id` | `uuid` | FK `chapters.id`, ON DELETE CASCADE, not null | Parent chapter. |
 | `content` | `text` | not null | The actual note text (markdown supported). |
 | `embedding_status` | `embedding_status` | default `'pending'`, not null | Status of vector generation. |
@@ -90,38 +87,61 @@ User-authored content.
 | `created_at` | `timestamptz` | default `now()`, not null | |
 | `updated_at` | `timestamptz` | default `now()`, not null | |
 
-### 3.6. Note Embeddings (`public.note_embeddings`)
+### 3.5. Note Embeddings (`public.note_embeddings`)
 Stores vector data for RAG. Separated from notes to support 1-to-many chunking if needed and to keep the notes table lightweight.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `note_id` | `uuid` | FK `notes.id`, ON DELETE CASCADE, not null | Parent note. |
 | `chunk_content` | `text` | not null | The specific text segment embedded. |
 | `embedding` | `vector(1536)` | not null | OpenAI `text-embedding-3-small` vector. |
 | `created_at` | `timestamptz` | default `now()`, not null | |
 
-### 3.7. Reading Sessions (`public.reading_sessions`)
+### 3.6. Reading Sessions (`public.reading_sessions`)
 Tracks time spent reading.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `book_id` | `uuid` | FK `books.id`, ON DELETE CASCADE, not null | Book being read. |
 | `started_at` | `timestamptz` | default `now()`, not null | When the session began. |
 | `ended_at` | `timestamptz` | | When the session stopped. Null if active. |
 | `end_page` | `int` | | Page number reached at end of session. |
 
-### 3.8. Search Logs (`public.search_logs`)
+### 3.7. Search Logs (`public.search_logs`)
 Logs user queries for adoption metrics and value analysis.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | |
-| `user_id` | `uuid` | FK `profiles.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
 | `query_text` | `text` | not null | The text of the user's question. |
+| `created_at` | `timestamptz` | default `now()`, not null | |
+
+### 3.8. Embedding Error Logs (`public.embedding_errors`)
+Tracks failures during the asynchronous embedding generation process.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `note_id` | `uuid` | FK `notes.id`, ON DELETE CASCADE | Associated note. |
+| `error_message` | `text` | not null | Detailed error info. |
+| `created_at` | `timestamptz` | default `now()`, not null | |
+
+### 3.9. Search Error Logs (`public.search_errors`)
+Tracks failures during the search/RAG process (LLM issues, embedding API failures).
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | |
+| `user_id` | `uuid` | FK `auth.users.id`, ON DELETE CASCADE, not null | Owner for RLS. |
+| `search_log_id` | `uuid` | FK `search_logs.id`, ON DELETE SET NULL | Optional link to original query. |
+| `source` | `error_source` | not null | Where the error occurred. |
+| `error_message` | `text` | not null | Detailed error info. |
 | `created_at` | `timestamptz` | default `now()`, not null | |
 
 ## 4. Indexes & Performance
@@ -135,6 +155,8 @@ Standard B-Tree indexes on all foreign keys to speed up joins and filtering.
 - `note_embeddings(user_id)`, `note_embeddings(note_id)`
 - `reading_sessions(user_id)`, `reading_sessions(book_id)`
 - `search_logs(user_id)`
+- `embedding_errors(user_id)`, `embedding_errors(note_id)`
+- `search_errors(user_id)`, `search_errors(search_log_id)`
 
 ### Vector Index
 - **Index:** HNSW (Hierarchical Navigable Small World)
@@ -159,20 +181,15 @@ using (user_id = auth.uid())
 with check (user_id = auth.uid());
 ```
 
-**Specific Policy for Profiles:**
-```sql
-create policy "Users can manage their own profile"
-on public.profiles
-for all
-to authenticated
-using (id = auth.uid())
-with check (id = auth.uid());
-```
-
 ## 6. Automation & Functions
 
 ### Timestamp Trigger
 A reusable function `handle_updated_at` will be applied to all tables with an `updated_at` column to automatically refresh the timestamp on row updates.
+
+### Series Book Count Trigger
+A trigger function `update_series_book_count` will run after INSERT, UPDATE (of `series_id`), or DELETE on the `books` table.
+- Increments/decrements `series.book_count`.
+- Handles moving a book from one series to another.
 
 ### Vector Search Function (`match_notes`)
 A PostgreSQL RPC function to perform similarity search.
