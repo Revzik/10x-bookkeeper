@@ -66,10 +66,10 @@ export type ErrorSource = Enums<"error_source">;
  */
 export type SeriesDto = Pick<
   SeriesEntity,
-  "id" | "title" | "description" | "cover_image_url" | "created_at" | "updated_at"
+  "id" | "title" | "description" | "cover_image_url" | "book_count" | "created_at" | "updated_at"
 >;
 
-export type SeriesListItemDto = Pick<SeriesEntity, "id" | "title" | "created_at" | "updated_at">;
+export type SeriesListItemDto = Pick<SeriesEntity, "id" | "title" | "book_count" | "created_at" | "updated_at">;
 
 export type CreateSeriesCommand = Pick<TablesInsert<"series">, "title"> &
   Partial<Pick<TablesInsert<"series">, "description" | "cover_image_url">>;
@@ -84,14 +84,6 @@ export interface SeriesListQueryDto {
   order?: SortOrderDto;
 }
 
-export interface SeriesGetQueryDto {
-  include?: "books_count";
-}
-
-export interface SeriesGetMetaDto {
-  books_count: number;
-}
-
 export interface CreateSeriesResponseDto {
   series: SeriesDto;
 }
@@ -101,7 +93,6 @@ export interface ListSeriesResponseDto {
 }
 export interface GetSeriesResponseDto {
   series: SeriesDto;
-  meta?: SeriesGetMetaDto;
 }
 export interface UpdateSeriesResponseDto {
   series: SeriesDto;

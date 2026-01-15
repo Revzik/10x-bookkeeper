@@ -1,11 +1,13 @@
 import type { supabaseClient } from "../../db/supabase.client";
 import type {
   CreateSeriesCommand,
+  UpdateSeriesCommand,
   SeriesDto,
   SeriesListItemDto,
   SeriesListQueryDto,
   PaginationMetaDto,
 } from "../../types";
+import { NotFoundError } from "../errors";
 
 export type SupabaseClientType = typeof supabaseClient;
 
@@ -35,7 +37,7 @@ export async function createSeries({
       description: command.description ?? null,
       cover_image_url: command.cover_image_url ?? null,
     })
-    .select("id, title, description, cover_image_url, created_at, updated_at")
+    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
     .single();
 
   if (error) {
@@ -81,7 +83,7 @@ export async function listSeries({
   // Build query
   let dbQuery = supabase
     .from("series")
-    .select("id, title, created_at, updated_at", { count: "exact" })
+    .select("id, title, book_count, created_at, updated_at", { count: "exact" })
     .eq("user_id", userId);
 
   // Apply search filter if provided
@@ -117,4 +119,157 @@ export async function listSeries({
       total_pages: totalPages,
     },
   };
+}
+
+/**
+ * Retrieves a single series by ID.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to scope the query
+ * @param seriesId - Series ID to retrieve
+ * @returns The series as SeriesDto
+ * @throws NotFoundError if the series is not found
+ * @throws Error if query fails
+ */
+export async function getSeriesById({
+  supabase,
+  userId,
+  seriesId,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  seriesId: string;
+}): Promise<SeriesDto> {
+  const { data, error } = await supabase
+    .from("series")
+    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
+    .eq("id", seriesId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new NotFoundError("Series not found");
+  }
+
+  return data;
+}
+
+/**
+ * Updates a series by ID.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to scope the query
+ * @param seriesId - Series ID to update
+ * @param command - Update data (partial fields)
+ * @returns The updated series as SeriesDto
+ * @throws NotFoundError if the series is not found
+ * @throws Error if update fails
+ */
+export async function updateSeriesById({
+  supabase,
+  userId,
+  seriesId,
+  command,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  seriesId: string;
+  command: UpdateSeriesCommand;
+}): Promise<SeriesDto> {
+  // First check if series exists
+  const { data: existingData, error: existingError } = await supabase
+    .from("series")
+    .select("id")
+    .eq("id", seriesId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  if (!existingData) {
+    throw new NotFoundError("Series not found");
+  }
+
+  // Perform update
+  const { data, error } = await supabase
+    .from("series")
+    .update(command)
+    .eq("id", seriesId)
+    .eq("user_id", userId)
+    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Failed to update series: no data returned");
+  }
+
+  return data;
+}
+
+/**
+ * Deletes a series by ID, with optional cascade delete of all books.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to scope the query
+ * @param seriesId - Series ID to delete
+ * @param cascade - If true, deletes all books in the series first (dangerous operation)
+ * @throws NotFoundError if the series is not found
+ * @throws Error if delete fails
+ */
+export async function deleteSeriesById({
+  supabase,
+  userId,
+  seriesId,
+  cascade = false,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  seriesId: string;
+  cascade?: boolean;
+}): Promise<void> {
+  // First check if series exists
+  const { data: existingData, error: existingError } = await supabase
+    .from("series")
+    .select("id")
+    .eq("id", seriesId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  if (!existingData) {
+    throw new NotFoundError("Series not found");
+  }
+
+  // If cascade mode, delete all books in the series first
+  if (cascade) {
+    const { error: booksDeleteError } = await supabase
+      .from("books")
+      .delete()
+      .eq("user_id", userId)
+      .eq("series_id", seriesId);
+
+    if (booksDeleteError) {
+      throw new Error(`Failed to cascade delete books: ${booksDeleteError.message}`);
+    }
+  }
+
+  // Delete the series
+  const { error: seriesDeleteError } = await supabase.from("series").delete().eq("id", seriesId).eq("user_id", userId);
+
+  if (seriesDeleteError) {
+    throw seriesDeleteError;
+  }
 }

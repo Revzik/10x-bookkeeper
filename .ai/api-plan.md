@@ -85,6 +85,7 @@ Common error codes:
     "title": "Stormlight Archive",
     "description": "optional",
     "cover_image_url": "optional",
+    "book_count": 0,
     "created_at": "iso",
     "updated_at": "iso"
   }
@@ -107,7 +108,7 @@ Common error codes:
 
 ```json
 {
-  "series": [ { "id": "uuid", "title": "string", "created_at": "iso", "updated_at": "iso" } ],
+  "series": [ { "id": "uuid", "title": "string", "book_count": 3, "created_at": "iso", "updated_at": "iso" } ],
   "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
 ```
@@ -117,15 +118,12 @@ Common error codes:
 - **Error codes**:
 
 #### GET `/series/:seriesId`
-- **Description**: Fetch one series (optionally include counts).
-- **Query params**:
-  - `include` = `books_count` (optional)
+- **Description**: Fetch one series.
 - **Response 200**:
 
 ```json
 {
-  "series": { "id": "uuid", "title": "string", "description": "string|null", "cover_image_url": "string|null", "created_at": "iso", "updated_at": "iso" },
-  "meta": { "books_count": 3 }
+  "series": { "id": "uuid", "title": "string", "description": "string|null", "cover_image_url": "string|null", "book_count": 3, "created_at": "iso", "updated_at": "iso" }
 }
 ```
 
@@ -155,9 +153,9 @@ Common error codes:
 
 #### DELETE `/series/:seriesId`
 - **Description**: Delete a series. By default, books with `series_id` are set to null (`ON DELETE SET NULL`).  
-  Optionally, the user can choose to also **cascade-delete all books, chapters, and related notes** in the series by passing `?cascade=1` as a query parameter (dangerous, cannot be undone).
+  Optionally, the user can choose to also **cascade-delete all books, chapters, and related notes** in the series by passing `?cascade=true` as a query parameter (dangerous, cannot be undone).
 - **Query parameters**:
-  - `cascade` (boolean, optional). If `true`/`1`, deletes all books, chapters, and notes under this series.
+  - `cascade` (boolean, optional). If `true`, deletes all books, chapters, and notes under this series.
 - **Response 204**
 - **Success codes**:
   - `204 NO CONTENT`
