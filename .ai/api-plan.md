@@ -14,12 +14,13 @@
 - **Book** → `public.books`
 - **Chapter** → `public.chapters`
 - **Note** → `public.notes`
-- **NoteEmbedding** (internal) → `public.note_embeddings`
-- **ReadingSession** → `public.reading_sessions`
+- **NoteEmbedding** (internal) → `public.note_embeddings` (Postponed for PoC)
+- **ReadingSession** → `public.reading_sessions` (Postponed for PoC)
 - **SearchLog** (internal/metrics) → `public.search_logs`
-- **EmbeddingErrorLog** (internal) → `public.embedding_errors`
+- **EmbeddingErrorLog** (internal) → `public.embedding_errors` (Postponed for PoC)
 - **SearchErrorLog** (internal) → `public.search_errors`
-- **AI Query (RAG)** (virtual resource) → implemented via DB RPC `match_notes` + LLM completion
+- **AI Query (Simple)** (virtual resource) → implemented via context fetching + LLM completion
+- **AI Query (RAG) Postponed for PoC** (virtual resource) → implemented via DB RPC `match_notes` + LLM completion
 
 ---
 
@@ -369,9 +370,10 @@ Common error codes:
 ### 2.6 Notes
 > PRD: “Notes are automatically chunked and embedded upon saving… immediately when created or updated.”
 > Schema: `notes(content text not null, embedding_status enum, embedding_duration int)`
+> **Note**: `embedding_status` and `embedding_duration` columns will be ignored or left as defaults in the PoC.
 
 #### POST `/chapters/:chapterId/notes`
-- **Description**: Create a note under a chapter; triggers embedding job.
+- **Description**: Create a note under a chapter.
 - **Request**:
 
 ```json
@@ -446,8 +448,8 @@ Common error codes:
   - `404 NOT_FOUND`
 
 #### PATCH `/notes/:noteId`
-> PRD: “Upon saving changes… recalculates and updates the vector embedding”
-- **Description**: Update note content; marks embedding pending and triggers regeneration.
+> PRD: “Upon saving changes… recalculates and updates the vector embedding” (Recalculation postponed for PoC)
+- **Description**: Update note content.
 - **Request**:
 
 ```json
@@ -467,7 +469,7 @@ Common error codes:
   - `404 NOT_FOUND`
 
 #### DELETE `/notes/:noteId`
-- **Description**: Delete note; cascades to `note_embeddings`.
+- **Description**: Delete note.
 - **Response 204**
 - **Success codes**:
   - `204 NO CONTENT`
@@ -476,7 +478,7 @@ Common error codes:
 
 ---
 
-### 2.7 Reading Sessions
+### 2.7 Reading Sessions (Postponed for PoC)
 > PRD: “Manual Start/Stop functionality to track time spent reading.”
 > Schema: `reading_sessions(started_at default now, ended_at nullable, end_page int nullable)`
 
@@ -573,7 +575,7 @@ Common error codes:
 
 ---
 
-### 2.8 AI Search (RAG Chat)
+### 2.8 AI Search (RAG Chat (Postponed for PoC)) (Simple chat)
 > PRD: “Chat-driven Q&A interface … vector similarity search … Low Confidence threshold … citations.”
 
 #### POST `/ai/query`
@@ -587,10 +589,11 @@ Common error codes:
     "book_id": "uuid|null",
     "series_id": "uuid|null"
   },
-  "retrieval": {
-    "match_threshold": 0.75,
-    "match_count": 8
-  }
+  // (Postponed for PoC)
+  // "retrieval": {
+  //   "match_threshold": 0.75,
+  //   "match_count": 8
+  // }
 }
 ```
 
@@ -602,27 +605,28 @@ Common error codes:
     "text": "Based on your notes, ...",
     "low_confidence": false
   },
-  "citations": [
-    {
-      "note_embedding_id": "uuid",
-      "note_id": "uuid",
-      "book_id": "uuid",
-      "book_title": "string",
-      "chapter_id": "uuid",
-      "chapter_title": "string",
-      "chunk_content": "string",
-      "similarity": 0.87
-    }
-  ],
+  //  (Postponed for PoC)
+  // "citations": [
+  //   {
+  //     "note_embedding_id": "uuid",
+  //     "note_id": "uuid",
+  //     "book_id": "uuid",
+  //     "book_title": "string",
+  //     "chapter_id": "uuid",
+  //     "chapter_title": "string",
+  //     "chunk_content": "string",
+  //     "similarity": 0.87
+  //   }
+  // ],
   "usage": {
-    "retrieved_chunks": 8,
+    // "retrieved_chunks": 8,
     "model": "string",
     "latency_ms": 1234
   }
 }
 ```
 
-- **Response 200** (low confidence fallback):
+- **Response 200** (low confidence fallback) (Postponed for PoC):
 
 ```json
 {
@@ -642,13 +646,17 @@ Common error codes:
   - `404 NOT_FOUND` (scope references not found)
   - `429 RATE_LIMITED`
 
-**Implementation detail (server-side)**:
+**Implementation detail (server-side)** (Postponed for PoC):
 - Step A: Embed `query_text` → `query_embedding vector(1536)`
 - Step B: Call DB RPC `match_notes(query_embedding, match_threshold, match_count, filter_book_id)`; for series scope, either:
   - add an RPC variant that filters by `series_id`, or
   - fetch book ids in series and filter in SQL.
 - Step C: If max similarity < threshold → return low confidence response.
 - Step D: Else provide citations + pass retrieved chunks into LLM prompt to generate a grounded answer (no outside knowledge).
+
+**Implementation detail (server-side)**:
+- Step A: Load user notes from `notes` table
+- Step B: Pass retrieved notes into LLM prompt to generate a grounded answer (no outside knowledge).
 
 ---
 
@@ -675,7 +683,7 @@ Common error codes:
 
 ---
 
-### 2.10 Embedding Errors (debug; optional to expose)
+### 2.10 Embedding Errors (debug; optional to expose) (Postponed for PoC)
 > Schema: `embedding_errors(error_message text not null, note_id uuid null, created_at default now)`
 
 #### GET `/embedding-errors`
@@ -864,7 +872,7 @@ Common error codes:
   - enforce max length (e.g., 2000 chars hard cap)
   - disallow extremely large payloads (request body limit)
 
-#### Note embeddings (`note_embeddings`) (server-managed)
+#### Note embeddings (`note_embeddings`) (server-managed) (Postponed for PoC)
 - **Schema**:
   - `chunk_content text not null`
   - `embedding vector(1536) not null`
@@ -874,7 +882,7 @@ Common error codes:
   - not directly writable by clients
   - embedding generation validates vector length = 1536
 
-#### Reading sessions (`reading_sessions`)
+#### Reading sessions (`reading_sessions`) (Postponed for PoC)
 - **Schema**:
   - `book_id not null`
   - `started_at default now not null`
@@ -891,7 +899,7 @@ Common error codes:
 - **API validation**:
   - `query_text` required, non-empty; consider max length (e.g., 500 chars)
 
-#### Embedding error logs (`embedding_errors`) (server-managed)
+#### Embedding error logs (`embedding_errors`) (server-managed) (Postponed for PoC)
 - **Schema**:
   - `error_message text not null`
   - `note_id uuid nullable`
@@ -931,7 +939,7 @@ Common error codes:
   - Update `notes.embedding_status` to `completed` and set `embedding_duration`
   - On failure: set `notes.embedding_status=failed`
 
-#### RAG query + low-confidence handling + citations
+#### RAG query + low-confidence handling + citations (Postponed for PoC)
 - **Ask question**: `POST /ai/query`
   - logs query → `search_logs`
   - embeds query → vector
@@ -939,7 +947,7 @@ Common error codes:
   - if below threshold → low confidence response with empty citations
   - else → grounded response with citations including book/chapter titles
 
-#### Reading session timer + progress updates
+#### Reading session timer + progress updates (Postponed for PoC)
 - **Start session**: `POST /books/:bookId/reading-sessions`
 - **Stop session**: `POST /reading-sessions/:sessionId/stop` (optionally updates book current_page)
 - **Manual page update**: `POST /books/:bookId/progress` (or `PATCH /books/:bookId`)
@@ -949,6 +957,6 @@ Common error codes:
 ## Security and Performance Considerations (from schema/PRD/stack)
 - **Strict data isolation**: use RLS on all tables and JWT auth context.
 - **Cascade deletes**: rely on FK `user_id → auth.users(id) ON DELETE CASCADE` on all core tables; deleting the auth user deletes all user-owned rows. `books.series_id` relies on FK `ON DELETE SET NULL` (and the API may also support an explicit “cascade delete series content” option if desired).
-- **Vector search performance**: use pgvector HNSW index on `note_embeddings(embedding)` with `vector_cosine_ops`; keep `match_count` capped (e.g., max 20).
+- **Vector search performance** (Postponed for PoC): use pgvector HNSW index on `note_embeddings(embedding)` with `vector_cosine_ops`; keep `match_count` capped (e.g., max 20).
 - **Input hardening**: request body size limits (especially notes), content sanitization if rendering markdown in UI, and consistent 404-on-not-owned behavior.
 

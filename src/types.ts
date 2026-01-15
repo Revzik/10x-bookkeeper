@@ -131,6 +131,11 @@ export type UpdateBookCommand = Partial<
   >
 >;
 
+/**
+ * NOTE: The API plan previously included `POST /books/:bookId/progress`.
+ * That endpoint is not part of the current PoC plan; prefer `PATCH /books/:bookId` instead.
+ * This type remains for forward-compatibility and to keep DB-coupling intact.
+ */
 export type UpdateBookProgressCommand = Pick<BookEntity, "current_page"> & Partial<Pick<BookEntity, "status">>;
 
 export interface BooksListQueryDto {
@@ -201,6 +206,11 @@ export type NoteDto = Pick<
   "id" | "chapter_id" | "content" | "embedding_status" | "embedding_duration" | "created_at" | "updated_at"
 >;
 
+/**
+ * NOTE (PoC): The API plan states `embedding_status` + `embedding_duration` are currently
+ * ignored/left as defaults. They remain in DTOs because they exist in the DB schema and will
+ * be used once embeddings are implemented.
+ */
 export type NoteListItemDto = Pick<
   NoteEntity,
   "id" | "chapter_id" | "content" | "embedding_status" | "created_at" | "updated_at"
@@ -248,10 +258,23 @@ export interface UpdateNoteResponseDto {
 /**
  * READING SESSIONS
  */
+/**
+ * POSTPONED (PoC): Reading sessions are not implemented yet per `.ai/api-plan.md`.
+ * These types are intentionally kept so follow-up work can enable the endpoints without
+ * re-deriving models, but they should not be used by current API routes/UI.
+ *
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export type ReadingSessionDto = Pick<ReadingSessionEntity, "id" | "book_id" | "started_at" | "ended_at" | "end_page">;
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export type StartReadingSessionCommand = Record<never, never>;
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface StopReadingSessionCommand {
   ended_at?: IsoDateTimeString;
   // DB column is `number | null`; client payload should be a concrete number when provided.
@@ -259,6 +282,9 @@ export interface StopReadingSessionCommand {
   update_book_progress?: boolean;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface ReadingSessionsListQueryDto {
   page?: number;
   size?: number;
@@ -269,19 +295,32 @@ export interface ReadingSessionsListQueryDto {
   order?: SortOrderDto;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface StartReadingSessionResponseDto {
   reading_session: ReadingSessionDto;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface StopReadingSessionResponseDto {
   reading_session: Pick<ReadingSessionEntity, "id" | "ended_at" | "end_page">;
   book: Pick<BookEntity, "id" | "current_page" | "status">;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface ListReadingSessionsResponseDto {
   reading_sessions: ReadingSessionDto[];
   meta: PaginationMetaDto;
 }
+
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface GetReadingSessionResponseDto {
   reading_session: ReadingSessionDto;
 }
@@ -289,11 +328,22 @@ export interface GetReadingSessionResponseDto {
 /**
  * AI SEARCH (RAG)
  */
+/**
+ * POSTPONED (PoC): RAG retrieval via `match_notes` + `note_embeddings` is not implemented yet.
+ * The PoC uses "simple chat" by loading note context from `notes` and sending it to the LLM.
+ *
+ * These types are kept to preserve the intended future contract once RAG is enabled.
+ *
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export type MatchNotesRpcRow = Database["public"]["Functions"]["match_notes"]["Returns"][number];
 
 /**
  * API plan calls this field `note_embedding_id`, but the RPC returns `id`.
  * This type performs a “rename” while still being fully derived from the RPC return type.
+ */
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
  */
 export type AiCitationDto = Omit<MatchNotesRpcRow, "id"> & { note_embedding_id: MatchNotesRpcRow["id"] };
 
@@ -303,6 +353,12 @@ export interface AiAnswerDto {
 }
 
 export interface AiUsageDto {
+  /**
+   * POSTPONED (PoC): `retrieved_chunks` is only meaningful for RAG retrieval. In the current
+   * "simple chat" PoC, this may be omitted/unused by the implementation.
+   *
+   * @deprecated Postponed for PoC; do not rely on this field yet.
+   */
   retrieved_chunks: number;
   model: string;
   latency_ms: number;
@@ -313,6 +369,9 @@ export interface AiQueryScopeDto {
   series_id?: Uuid | null;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export type AiQueryRetrievalDto = Pick<
   Database["public"]["Functions"]["match_notes"]["Args"],
   "match_threshold" | "match_count"
@@ -321,11 +380,22 @@ export type AiQueryRetrievalDto = Pick<
 export interface AiQueryCommand {
   query_text: SearchLogEntity["query_text"];
   scope: AiQueryScopeDto;
+  /**
+   * POSTPONED (PoC): RAG retrieval parameters are not used in the current "simple chat" plan.
+   *
+   * @deprecated Postponed for PoC; do not send/expect this yet.
+   */
   retrieval: AiQueryRetrievalDto;
 }
 
 export interface AiQueryResponseDto {
   answer: AiAnswerDto;
+  /**
+   * POSTPONED (PoC): citations come from vector retrieval; the current PoC response does not
+   * include citations.
+   *
+   * @deprecated Postponed for PoC; do not rely on this field yet.
+   */
   citations: AiCitationDto[];
   usage: AiUsageDto;
 }
@@ -350,8 +420,17 @@ export interface ListSearchLogsResponseDto {
 /**
  * EMBEDDING ERRORS (optional exposure)
  */
+/**
+ * POSTPONED (PoC): Embedding pipeline + error surfacing is not implemented yet per `.ai/api-plan.md`.
+ * Types are kept for the later embedding rollout.
+ *
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export type EmbeddingErrorDto = Pick<EmbeddingErrorEntity, "id" | "note_id" | "error_message" | "created_at">;
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface EmbeddingErrorsListQueryDto {
   page?: number;
   size?: number;
@@ -360,10 +439,17 @@ export interface EmbeddingErrorsListQueryDto {
   order?: SortOrderDto;
 }
 
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface ListEmbeddingErrorsResponseDto {
   embedding_errors: EmbeddingErrorDto[];
   meta: PaginationMetaDto;
 }
+
+/**
+ * @deprecated Postponed for PoC; do not use in current implementation.
+ */
 export interface GetEmbeddingErrorResponseDto {
   embedding_error: EmbeddingErrorDto;
 }
