@@ -8,6 +8,7 @@ import type {
   PaginationMetaDto,
 } from "../../types";
 import { NotFoundError } from "../errors";
+import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
 export type SupabaseClientType = typeof supabaseClient;
 
@@ -69,16 +70,11 @@ export async function listSeries({
   userId: string;
   query: SeriesListQueryDto;
 }): Promise<{ series: SeriesListItemDto[]; meta: PaginationMetaDto }> {
-  // Apply defaults and constraints
-  const page = Math.max(1, query.page ?? 1);
-  const size = Math.min(Math.max(1, query.size ?? 10), 100);
+  // Apply pagination constraints
+  const { page, size, from, to } = applyPaginationConstraints(query.page, query.size);
   const sort = query.sort ?? "updated_at";
   const order = query.order ?? "desc";
   const searchQuery = query.q?.trim();
-
-  // Calculate pagination range
-  const from = (page - 1) * size;
-  const to = from + size - 1;
 
   // Build query
   let dbQuery = supabase
@@ -107,17 +103,9 @@ export async function listSeries({
     throw error;
   }
 
-  const totalItems = count ?? 0;
-  const totalPages = size > 0 ? Math.ceil(totalItems / size) : 0;
-
   return {
     series: data ?? [],
-    meta: {
-      current_page: page,
-      page_size: size,
-      total_items: totalItems,
-      total_pages: totalPages,
-    },
+    meta: buildPaginationMeta(page, size, count ?? 0),
   };
 }
 

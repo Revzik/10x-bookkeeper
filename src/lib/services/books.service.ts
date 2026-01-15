@@ -8,8 +8,43 @@ import type {
   UpdateBookCommand,
 } from "../../types";
 import { NotFoundError, ValidationError } from "../errors";
+import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
 export type SupabaseClientType = typeof supabaseClient;
+
+/**
+ * Verifies that a book exists and belongs to the specified user.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to filter by
+ * @param bookId - Book ID to verify
+ * @throws NotFoundError if the book doesn't exist for the user
+ * @throws Error if the query operation fails
+ */
+export async function verifyBookExists({
+  supabase,
+  userId,
+  bookId,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  bookId: string;
+}): Promise<void> {
+  const { data, error } = await supabase
+    .from("books")
+    .select("id")
+    .eq("id", bookId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new NotFoundError("Book not found");
+  }
+}
 
 /**
  * Creates a new book in the database.
@@ -95,16 +130,11 @@ export async function listBooks({
   userId: string;
   query: BooksListQueryDto;
 }): Promise<{ books: BookListItemDto[]; meta: PaginationMetaDto }> {
-  // Apply defaults and constraints
-  const page = Math.max(1, query.page ?? 1);
-  const size = Math.min(Math.max(1, query.size ?? 10), 100);
+  // Apply pagination constraints
+  const { page, size, from, to } = applyPaginationConstraints(query.page, query.size);
   const sort = query.sort ?? "updated_at";
   const order = query.order ?? "desc";
   const searchQuery = query.q?.trim();
-
-  // Calculate pagination range
-  const from = (page - 1) * size;
-  const to = from + size - 1;
 
   // Build query
   let dbQuery = supabase
@@ -145,17 +175,9 @@ export async function listBooks({
     throw error;
   }
 
-  const totalItems = count ?? 0;
-  const totalPages = size > 0 ? Math.ceil(totalItems / size) : 0;
-
   return {
     books: data ?? [],
-    meta: {
-      current_page: page,
-      page_size: size,
-      total_items: totalItems,
-      total_pages: totalPages,
-    },
+    meta: buildPaginationMeta(page, size, count ?? 0),
   };
 }
 
@@ -223,7 +245,7 @@ export async function updateBookById({
   // First, fetch the existing book to validate cross-field constraints
   const { data: existingBook, error: fetchError } = await supabase
     .from("books")
-    .select("id, total_pages, current_page, series_id, series_order")
+    .select("total_pages, current_page")
     .eq("id", bookId)
     .eq("user_id", userId)
     .maybeSingle();

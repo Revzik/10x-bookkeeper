@@ -53,7 +53,6 @@
 
 Common error codes:
 - `400 BAD REQUEST` → `VALIDATION_ERROR`
-- `403 FORBIDDEN` → `NOT_ALLOWED`
 - `404 NOT FOUND` → `NOT_FOUND`
 - `409 CONFLICT` → `CONFLICT`
 - `429 TOO MANY REQUESTS` → `RATE_LIMITED`
@@ -280,27 +279,6 @@ Common error codes:
 - **Error codes**:
   - `400 VALIDATION_ERROR` (current_page < 0, total_pages <= 0, current_page > total_pages)
   - `404 NOT_FOUND` (book or new series not found)
-
-#### POST `/books/:bookId/progress`
-> PRD: “Manual entry of current page number… progress bar updates”
-- **Description**: Purpose-built endpoint to update `current_page` (and optionally `status`).
-- **Request**:
-
-```json
-{ "current_page": 42 }
-```
-
-- **Response 200**:
-
-```json
-{ "book": { "id": "uuid", "current_page": 42, "total_pages": 100, "status": "reading", "updated_at": "iso" } }
-```
-
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
-  - `400 VALIDATION_ERROR` (out of bounds)
-  - `404 NOT_FOUND`
 
 #### DELETE `/books/:bookId`
 - **Description**: Delete a book. Cascades to chapters, notes, embeddings, sessions.

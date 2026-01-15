@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationOrderSchema, paginationPageSchema, paginationSizeSchema, searchQuerySchema } from "./shared.schemas";
 
 /**
  * Validation schema for POST /api/v1/series request body
@@ -13,27 +14,11 @@ export const createSeriesBodySchema = z.object({
  * Validation schema for GET /api/v1/series query parameters
  */
 export const listSeriesQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
-    .pipe(z.number().int().min(1, "Page must be at least 1"))
-    .default("1"),
-  size: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
-    .pipe(z.number().int().min(1, "Size must be at least 1").max(100, "Size cannot exceed 100"))
-    .default("10"),
-  q: z
-    .string()
-    .optional()
-    .transform((val) => val?.trim())
-    .refine((val) => !val || val.length <= 50, {
-      message: "Search query cannot exceed 50 characters",
-    }),
+  page: paginationPageSchema,
+  size: paginationSizeSchema,
+  q: searchQuerySchema,
   sort: z.enum(["created_at", "updated_at", "title"]).optional().default("updated_at"),
-  order: z.enum(["asc", "desc"]).optional().default("desc"),
+  order: paginationOrderSchema,
 });
 
 /**

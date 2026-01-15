@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationOrderSchema, paginationPageSchema, paginationSizeSchema, searchQuerySchema } from "./shared.schemas";
 
 /**
  * Validation schema for POST /api/v1/books request body
@@ -36,33 +37,17 @@ export const createBookBodySchema = z.object({
  * Validation schema for GET /api/v1/books query parameters
  */
 export const listBooksQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
-    .pipe(z.number().int().min(1, "Page must be at least 1"))
-    .default("1"),
-  size: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
-    .pipe(z.number().int().min(1, "Size must be at least 1").max(100, "Size cannot exceed 100"))
-    .default("10"),
+  page: paginationPageSchema,
+  size: paginationSizeSchema,
   series_id: z
     .string()
     .uuid("Invalid UUID format for series_id")
     .optional()
     .transform((val) => (val === "" ? undefined : val)),
   status: z.enum(["want_to_read", "reading", "completed"]).optional(),
-  q: z
-    .string()
-    .optional()
-    .transform((val) => val?.trim())
-    .refine((val) => !val || val.length <= 50, {
-      message: "Search query cannot exceed 50 characters",
-    }),
+  q: searchQuerySchema,
   sort: z.enum(["updated_at", "created_at", "title", "author", "status"]).optional().default("updated_at"),
-  order: z.enum(["asc", "desc"]).optional().default("desc"),
+  order: paginationOrderSchema,
 });
 
 /**
