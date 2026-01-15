@@ -242,3 +242,38 @@ export async function deleteChapter({
     throw new NotFoundError("Chapter not found");
   }
 }
+
+/**
+ * Verifies that a chapter exists and belongs to the specified user.
+ * This is a lightweight guard function used before creating related entities (e.g., notes).
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to filter by
+ * @param chapterId - Chapter ID to verify
+ * @throws NotFoundError if the chapter doesn't exist for the user
+ * @throws Error if the query operation fails
+ */
+export async function verifyChapterExists({
+  supabase,
+  userId,
+  chapterId,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  chapterId: string;
+}): Promise<void> {
+  const { data, error } = await supabase
+    .from("chapters")
+    .select("id")
+    .eq("id", chapterId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new NotFoundError("Chapter not found");
+  }
+}
