@@ -249,12 +249,6 @@ Common error codes:
 ```json
 {
   "book": { "id": "uuid", "title": "string", "author": "string", "total_pages": 100, "current_page": 42, "status": "reading", "series_id": "uuid|null", "series_order": 1, "cover_image_url": "string|null", "created_at": "iso", "updated_at": "iso" },
-  "meta": {
-    "progress": { "percent": 42 },
-    "chapters_count": 12,
-    "notes_count": 34,
-    "active_session": { "id": "uuid", "started_at": "iso" }
-  }
 }
 ```
 

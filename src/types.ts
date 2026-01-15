@@ -143,23 +143,6 @@ export interface BooksListQueryDto {
   order?: SortOrderDto;
 }
 
-export interface BookProgressMetaDto {
-  percent: number;
-}
-
-export type BookActiveSessionMetaDto = Pick<ReadingSessionEntity, "id" | "started_at">;
-
-export interface BookGetMetaDto {
-  progress: BookProgressMetaDto;
-  chapters_count: number;
-  notes_count: number;
-  /**
-   * Nullable when there is no running session.
-   * (The API plan shows an object in the example, but real data can be absent.)
-   */
-  active_session: BookActiveSessionMetaDto | null;
-}
-
 export interface CreateBookResponseDto {
   book: BookDto;
 }
@@ -169,7 +152,6 @@ export interface ListBooksResponseDto {
 }
 export interface GetBookResponseDto {
   book: BookDto;
-  meta: BookGetMetaDto;
 }
 export interface UpdateBookResponseDto {
   book: BookDto;
