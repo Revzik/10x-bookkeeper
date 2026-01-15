@@ -1,4 +1,4 @@
-import type { Database, Enums, Json, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
+import type { Database, Enums, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
 
 /**
  * Shared primitives
@@ -33,11 +33,7 @@ export type ApiErrorCode =
 export interface ApiErrorDto {
   code: ApiErrorCode;
   message: string;
-  /**
-   * Intended to carry validation errors, underlying error payloads, etc.
-   * Kept broad while still being JSON-serializable.
-   */
-  details?: Json;
+  details?: unknown;
 }
 
 export interface ApiErrorResponseDto {
