@@ -660,7 +660,7 @@ Common error codes:
 
 ---
 
-### 2.9 Search Logs (metrics; optional to expose)
+### 2.9 Search Logs (metrics postponed for PoC; optional to expose)
 > Schema: `search_logs(query_text text not null, created_at default now)`
 
 #### GET `/search-logs`

@@ -389,6 +389,27 @@ export interface AiQueryCommand {
   retrieval: AiQueryRetrievalDto;
 }
 
+/**
+ * Simplified command for AI query (PoC version without retrieval parameters).
+ * Used for the "simple chat" implementation.
+ */
+export interface AiQuerySimpleCommand {
+  query_text: SearchLogEntity["query_text"];
+  scope: AiQueryScopeDto;
+}
+
+/**
+ * Simplified response DTO for AI query endpoint (PoC version).
+ * Does not include citations or retrieved_chunks.
+ */
+export interface AiQueryResponseDtoSimple {
+  answer: AiAnswerDto;
+  usage: {
+    model: string;
+    latency_ms: number;
+  };
+}
+
 export interface AiQueryResponseDto {
   answer: AiAnswerDto;
   /**

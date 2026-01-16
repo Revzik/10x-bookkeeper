@@ -13,6 +13,40 @@ import { applyPaginationConstraints, buildPaginationMeta } from "./shared.servic
 export type SupabaseClientType = typeof supabaseClient;
 
 /**
+ * Verifies that a series exists and belongs to the specified user.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - User ID to filter by
+ * @param seriesId - Series ID to verify
+ * @throws NotFoundError if the series doesn't exist for the user
+ * @throws Error if the query operation fails
+ */
+export async function verifySeriesExists({
+  supabase,
+  userId,
+  seriesId,
+}: {
+  supabase: SupabaseClientType;
+  userId: string;
+  seriesId: string;
+}): Promise<void> {
+  const { data, error } = await supabase
+    .from("series")
+    .select("id")
+    .eq("id", seriesId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new NotFoundError("Series not found");
+  }
+}
+
+/**
  * Creates a new series in the database.
  *
  * @param supabase - Supabase client instance
