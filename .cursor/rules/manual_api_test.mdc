@@ -1,0 +1,11 @@
+---
+alwaysApply: false
+---
+## Manual testing
+
+### General Guidelines
+
+- Use curl to test implemented endpoints
+- The dev server is running at `http://localhost:3000`
+- If {{api_paths}} parameter is provided: before executing any tests, check for current related entities existing in the database using api paths {{api_paths}}
+

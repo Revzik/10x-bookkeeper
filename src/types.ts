@@ -237,6 +237,7 @@ export interface NoteGetQueryDto {
 export interface NoteContextDto {
   book_id: Uuid;
   book_title: BookEntity["title"];
+  chapter_id: ChapterEntity["id"];
   chapter_title: ChapterEntity["title"];
 }
 
