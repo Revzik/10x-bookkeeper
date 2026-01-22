@@ -3,6 +3,7 @@ import type { LibrarySeriesQueryViewModel } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useDebouncedValue } from "./hooks";
 
 interface SeriesToolbarProps {
   query: LibrarySeriesQueryViewModel;
@@ -11,26 +12,30 @@ interface SeriesToolbarProps {
 
 /**
  * SeriesToolbar - All Series tab list controls (search, sort)
- *
- * TODO: Implement debounced search
  */
 export const SeriesToolbar = ({ query, onQueryChange }: SeriesToolbarProps) => {
   const [searchValue, setSearchValue] = useState(query.q || "");
+  const debouncedSearchValue = useDebouncedValue(searchValue, 300);
 
+  // Sync search value when query changes externally (e.g., tab switch, browser back)
   useEffect(() => {
     setSearchValue(query.q || "");
   }, [query.q]);
 
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
+  // Update query when debounced search value changes
+  useEffect(() => {
+    const trimmed = debouncedSearchValue.trim();
+    if (trimmed !== (query.q || "")) {
+      onQueryChange({ ...query, q: trimmed || undefined, page: 1 });
+    }
+  }, [debouncedSearchValue, onQueryChange, query]);
 
+  const handleSearchChange = (value: string) => {
     // Validate length
-    if (value.trim().length > 50) {
+    if (value.length > 50) {
       return;
     }
-
-    // TODO: Implement debounce
-    onQueryChange({ ...query, q: value.trim() || undefined, page: 1 });
+    setSearchValue(value);
   };
 
   const handleSortChange = (sort: string) => {

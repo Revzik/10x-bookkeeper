@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { LibraryTabViewModel, LibraryBooksQueryViewModel, LibrarySeriesQueryViewModel } from "@/types";
 import { LibraryTabs } from "@/components/library/LibraryTabs";
 import { BooksTabPanel } from "@/components/library/BooksTabPanel";
@@ -16,27 +16,23 @@ import { useLibraryUrlState, useBooksList, useSeriesList, useSeriesOptions } fro
  * - Data fetching for both tabs
  * - Dialog state management
  * - Refetching lists on successful creation
+ *
+ * Tab state strategy:
+ * - Active tab: query comes from URL (source of truth)
+ * - Inactive tab: query stored in component state (preserved in memory)
+ * - On tab switch: current query saved to inactive state, inactive state restored to URL
  */
 const LibraryPage = () => {
-  // URL state management
+  // URL state management (source of truth for active tab)
   const { activeTab, booksQuery, seriesQuery, setActiveTab, setBooksQuery, setSeriesQuery } = useLibraryUrlState();
 
-  // Preserve each tab's query params in memory when switching tabs
-  const [savedBooksQuery, setSavedBooksQuery] = useState<LibraryBooksQueryViewModel>(booksQuery);
-  const [savedSeriesQuery, setSavedSeriesQuery] = useState<LibrarySeriesQueryViewModel>(seriesQuery);
+  // Preserved query state for inactive tab
+  const [inactiveBooksQuery, setInactiveBooksQuery] = useState<LibraryBooksQueryViewModel>(booksQuery);
+  const [inactiveSeriesQuery, setInactiveSeriesQuery] = useState<LibrarySeriesQueryViewModel>(seriesQuery);
 
-  // Update saved queries when the active tab's query changes
-  useEffect(() => {
-    if (activeTab === "books") {
-      setSavedBooksQuery(booksQuery);
-    } else {
-      setSavedSeriesQuery(seriesQuery);
-    }
-  }, [activeTab, booksQuery, seriesQuery]);
-
-  // Data fetching - use active query for current tab, saved query for inactive tab
-  const booksData = useBooksList(activeTab === "books" ? booksQuery : savedBooksQuery);
-  const seriesData = useSeriesList(activeTab === "series" ? seriesQuery : savedSeriesQuery);
+  // Data fetching - active tab uses URL query, inactive tab uses preserved query
+  const booksData = useBooksList(activeTab === "books" ? booksQuery : inactiveBooksQuery);
+  const seriesData = useSeriesList(activeTab === "series" ? seriesQuery : inactiveSeriesQuery);
   const { options: seriesOptions, refetch: refetchSeriesOptions } = useSeriesOptions();
 
   // Dialog state
@@ -54,11 +50,15 @@ const LibraryPage = () => {
   const handleTabChange = (tab: LibraryTabViewModel) => {
     if (tab === activeTab) return;
 
-    // Preserve current tab's query and restore next tab's query
-    if (tab === "books") {
-      setBooksQuery(savedBooksQuery);
+    // Save current active tab's query to inactive state, then restore new tab's query from inactive state
+    if (activeTab === "books") {
+      // Switching from Books to Series
+      setInactiveBooksQuery(booksQuery); // Save current books query
+      setSeriesQuery(inactiveSeriesQuery); // Restore series query to URL
     } else {
-      setSeriesQuery(savedSeriesQuery);
+      // Switching from Series to Books
+      setInactiveSeriesQuery(seriesQuery); // Save current series query
+      setBooksQuery(inactiveBooksQuery); // Restore books query to URL
     }
 
     setActiveTab(tab);
@@ -67,6 +67,8 @@ const LibraryPage = () => {
   const handleCreatedBook = () => {
     setIsAddBookOpen(false);
     booksData.refetch();
+    // Refetch series list to update book counts (in case book was added to a series)
+    seriesData.refetch();
   };
 
   const handleCreatedSeries = () => {

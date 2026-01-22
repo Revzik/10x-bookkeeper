@@ -1,5 +1,6 @@
 import type { PaginationMetaDto } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PaginationControlsProps {
@@ -41,9 +42,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
       <div className="flex items-center gap-4">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
-          <label htmlFor="page-size" className="text-sm text-muted-foreground">
-            Per page:
-          </label>
+          <Label className="text-sm text-muted-foreground">Per page:</Label>
           <Select value={String(page_size)} onValueChange={(value) => handleSizeChange(Number(value))}>
             <SelectTrigger className="w-[80px]">
               <SelectValue />
