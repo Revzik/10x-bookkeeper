@@ -1,4 +1,5 @@
 import type { ApiErrorCode, ApiErrorResponseDto } from "../../types";
+import type { ZodIssue } from "zod";
 
 /**
  * Creates a JSON response with the specified status code and body.
@@ -21,7 +22,7 @@ export function json<T>(status: number, body: T): Response {
  * @param message - Human-readable error message
  * @param details - Optional additional error details (validation errors, etc.)
  */
-export function apiError(status: number, code: ApiErrorCode, message: string, details?: unknown): Response {
+export function apiError(status: number, code: ApiErrorCode, message: string, details?: ZodIssue[]): Response {
   const body: ApiErrorResponseDto = {
     error: {
       code,

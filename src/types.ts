@@ -1,4 +1,5 @@
 import type { Database, Enums, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
+import type { ZodIssue } from "zod";
 
 /**
  * Shared primitives
@@ -33,7 +34,7 @@ export type ApiErrorCode =
 export interface ApiErrorDto {
   code: ApiErrorCode;
   message: string;
-  details?: unknown;
+  details?: ZodIssue[];
 }
 
 export interface ApiErrorResponseDto {
@@ -499,4 +500,96 @@ export interface ListSearchErrorsResponseDto {
 }
 export interface GetSearchErrorResponseDto {
   search_error: SearchErrorDto;
+}
+
+/**
+ * VIEW MODELS (Library View)
+ * These types are specific to the Library view and derived from DTOs for UI rendering.
+ */
+
+/**
+ * Active tab identifier for Library view
+ */
+export type LibraryTabViewModel = "books" | "series";
+
+/**
+ * URL-backed query state for Books tab
+ */
+export interface LibraryBooksQueryViewModel {
+  q?: string;
+  status?: BookStatus;
+  series_id?: string;
+  sort: "updated_at" | "created_at" | "title" | "author" | "status";
+  order: SortOrderDto;
+  page: number;
+  size: number;
+}
+
+/**
+ * URL-backed query state for Series tab
+ */
+export interface LibrarySeriesQueryViewModel {
+  q?: string;
+  sort: "created_at" | "updated_at" | "title";
+  order: SortOrderDto;
+  page: number;
+  size: number;
+}
+
+/**
+ * UI-ready book row model derived from BookListItemDto
+ */
+export interface BookListItemViewModel {
+  id: string;
+  title: string;
+  author: string;
+  status: BookStatus;
+  progressLabel: string;
+  progressPercent: number;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+  seriesId: string | null;
+}
+
+/**
+ * UI-ready series row model derived from SeriesListItemDto
+ */
+export interface SeriesListItemViewModel {
+  id: string;
+  title: string;
+  bookCount: number;
+  createdAtIso: string;
+  createdAtLabel: string;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+}
+
+/**
+ * Series option for dropdowns (filter + create book)
+ */
+export interface SeriesSelectOptionViewModel {
+  value: string;
+  label: string;
+}
+
+/**
+ * Controlled form state for AddBookDialog
+ */
+export interface CreateBookFormViewModel {
+  title: string;
+  author: string;
+  total_pages: string;
+  status?: BookStatus;
+  series_id: string;
+  series_order: string;
+  cover_image_url: string;
+}
+
+/**
+ * Controlled form state for AddSeriesDialog
+ */
+export interface CreateSeriesFormViewModel {
+  title: string;
+  description: string;
+  cover_image_url: string;
 }
