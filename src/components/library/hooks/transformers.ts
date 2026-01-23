@@ -5,6 +5,7 @@ import type {
   SeriesListItemViewModel,
   SeriesSelectOptionViewModel,
 } from "@/types";
+import { formatRelativeTime } from "@/lib/utils";
 
 /**
  * Transform BookListItemDto to BookListItemViewModel
@@ -49,35 +50,3 @@ export const transformSeriesOption = (dto: SeriesListItemDto): SeriesSelectOptio
     label: dto.title,
   };
 };
-
-/**
- * Format ISO timestamp to relative time string
- */
-function formatRelativeTime(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSeconds < 60) {
-    return "just now";
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  } else if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks}w ago`;
-  } else if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months}mo ago`;
-  } else {
-    const years = Math.floor(diffDays / 365);
-    return `${years}y ago`;
-  }
-}

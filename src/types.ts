@@ -593,3 +593,68 @@ export interface CreateSeriesFormViewModel {
   description: string;
   cover_image_url: string;
 }
+
+/**
+ * VIEW MODELS (Series Detail View)
+ * These types are specific to the Series Detail view and derived from DTOs for UI rendering.
+ */
+
+/**
+ * Active tab identifier for Series Detail view
+ */
+export type SeriesTabViewModel = "books" | "ask";
+
+/**
+ * UI-ready series header model derived from SeriesDto
+ */
+export interface SeriesHeaderViewModel {
+  id: string;
+  title: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  bookCount: number;
+  createdAtIso: string;
+  createdAtLabel: string;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+}
+
+/**
+ * URL-backed state for books list within a series (namespaced params)
+ */
+export interface SeriesBooksQueryViewModel {
+  q?: string;
+  status?: BookStatus;
+  sort: "updated_at" | "created_at" | "title" | "author" | "status";
+  order: SortOrderDto;
+  page: number;
+  size: number;
+}
+
+/**
+ * Controlled form state for EditSeriesDialog
+ */
+export interface UpdateSeriesFormViewModel {
+  title: string;
+  description: string;
+  cover_image_url: string;
+}
+
+/**
+ * Controlled state for DeleteSeriesDialog
+ */
+export interface DeleteSeriesConfirmViewModel {
+  cascade: boolean;
+}
+
+/**
+ * Series Detail view state aggregator
+ */
+export interface SeriesDetailStateViewModel {
+  series: SeriesHeaderViewModel | null;
+  seriesLoading: boolean;
+  seriesError: ApiErrorDto | null;
+  seriesNotFound: boolean;
+  activeTab: SeriesTabViewModel;
+  booksQuery: SeriesBooksQueryViewModel;
+}

@@ -1,0 +1,17 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SeriesDetailPage from "../../components/series/SeriesDetailPage";
+
+export const prerender = false;
+
+const { seriesId } = Astro.params;
+
+// Ensure seriesId exists (should always be present via route)
+if (!seriesId) {
+  return new Response("Series ID is required", { status: 400 });
+}
+---
+
+<Layout title="Series — Bookkeeper">
+  <SeriesDetailPage client:only="react" seriesId={seriesId} />
+</Layout>
