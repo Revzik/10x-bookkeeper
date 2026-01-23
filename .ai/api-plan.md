@@ -162,6 +162,40 @@ Common error codes:
 - **Error codes**:
   - `404 NOT_FOUND`
 
+#### TODO: PATCH `/series/:seriesId/reorder`
+- **Description**: Bulk reorder books within a series. Updates `series_order` for multiple books in a single transaction.
+- **Request**:
+
+```json
+{
+  "books": [
+    { "id": "uuid", "series_order": 1 },
+    { "id": "uuid", "series_order": 2 },
+    { "id": "uuid", "series_order": 3 }
+  ]
+}
+```
+
+- **Response 200**:
+
+```json
+{
+  "updated_count": 3
+}
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+  - `400 VALIDATION_ERROR` (invalid book IDs, duplicate series_order values)
+  - `404 NOT_FOUND` (series not found or book not in this series)
+  - `409 CONFLICT` (concurrent modification)
+- **Notes**:
+  - All updates should happen in a single database transaction for atomicity
+  - Validates that all book IDs belong to the specified series
+  - More performant than individual PATCH calls per book
+  - Frontend currently uses sequential PATCH `/books/:bookId` calls as a workaround
+
 ---
 
 ### 2.4 Books

@@ -139,7 +139,9 @@ export async function listBooks({
   // Build query
   let dbQuery = supabase
     .from("books")
-    .select("id, series_id, title, author, status, total_pages, current_page, updated_at", { count: "exact" })
+    .select("id, title, author, status, total_pages, current_page, series_id, series_order, updated_at", {
+      count: "exact",
+    })
     .eq("user_id", userId);
 
   // Apply series_id filter if provided

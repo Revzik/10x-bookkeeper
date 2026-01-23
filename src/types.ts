@@ -119,7 +119,7 @@ export type BookDto = Pick<
 
 export type BookListItemDto = Pick<
   BookEntity,
-  "id" | "series_id" | "title" | "author" | "status" | "total_pages" | "current_page" | "updated_at"
+  "id" | "title" | "author" | "status" | "total_pages" | "current_page" | "series_id" | "series_order" | "updated_at"
 >;
 
 export type CreateBookCommand = Pick<TablesInsert<"books">, "title" | "author" | "total_pages"> &
@@ -549,6 +549,7 @@ export interface BookListItemViewModel {
   updatedAtIso: string;
   updatedAtLabel: string;
   seriesId: string | null;
+  seriesOrder: number | null;
 }
 
 /**
@@ -620,18 +621,6 @@ export interface SeriesHeaderViewModel {
 }
 
 /**
- * URL-backed state for books list within a series (namespaced params)
- */
-export interface SeriesBooksQueryViewModel {
-  q?: string;
-  status?: BookStatus;
-  sort: "updated_at" | "created_at" | "title" | "author" | "status";
-  order: SortOrderDto;
-  page: number;
-  size: number;
-}
-
-/**
  * Controlled form state for EditSeriesDialog
  */
 export interface UpdateSeriesFormViewModel {
@@ -648,6 +637,28 @@ export interface DeleteSeriesConfirmViewModel {
 }
 
 /**
+ * UI-ready book row for series books with reorder metadata
+ * Extends BookListItemViewModel with position and move controls state
+ */
+export interface SeriesBookRowViewModel extends BookListItemViewModel {
+  position: number;
+  isMoveUpDisabled: boolean;
+  isMoveDownDisabled: boolean;
+}
+
+/**
+ * Reorder state for series books tab
+ */
+export interface SeriesBooksReorderStateViewModel {
+  isEditing: boolean;
+  isDirty: boolean;
+  isSaving: boolean;
+  serverOrderIds: string[];
+  draftOrderIds: string[];
+  saveError: ApiErrorDto | null;
+}
+
+/**
  * Series Detail view state aggregator
  */
 export interface SeriesDetailStateViewModel {
@@ -656,5 +667,4 @@ export interface SeriesDetailStateViewModel {
   seriesError: ApiErrorDto | null;
   seriesNotFound: boolean;
   activeTab: SeriesTabViewModel;
-  booksQuery: SeriesBooksQueryViewModel;
 }

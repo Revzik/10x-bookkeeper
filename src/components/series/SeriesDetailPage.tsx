@@ -25,7 +25,7 @@ interface SeriesDetailPageProps {
  */
 const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   // URL state management (source of truth for active tab)
-  const { activeTab, booksQuery, setActiveTab, setBooksQuery } = useSeriesUrlState();
+  const { activeTab, setActiveTab } = useSeriesUrlState();
 
   // Series data fetching
   const { series, loading, error, notFound, refetch } = useSeriesById(seriesId);
@@ -95,7 +95,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-6">
         {activeTab === "books" ? (
-          <SeriesBooksTabPanel seriesId={seriesId} query={booksQuery} onQueryChange={setBooksQuery} />
+          <SeriesBooksTabPanel seriesId={seriesId} />
         ) : (
           <SeriesAskTabPanel seriesId={seriesId} />
         )}

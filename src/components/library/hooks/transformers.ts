@@ -23,6 +23,7 @@ export const transformBookListItem = (dto: BookListItemDto): BookListItemViewMod
     updatedAtIso: dto.updated_at,
     updatedAtLabel: formatRelativeTime(dto.updated_at),
     seriesId: dto.series_id,
+    seriesOrder: dto.series_order,
   };
 };
 
