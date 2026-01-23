@@ -1,0 +1,17 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import BookDetailPage from "../../components/book/BookDetailPage";
+
+export const prerender = false;
+
+const { bookId } = Astro.params;
+
+// Ensure bookId exists (should always be present via route)
+if (!bookId) {
+  return new Response("Book ID is required", { status: 400 });
+}
+---
+
+<Layout title="Book — Bookkeeper">
+  <BookDetailPage client:only="react" bookId={bookId} />
+</Layout>

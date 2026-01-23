@@ -718,3 +718,72 @@ export interface SeriesAskComposerViewModel {
   validationError: string | null;
   charCountLabel: string;
 }
+
+/**
+ * VIEW MODELS (Book Detail View)
+ * These types are specific to the Book Detail view and derived from DTOs for UI rendering.
+ */
+
+/**
+ * Active tab identifier for Book Detail view
+ */
+export type BookTabViewModel = "chapters" | "notes" | "ask";
+
+/**
+ * Ask tab scope identifier
+ */
+export type BookAskScopeViewModel = "book" | "series";
+
+/**
+ * Optional series display data for the header when book.series_id is present
+ */
+export interface BookSeriesSummaryViewModel {
+  id: string;
+  title: string;
+}
+
+/**
+ * UI-ready book header model derived from BookDto (+ optional series info)
+ */
+export interface BookHeaderViewModel {
+  id: string;
+  title: string;
+  author: string;
+  status: BookStatus;
+  totalPages: number;
+  currentPage: number;
+  progressLabel: string;
+  progressPercent: number;
+  coverImageUrl: string | null;
+  series: BookSeriesSummaryViewModel | null;
+  createdAtIso: string;
+  createdAtLabel: string;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+}
+
+/**
+ * Controlled form state for EditBookDialog
+ */
+export interface UpdateBookFormViewModel {
+  title: string;
+  author: string;
+  total_pages: string;
+  current_page: string;
+  status: BookStatus;
+  series_id: string;
+  series_order: string;
+  cover_image_url: string;
+}
+
+/**
+ * Book Detail view state aggregator
+ */
+export interface BookDetailStateViewModel {
+  book: BookHeaderViewModel | null;
+  bookLoading: boolean;
+  bookError: ApiErrorDto | null;
+  bookNotFound: boolean;
+  activeTab: BookTabViewModel;
+  askScope: BookAskScopeViewModel;
+}
