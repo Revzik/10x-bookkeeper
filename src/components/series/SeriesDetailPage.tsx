@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { SeriesTabViewModel } from "@/types";
 import { useSeriesUrlState, useSeriesById } from "./hooks";
 import { SeriesStickyHeader } from "@/components/series/SeriesStickyHeader";
@@ -22,6 +22,7 @@ interface SeriesDetailPageProps {
  * - Series data fetching
  * - Dialog state management (edit/delete)
  * - Tab switching and content rendering
+ * - Dynamic header height tracking for sticky tabs positioning
  */
 const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   // URL state management (source of truth for active tab)
@@ -33,6 +34,33 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   // Dialog state
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Header height tracking for sticky tabs positioning
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(120);
+
+  // Measure header height and update on resize or content changes
+  useEffect(() => {
+    if (!headerRef.current) return;
+
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
+      }
+    };
+
+    // Initial measurement
+    updateHeaderHeight();
+
+    // Update on window resize
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    resizeObserver.observe(headerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [series]);
 
   const handleTabChange = (tab: SeriesTabViewModel) => {
     if (tab === activeTab) return;
@@ -87,18 +115,21 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   return (
     <div className="min-h-screen">
       {/* Sticky Header */}
-      <SeriesStickyHeader series={series} onEdit={handleEdit} onDelete={handleDelete} />
+      <div ref={headerRef}>
+        <SeriesStickyHeader series={series} onEdit={handleEdit} onDelete={handleDelete} />
+      </div>
 
       {/* Sticky Tabs Bar */}
-      <SeriesTabsBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <SeriesTabsBar activeTab={activeTab} onTabChange={handleTabChange} headerHeight={headerHeight} />
 
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-6">
-        {activeTab === "books" ? (
+        <div className={activeTab === "books" ? "" : "hidden"}>
           <SeriesBooksTabPanel seriesId={seriesId} />
-        ) : (
+        </div>
+        <div className={activeTab === "ask" ? "" : "hidden"}>
           <SeriesAskTabPanel seriesId={seriesId} />
-        )}
+        </div>
       </div>
 
       {/* Edit Series Dialog */}

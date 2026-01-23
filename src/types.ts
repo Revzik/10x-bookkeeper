@@ -668,3 +668,53 @@ export interface SeriesDetailStateViewModel {
   seriesNotFound: boolean;
   activeTab: SeriesTabViewModel;
 }
+
+/**
+ * Ask Tab View Models
+ * These types are specific to the Series Ask Tab (Q&A interface)
+ */
+
+/**
+ * Chat message role - who authored the message
+ */
+export type SeriesAiChatRoleViewModel = "user" | "assistant";
+
+/**
+ * Chat message lifecycle status
+ */
+export type SeriesAiChatMessageStatusViewModel = "sent" | "pending" | "failed";
+
+/**
+ * Single chat message in the transcript
+ */
+export interface SeriesAiChatMessageViewModel {
+  id: string;
+  role: SeriesAiChatRoleViewModel;
+  content: string;
+  createdAtMs: number;
+  status: SeriesAiChatMessageStatusViewModel;
+  lowConfidence?: boolean;
+}
+
+/**
+ * Aggregated state for the Ask tab chat interface
+ */
+export interface SeriesAiChatStateViewModel {
+  messages: SeriesAiChatMessageViewModel[];
+  draftText: string;
+  isSubmitting: boolean;
+  lastError: ApiErrorDto | null;
+  lastSubmittedQueryText: string | null;
+  lastResponseLowConfidence: boolean;
+}
+
+/**
+ * Derived state for the composer (input) component
+ */
+export interface SeriesAskComposerViewModel {
+  trimmedLength: number;
+  isEmpty: boolean;
+  isTooLong: boolean;
+  validationError: string | null;
+  charCountLabel: string;
+}

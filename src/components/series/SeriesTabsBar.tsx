@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface SeriesTabsBarProps {
   activeTab: SeriesTabViewModel;
   onTabChange: (tab: SeriesTabViewModel) => void;
+  headerHeight: number;
 }
 
 /**
@@ -11,12 +12,13 @@ interface SeriesTabsBarProps {
  *
  * Features:
  * - Sticky positioning beneath the series header
+ * - Dynamic positioning based on actual header height
  * - Accessible tab navigation
  * - URL-backed active tab state
  */
-export const SeriesTabsBar = ({ activeTab, onTabChange }: SeriesTabsBarProps) => {
+export const SeriesTabsBar = ({ activeTab, onTabChange, headerHeight }: SeriesTabsBarProps) => {
   return (
-    <div className="sticky top-[var(--header-height,120px)] z-10 border-b bg-background">
+    <div className="sticky z-10 border-b bg-background" style={{ top: `${headerHeight}px` }}>
       <div className="container mx-auto px-4">
         <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as SeriesTabViewModel)}>
           <TabsList>

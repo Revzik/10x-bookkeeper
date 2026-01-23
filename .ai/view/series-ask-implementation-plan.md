@@ -8,7 +8,6 @@ Key UX points:
 - **Low confidence is not an error**: it is a distinct, helpful state with guidance.
 - **Rate limited is an error**: show retry/backoff guidance while keeping prior messages.
 - **Safe rendering**: treat AI answer text as untrusted; render as plain text.
-- **Citations are planned but postponed**: show a UI placeholder (“Sources coming soon”).
 
 ## 2. View Routing
 - **View path**: `/series/:seriesId?tab=ask`
@@ -112,8 +111,7 @@ Notes:
   - `ChatMessageBubble` for each message
   - `TypingIndicatorBubble` while `isSubmitting` is true (or while assistant message is pending)
 - **Handled events**:
-  - None required for MVP (transcript is display-only).
-  - Optional: per-message copy in the future; for now keep “Copy answer” in the header.
+  - None required for MVP.
 - **Validation conditions**:
   - Render assistant text as plain text:
     - Use `<p className="whitespace-pre-wrap break-words">` (no HTML injection).
@@ -129,9 +127,9 @@ Notes:
 - **Main elements**:
   - Wrapper: `<div role="group" aria-label="Chat message">`
   - Bubble: `<div className="rounded-lg px-3 py-2 ...">`
-  - Optional meta row (small text): “You”, “Assistant”, timestamp (optional for MVP)
+  - meta row (small text): “You”, “Assistant”, timestamp, copy answer button for "Assistant" answer
 - **Handled events**:
-  - None required for MVP.
+  - Message copy
 - **Validation conditions**:
   - Always render `content` via text nodes (no `dangerouslySetInnerHTML`).
 - **Types**:
@@ -158,9 +156,6 @@ Notes:
       - Add notes to the relevant chapter(s)
       - Confirm you’re on the right series
       - Try a more specific phrasing (names, places, chapter number)
-    - Optional CTA: link/button “Go to Books tab” (switches tab) or “Add notes” (future)
-- **Handled events**:
-  - Optional: `onGoToBooks()` -> `setActiveTab("books")` via parent handler (requires a callback from `SeriesDetailPage` or access to `useSeriesUrlState` in the Ask tab; prefer using the existing hook in the Ask tab if needed).
 - **Validation conditions**:
   - Shown only when the **latest assistant message** is flagged `lowConfidence === true`.
   - Must not be styled as destructive error; distinct color palette (info/warning) and gentle tone.
@@ -168,7 +163,6 @@ Notes:
   - `SeriesLowConfidenceViewModel` (optional; can be derived inline).
 - **Props**:
   - `visible: boolean`
-  - `onGoToBooks?: () => void`
 
 ### `SeriesAskComposer`
 - **Purpose**: Multi-line input for questions, with Enter-to-submit and Shift+Enter newline behavior; disabled while request is in flight.
@@ -254,8 +248,7 @@ Derived state for input rendering.
 - `validationError: string | null`
 - `charCountLabel: string` (e.g. `${trimmedLength} / 500`)
 
-### Client request/response aliases (optional, for readability)
-If you prefer not to rely on Zod-inferred types in UI components:
+### Client request/response aliases
 - `type AiQueryRequestDto = { query_text: string; scope: { book_id: null; series_id: string } }`
 - `type AiQueryResponseDto = AiQueryResponseDtoSimple` (PoC contract)
 
@@ -341,11 +334,11 @@ Handle error codes:
 - **Outcome**: Inserts newline; does not submit.
 
 ### Copy answer
-- **Action**: Click “Copy answer”.
+- **Action**: Click “Copy answer” on assistant response.
 - **Outcome**:
-  - Copies latest assistant answer to clipboard.
-  - Optional: transient UI feedback (e.g., button label changes to “Copied” for 1–2 seconds).
-  - If clipboard API is unavailable, fallback to a hidden textarea copy method (optional).
+  - Copies selected assistant answer to clipboard.
+  - Transient UI feedback (e.g., button label changes to “Copied” for 1–2 seconds).
+  - If clipboard API is unavailable, fallback to a hidden textarea copy method.
 
 ### Clear chat
 - **Action**: Click “Clear chat”.
@@ -447,7 +440,7 @@ Keep transcript; do not discard messages.
    - On error, set `lastError` and mark assistant pending/failed message appropriately.
    - Use `InlineBanner` with `onRetry` to re-submit.
 9. **Add Copy/Clear actions**:
-   - Copy last assistant answer.
+   - Copy selected assistant answer
    - Clear transcript with confirm and abort.
 10. **Add low-confidence panel**:
    - Detect `lastResponseLowConfidence` and show guidance panel (non-error styling).

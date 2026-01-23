@@ -193,6 +193,7 @@ export async function queryAiSimpleChat({
     const mockedAnswer = `Based on your ${noteCount} note${noteCount !== 1 ? "s" : ""}, here's what I found regarding "${command.query_text}": This is a mocked response for the PoC implementation. In production, this would be replaced with an actual LLM response generated from your notes.`;
 
     // Step 6: Return response
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return {
       answer: {
         text: mockedAnswer,

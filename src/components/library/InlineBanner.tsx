@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface InlineBannerProps {
   error: ApiErrorDto;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
 /**
@@ -35,9 +35,11 @@ export const InlineBanner = ({ error, onRetry }: InlineBannerProps) => {
           )}
         </div>
 
-        <Button variant="outline" size="sm" onClick={onRetry} className="ml-4">
-          Retry
-        </Button>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry} className="ml-4">
+            Retry
+          </Button>
+        )}
       </div>
     </div>
   );
