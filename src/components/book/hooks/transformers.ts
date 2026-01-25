@@ -1,4 +1,11 @@
-import type { BookDto, BookHeaderViewModel, ChapterListItemDto, ChapterListItemViewModel } from "@/types";
+import type {
+  BookDto,
+  BookHeaderViewModel,
+  ChapterListItemDto,
+  ChapterListItemViewModel,
+  NoteListItemDto,
+  NoteListItemViewModel,
+} from "@/types";
 import { formatRelativeTime } from "@/lib/utils";
 
 /**
@@ -48,6 +55,25 @@ export const transformChapterListItem = (dto: ChapterListItemDto): ChapterListIt
     bookId: dto.book_id,
     title: dto.title,
     order: dto.order,
+    updatedAtIso: dto.updated_at,
+    updatedAtLabel: formatRelativeTime(dto.updated_at),
+  };
+};
+
+/**
+ * Transform NoteListItemDto to NoteListItemViewModel
+ *
+ * Includes:
+ * - Raw fields from DTO
+ * - Computed fields (formatted timestamps)
+ */
+export const transformNoteListItem = (dto: NoteListItemDto): NoteListItemViewModel => {
+  return {
+    id: dto.id,
+    chapterId: dto.chapter_id,
+    content: dto.content,
+    createdAtIso: dto.created_at,
+    createdAtLabel: formatRelativeTime(dto.created_at),
     updatedAtIso: dto.updated_at,
     updatedAtLabel: formatRelativeTime(dto.updated_at),
   };

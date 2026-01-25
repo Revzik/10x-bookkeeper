@@ -22,8 +22,8 @@ export const BookTabsBar = ({ activeTab, onTabChange, headerHeight }: BookTabsBa
       <div className="container mx-auto px-4">
         <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as BookTabViewModel)}>
           <TabsList>
-            <TabsTrigger value="chapters">Chapters</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="chapters">Chapters</TabsTrigger>
             <TabsTrigger value="ask">Ask</TabsTrigger>
           </TabsList>
         </Tabs>

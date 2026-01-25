@@ -218,7 +218,7 @@ export type NoteListItemDto = Pick<
 >;
 
 export type CreateNoteCommand = Pick<TablesInsert<"notes">, "content">;
-export type UpdateNoteCommand = Pick<TablesUpdate<"notes">, "content">;
+export type UpdateNoteCommand = Partial<Pick<TablesUpdate<"notes">, "content" | "chapter_id">>;
 
 export interface NotesListQueryDto {
   page?: number;
@@ -842,4 +842,59 @@ export interface CreateChapterFormViewModel {
 export interface UpdateChapterFormViewModel {
   title: string;
   order: string;
+}
+
+/**
+ * URL-backed query state for Notes tab
+ */
+export interface BookNotesQueryViewModel {
+  chapter_id?: string;
+  page: number;
+  size: number;
+}
+
+/**
+ * Chapter option for Notes tab filter dropdown
+ */
+export interface ChapterSelectOptionViewModel {
+  value: string;
+  label: string;
+  chapterId?: string;
+}
+
+/**
+ * UI-ready note list item derived from NoteListItemDto
+ * Note: No separate title field - use chapter title in dialogs
+ */
+export interface NoteListItemViewModel {
+  id: string;
+  chapterId: string;
+  content: string;
+  createdAtIso: string;
+  createdAtLabel: string;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+}
+
+/**
+ * Notes grouped by chapter ID
+ */
+export type NotesByChapterViewModel = Record<string, NoteListItemViewModel[]>;
+
+/**
+ * Note dialog mode - create new or view/edit existing
+ */
+export type UpsertNoteModeViewModel = "create" | "existing";
+
+/**
+ * Existing note dialog mode - view or editing
+ */
+export type ExistingNoteDialogModeViewModel = "view" | "editing";
+
+/**
+ * Controlled form state for NoteDialog
+ */
+export interface UpsertNoteFormViewModel {
+  chapter_id: string;
+  content: string;
 }
