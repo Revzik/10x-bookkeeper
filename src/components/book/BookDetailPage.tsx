@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import type { BookTabViewModel } from "@/types";
-import { useBookUrlState } from "./hooks/useBookUrlState";
+import { useBookUrlState, useBookById } from "./hooks";
+import { useSeriesOptions } from "@/components/library/hooks/useSeriesOptions";
+import { BookStickyHeader } from "@/components/book/BookStickyHeader";
+import { BookTabsBar } from "@/components/book/BookTabsBar";
+import { BookChaptersTabPanel } from "@/components/book/BookChaptersTabPanel";
+import { BookNotesTabPanel } from "@/components/book/BookNotesTabPanel";
+import { BookAskTabPanel } from "@/components/book/BookAskTabPanel";
+import { EditBookDialog } from "@/components/book/EditBookDialog";
+import { DeleteBookDialog } from "@/components/book/DeleteBookDialog";
 import { InlineBanner } from "@/components/library/InlineBanner";
 import { Button } from "@/components/ui/button";
 
@@ -22,11 +30,11 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   // URL state management (source of truth for active tab)
   const { activeTab, askScope, setActiveTab } = useBookUrlState();
 
-  // TODO: Book data fetching (step 4)
-  const book = null;
-  const loading = true;
-  const error = null;
-  const notFound = false;
+  // Book data fetching
+  const { book, loading, error, notFound, refetch } = useBookById(bookId);
+
+  // Series options for edit dialog
+  const { options: seriesOptions } = useSeriesOptions();
 
   // Dialog state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -74,7 +82,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
 
   const handleUpdatedBook = () => {
     setIsEditOpen(false);
-    // TODO: refetch book data
+    refetch();
   };
 
   const handleDeletedBook = () => {
@@ -113,7 +121,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-16">
-          <InlineBanner error={error} onRetry={() => {}} />
+          <InlineBanner error={error} onRetry={refetch} />
         </div>
       </div>
     );
@@ -121,57 +129,48 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
 
   return (
     <div className="min-h-screen">
-      {/* TODO: Sticky Header (step 7) */}
-      <div ref={headerRef} className="bg-background border-b">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-sm text-muted-foreground">Header placeholder (bookId: {bookId})</p>
-        </div>
+      {/* Sticky Header */}
+      <div ref={headerRef}>
+        <BookStickyHeader book={book} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
 
-      {/* TODO: Sticky Tabs Bar (step 10) */}
-      <div className="sticky bg-background border-b z-10" style={{ top: `${headerHeight}px` }}>
-        <div className="container mx-auto px-4">
-          <div className="flex gap-4 py-2">
-            <Button
-              variant="ghost"
-              onClick={() => handleTabChange("chapters")}
-              className={activeTab === "chapters" ? "font-bold" : ""}
-            >
-              Chapters
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => handleTabChange("notes")}
-              className={activeTab === "notes" ? "font-bold" : ""}
-            >
-              Notes
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => handleTabChange("ask")}
-              className={activeTab === "ask" ? "font-bold" : ""}
-            >
-              Ask
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Sticky Tabs Bar */}
+      <BookTabsBar activeTab={activeTab} onTabChange={handleTabChange} headerHeight={headerHeight} />
 
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-6">
         <div className={activeTab === "chapters" ? "" : "hidden"}>
-          <p className="text-muted-foreground">Chapters will appear here.</p>
+          <BookChaptersTabPanel bookId={bookId} />
         </div>
         <div className={activeTab === "notes" ? "" : "hidden"}>
-          <p className="text-muted-foreground">Notes will appear here.</p>
+          <BookNotesTabPanel bookId={bookId} />
         </div>
         <div className={activeTab === "ask" ? "" : "hidden"}>
-          <p className="text-muted-foreground">Ask will appear here. (Current scope: {askScope})</p>
+          <BookAskTabPanel bookId={bookId} defaultScope={askScope} />
         </div>
       </div>
 
-      {/* TODO: Edit Book Dialog (step 8) */}
-      {/* TODO: Delete Book Dialog (step 9) */}
+      {/* Edit Book Dialog */}
+      {book && (
+        <EditBookDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          book={book}
+          seriesOptions={seriesOptions}
+          onUpdated={handleUpdatedBook}
+        />
+      )}
+
+      {/* Delete Book Dialog */}
+      {book && (
+        <DeleteBookDialog
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+          bookId={book.id}
+          bookTitle={book.title}
+          onDeleted={handleDeletedBook}
+        />
+      )}
     </div>
   );
 };

@@ -744,17 +744,23 @@ export interface BookSeriesSummaryViewModel {
 
 /**
  * UI-ready book header model derived from BookDto (+ optional series info)
+ * Includes both raw fields (for edit dialog) and computed fields (for display)
  */
 export interface BookHeaderViewModel {
+  // Raw fields (for edit dialog and other operations)
   id: string;
   title: string;
   author: string;
   status: BookStatus;
   totalPages: number;
   currentPage: number;
+  seriesId: string | null;
+  seriesOrder: number | null;
+  coverImageUrl: string | null;
+
+  // Computed/formatted fields (for display)
   progressLabel: string;
   progressPercent: number;
-  coverImageUrl: string | null;
   series: BookSeriesSummaryViewModel | null;
   createdAtIso: string;
   createdAtLabel: string;

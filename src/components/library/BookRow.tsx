@@ -1,5 +1,6 @@
-import type { BookListItemViewModel, BookStatus } from "@/types";
+import type { BookListItemViewModel } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { BookStatusBadge } from "@/components/shared/BookStatusBadge";
 
 interface BookRowProps {
   book: BookListItemViewModel;
@@ -10,18 +11,6 @@ interface BookRowProps {
  * BookRow - Single book item in the list
  */
 export const BookRow = ({ book, onClick }: BookRowProps) => {
-  const statusLabels: Record<BookStatus, string> = {
-    want_to_read: "Want to Read",
-    reading: "Reading",
-    completed: "Completed",
-  };
-
-  const statusColors: Record<BookStatus, string> = {
-    want_to_read: "bg-secondary text-secondary-foreground",
-    reading: "bg-accent text-accent-foreground",
-    completed: "bg-primary/10 text-primary",
-  };
-
   return (
     <Card
       className="cursor-pointer transition-shadow hover:shadow-md"
@@ -44,13 +33,7 @@ export const BookRow = ({ book, onClick }: BookRowProps) => {
 
         {/* Status badge */}
         <div>
-          <span
-            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-              statusColors[book.status] || "bg-secondary text-secondary-foreground"
-            }`}
-          >
-            {statusLabels[book.status] || book.status}
-          </span>
+          <BookStatusBadge status={book.status} />
         </div>
 
         {/* Progress */}
