@@ -136,7 +136,7 @@ function parseUrl(): Omit<BookUrlState, "setActiveTab" | "setAskScope" | "setNot
   // Parse tab (default: chapters)
   const tabParam = searchParams.get("tab");
   let activeTab: BookTabViewModel = "notes";
-  if (tabParam === "notes" || tabParam === "ask") {
+  if (tabParam === "chapters" || tabParam === "ask") {
     activeTab = tabParam;
   }
 

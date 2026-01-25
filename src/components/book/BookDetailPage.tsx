@@ -27,8 +27,8 @@ interface BookDetailPageProps {
  * - Dynamic header height tracking for sticky tabs positioning
  */
 const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
-  // URL state management (source of truth for active tab)
-  const { activeTab, askScope, setActiveTab } = useBookUrlState();
+  // URL state management (source of truth for active tab and ask scope)
+  const { activeTab, askScope, setActiveTab, setAskScope } = useBookUrlState();
 
   // Book data fetching
   const { book, loading, error, notFound, refetch } = useBookById(bookId);
@@ -146,7 +146,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
           <BookNotesTabPanel bookId={bookId} />
         </div>
         <div className={activeTab === "ask" ? "" : "hidden"}>
-          <BookAskTabPanel bookId={bookId} defaultScope={askScope} />
+          <BookAskTabPanel book={book} askScope={askScope} setAskScope={setAskScope} />
         </div>
       </div>
 

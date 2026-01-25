@@ -670,53 +670,68 @@ export interface SeriesDetailStateViewModel {
 }
 
 /**
- * Ask Tab View Models
- * These types are specific to the Series Ask Tab (Q&A interface)
+ * SHARED AI CHAT VIEW MODELS
+ * These types are shared between Series Ask and Book Ask tabs to avoid duplication.
  */
 
 /**
  * Chat message role - who authored the message
  */
-export type SeriesAiChatRoleViewModel = "user" | "assistant";
+export type AiChatRoleViewModel = "user" | "assistant";
 
 /**
  * Chat message lifecycle status
  */
-export type SeriesAiChatMessageStatusViewModel = "sent" | "pending" | "failed";
+export type AiChatMessageStatusViewModel = "sent" | "pending" | "failed";
 
 /**
- * Single chat message in the transcript
+ * Single chat message in the transcript (shared across book/series)
  */
-export interface SeriesAiChatMessageViewModel {
+export interface AiChatMessageViewModel {
   id: string;
-  role: SeriesAiChatRoleViewModel;
+  role: AiChatRoleViewModel;
   content: string;
   createdAtMs: number;
-  status: SeriesAiChatMessageStatusViewModel;
-  lowConfidence?: boolean;
+  status: AiChatMessageStatusViewModel;
+  lowConfidence?: boolean; // assistant-only
 }
 
 /**
- * Aggregated state for the Ask tab chat interface
+ * Aggregated state for the Ask tab chat interface (shared)
  */
-export interface SeriesAiChatStateViewModel {
-  messages: SeriesAiChatMessageViewModel[];
+export interface AiChatStateViewModel {
+  messages: AiChatMessageViewModel[];
   draftText: string;
   isSubmitting: boolean;
   lastError: ApiErrorDto | null;
   lastSubmittedQueryText: string | null;
-  lastResponseLowConfidence: boolean;
 }
 
 /**
- * Derived state for the composer (input) component
+ * Derived state for the composer (input) component (shared)
  */
-export interface SeriesAskComposerViewModel {
+export interface AiChatComposerViewModel {
   trimmedLength: number;
   isEmpty: boolean;
   isTooLong: boolean;
   validationError: string | null;
-  charCountLabel: string;
+  charCountLabel: string; // `${trimmedLength} / 500`
+}
+
+/**
+ * BACKWARDS-COMPATIBLE ALIASES
+ * Allows existing Series Ask implementation to migrate gradually without breaking changes.
+ */
+export type SeriesAiChatRoleViewModel = AiChatRoleViewModel;
+export type SeriesAiChatMessageStatusViewModel = AiChatMessageStatusViewModel;
+export type SeriesAiChatMessageViewModel = AiChatMessageViewModel;
+export type SeriesAskComposerViewModel = AiChatComposerViewModel;
+
+/**
+ * Extended state for Series Ask (includes legacy lastResponseLowConfidence field)
+ */
+export interface SeriesAiChatStateViewModel extends AiChatStateViewModel {
+  lastResponseLowConfidence: boolean;
 }
 
 /**
