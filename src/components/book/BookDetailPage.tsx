@@ -32,7 +32,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   const { activeTab, askScope, setActiveTab, setAskScope } = useBookUrlState();
 
   // Book data fetching
-  const { book, loading, error, notFound, refetch } = useBookById(bookId);
+  const { book, loading, error, notFound, refetch } = useBookById(bookId, true);
 
   // Series options for edit dialog
   const { options: seriesOptions } = useSeriesOptions();
@@ -138,9 +138,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
       <AppHeader showBackToLibrary />
 
       {/* Sticky Book Header */}
-      <div ref={headerRef}>
-        <BookStickyHeader book={book} onEdit={handleEdit} onDelete={handleDelete} />
-      </div>
+      <BookStickyHeader ref={headerRef} book={book} onEdit={handleEdit} onDelete={handleDelete} />
 
       {/* Sticky Tabs Bar */}
       <BookTabsBar activeTab={activeTab} onTabChange={handleTabChange} headerHeight={headerHeight} />

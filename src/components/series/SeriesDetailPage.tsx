@@ -122,9 +122,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
       <AppHeader showBackToLibrary />
 
       {/* Sticky Series Header */}
-      <div ref={headerRef}>
-        <SeriesStickyHeader series={series} onEdit={handleEdit} onDelete={handleDelete} />
-      </div>
+      <SeriesStickyHeader ref={headerRef} series={series} onEdit={handleEdit} onDelete={handleDelete} />
 
       {/* Sticky Tabs Bar */}
       <SeriesTabsBar activeTab={activeTab} onTabChange={handleTabChange} headerHeight={headerHeight} />

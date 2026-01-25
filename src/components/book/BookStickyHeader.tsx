@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import type { BookHeaderViewModel } from "@/types";
 import { BookActionsMenu } from "@/components/book/BookActionsMenu";
 import { BookStatusBadge } from "@/components/shared/BookStatusBadge";
@@ -19,11 +19,11 @@ interface BookStickyHeaderProps {
  * - Actions menu with Edit and Delete options
  * - Responsive: collapsible details on small screens (< 640px)
  */
-export const BookStickyHeader = ({ book, onEdit, onDelete }: BookStickyHeaderProps) => {
+export const BookStickyHeader = forwardRef<HTMLDivElement, BookStickyHeaderProps>(({ book, onEdit, onDelete }, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="sticky top-14 z-20 border-b bg-background">
+    <div ref={ref} className="sticky top-14 z-20 border-b bg-background">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           {/* Book Identity: Cover + Title/Details */}
@@ -103,4 +103,6 @@ export const BookStickyHeader = ({ book, onEdit, onDelete }: BookStickyHeaderPro
       </div>
     </div>
   );
-};
+});
+
+BookStickyHeader.displayName = "BookStickyHeader";

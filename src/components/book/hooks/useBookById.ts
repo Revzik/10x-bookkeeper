@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { BookHeaderViewModel, ApiErrorDto, GetBookResponseDto } from "@/types";
+import type { BookHeaderViewModel, ApiErrorDto, GetBookResponseDto, GetSeriesResponseDto } from "@/types";
 import { apiClient } from "@/lib/api/client";
 import { transformBookHeader } from "./transformers";
 
@@ -19,7 +19,7 @@ interface UseBookByIdResult {
  * - Error state with specific 404 handling
  * - Transformation to BookHeaderViewModel
  */
-export const useBookById = (bookId: string): UseBookByIdResult => {
+export const useBookById = (bookId: string, fetchSeries = false): UseBookByIdResult => {
   const [book, setBook] = useState<BookHeaderViewModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorDto | null>(null);
@@ -32,7 +32,12 @@ export const useBookById = (bookId: string): UseBookByIdResult => {
 
     try {
       const response = await apiClient.getJson<GetBookResponseDto>(`/books/${bookId}`);
-      setBook(transformBookHeader(response.book));
+      if (fetchSeries) {
+        const seriesResponse = await apiClient.getJson<GetSeriesResponseDto>(`/series/${response.book.series_id}`);
+        setBook(transformBookHeader(response.book, seriesResponse.series.title));
+      } else {
+        setBook(transformBookHeader(response.book));
+      }
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
       const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch book" };
@@ -47,7 +52,7 @@ export const useBookById = (bookId: string): UseBookByIdResult => {
     } finally {
       setLoading(false);
     }
-  }, [bookId]);
+  }, [bookId, fetchSeries]);
 
   useEffect(() => {
     fetchBook();
