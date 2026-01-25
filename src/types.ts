@@ -793,3 +793,53 @@ export interface BookDetailStateViewModel {
   activeTab: BookTabViewModel;
   askScope: BookAskScopeViewModel;
 }
+
+/**
+ * UI-ready chapter list item derived from ChapterListItemDto
+ */
+export interface ChapterListItemViewModel {
+  id: string;
+  bookId: string;
+  title: string;
+  order: number;
+  updatedAtIso: string;
+  updatedAtLabel: string;
+}
+
+/**
+ * Chapter row with reorder metadata
+ * Extends ChapterListItemViewModel with position and move controls state
+ */
+export interface BookChapterRowViewModel extends ChapterListItemViewModel {
+  position: number;
+  isMoveUpDisabled: boolean;
+  isMoveDownDisabled: boolean;
+}
+
+/**
+ * Reorder state for chapters tab
+ */
+export interface BookChaptersReorderStateViewModel {
+  isEditing: boolean;
+  isDirty: boolean;
+  isSaving: boolean;
+  serverOrderIds: string[];
+  draftOrderIds: string[];
+  saveError: ApiErrorDto | null;
+}
+
+/**
+ * Controlled form state for AddChapterDialog
+ */
+export interface CreateChapterFormViewModel {
+  title: string;
+  order: string;
+}
+
+/**
+ * Controlled form state for EditChapterDialog
+ */
+export interface UpdateChapterFormViewModel {
+  title: string;
+  order: string;
+}

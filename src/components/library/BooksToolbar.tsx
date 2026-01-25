@@ -3,6 +3,7 @@ import type { LibraryBooksQueryViewModel, BookStatus, SeriesSelectOptionViewMode
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { useDebouncedValue } from "./hooks";
 
 interface BooksToolbarProps {
@@ -133,7 +134,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
         onClick={handleOrderToggle}
         aria-label={`Sort ${query.order === "asc" ? "ascending" : "descending"}`}
       >
-        {query.order === "asc" ? "↑" : "↓"}
+        {query.order === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </Button>
     </div>
   );

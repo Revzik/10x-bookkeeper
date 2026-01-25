@@ -1,4 +1,4 @@
-import type { BookDto, BookHeaderViewModel } from "@/types";
+import type { BookDto, BookHeaderViewModel, ChapterListItemDto, ChapterListItemViewModel } from "@/types";
 import { formatRelativeTime } from "@/lib/utils";
 
 /**
@@ -30,6 +30,24 @@ export const transformBookHeader = (dto: BookDto, seriesTitle?: string): BookHea
     series: dto.series_id && seriesTitle ? { id: dto.series_id, title: seriesTitle } : null,
     createdAtIso: dto.created_at,
     createdAtLabel: formatRelativeTime(dto.created_at),
+    updatedAtIso: dto.updated_at,
+    updatedAtLabel: formatRelativeTime(dto.updated_at),
+  };
+};
+
+/**
+ * Transform ChapterListItemDto to ChapterListItemViewModel
+ *
+ * Includes:
+ * - Raw fields from DTO
+ * - Computed fields (order label, formatted timestamp)
+ */
+export const transformChapterListItem = (dto: ChapterListItemDto): ChapterListItemViewModel => {
+  return {
+    id: dto.id,
+    bookId: dto.book_id,
+    title: dto.title,
+    order: dto.order,
     updatedAtIso: dto.updated_at,
     updatedAtLabel: formatRelativeTime(dto.updated_at),
   };
