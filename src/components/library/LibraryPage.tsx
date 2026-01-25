@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { LibraryTabViewModel, LibraryBooksQueryViewModel, LibrarySeriesQueryViewModel } from "@/types";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { LibraryTabs } from "@/components/library/LibraryTabs";
 import { BooksTabPanel } from "@/components/library/BooksTabPanel";
 import { SeriesTabPanel } from "@/components/library/SeriesTabPanel";
@@ -86,57 +87,62 @@ const LibraryPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Page header */}
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Library</h1>
-        <div>
-          {activeTab === "books" ? (
-            <Button onClick={() => setIsAddBookOpen(true)}>Add Book</Button>
-          ) : (
-            <Button onClick={() => setIsAddSeriesOpen(true)}>Add Series</Button>
-          )}
+    <div className="min-h-screen">
+      {/* App Header */}
+      <AppHeader />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Page header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Library</h1>
+          <div>
+            {activeTab === "books" ? (
+              <Button onClick={() => setIsAddBookOpen(true)}>Add Book</Button>
+            ) : (
+              <Button onClick={() => setIsAddSeriesOpen(true)}>Add Series</Button>
+            )}
+          </div>
         </div>
+
+        {/* Tab navigation and panels */}
+        <LibraryTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          booksPanel={
+            <BooksTabPanel
+              query={booksQuery}
+              onQueryChange={handleBooksQueryChange}
+              items={booksData.items}
+              meta={booksData.meta}
+              loading={booksData.loading}
+              error={booksData.error}
+              seriesOptions={seriesOptions}
+              onRetry={handleRetryBooks}
+            />
+          }
+          seriesPanel={
+            <SeriesTabPanel
+              query={seriesQuery}
+              onQueryChange={handleSeriesQueryChange}
+              items={seriesData.items}
+              meta={seriesData.meta}
+              loading={seriesData.loading}
+              error={seriesData.error}
+              onRetry={handleRetrySeries}
+            />
+          }
+        />
+
+        {/* Create dialogs */}
+        <AddBookDialog
+          open={isAddBookOpen}
+          onOpenChange={setIsAddBookOpen}
+          seriesOptions={seriesOptions}
+          onCreated={handleCreatedBook}
+        />
+
+        <AddSeriesDialog open={isAddSeriesOpen} onOpenChange={setIsAddSeriesOpen} onCreated={handleCreatedSeries} />
       </div>
-
-      {/* Tab navigation and panels */}
-      <LibraryTabs
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        booksPanel={
-          <BooksTabPanel
-            query={booksQuery}
-            onQueryChange={handleBooksQueryChange}
-            items={booksData.items}
-            meta={booksData.meta}
-            loading={booksData.loading}
-            error={booksData.error}
-            seriesOptions={seriesOptions}
-            onRetry={handleRetryBooks}
-          />
-        }
-        seriesPanel={
-          <SeriesTabPanel
-            query={seriesQuery}
-            onQueryChange={handleSeriesQueryChange}
-            items={seriesData.items}
-            meta={seriesData.meta}
-            loading={seriesData.loading}
-            error={seriesData.error}
-            onRetry={handleRetrySeries}
-          />
-        }
-      />
-
-      {/* Create dialogs */}
-      <AddBookDialog
-        open={isAddBookOpen}
-        onOpenChange={setIsAddBookOpen}
-        seriesOptions={seriesOptions}
-        onCreated={handleCreatedBook}
-      />
-
-      <AddSeriesDialog open={isAddSeriesOpen} onOpenChange={setIsAddSeriesOpen} onCreated={handleCreatedSeries} />
     </div>
   );
 };

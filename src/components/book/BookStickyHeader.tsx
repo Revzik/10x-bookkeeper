@@ -23,7 +23,7 @@ export const BookStickyHeader = ({ book, onEdit, onDelete }: BookStickyHeaderPro
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="sticky top-0 z-20 border-b bg-background">
+    <div className="sticky top-14 z-20 border-b bg-background">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           {/* Book Identity: Cover + Title/Details */}

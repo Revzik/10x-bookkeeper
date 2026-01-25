@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import type { BookTabViewModel } from "@/types";
 import { useBookUrlState, useBookById } from "./hooks";
 import { useSeriesOptions } from "@/components/library/hooks/useSeriesOptions";
+import { AppHeader, APP_HEADER_HEIGHT } from "@/components/shared/AppHeader";
 import { BookStickyHeader } from "@/components/book/BookStickyHeader";
 import { BookTabsBar } from "@/components/book/BookTabsBar";
 import { BookChaptersTabPanel } from "@/components/book/BookChaptersTabPanel";
@@ -41,6 +42,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Header height tracking for sticky tabs positioning
+  // Note: Total height = AppHeader + BookStickyHeader (dynamic)
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
 
@@ -51,7 +53,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
     const updateHeaderHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
-        setHeaderHeight(height);
+        setHeaderHeight(height + APP_HEADER_HEIGHT);
       }
     };
 
@@ -94,6 +96,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (notFound) {
     return (
       <div className="min-h-screen">
+        <AppHeader showBackToLibrary />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold">Book not found</h1>
@@ -109,6 +112,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (loading || !book) {
     return (
       <div className="min-h-screen">
+        <AppHeader showBackToLibrary />
         <div className="container mx-auto px-4 py-16 text-center">
           <p className="text-muted-foreground">Loading book...</p>
         </div>
@@ -120,6 +124,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (error) {
     return (
       <div className="min-h-screen">
+        <AppHeader showBackToLibrary />
         <div className="container mx-auto px-4 py-16">
           <InlineBanner error={error} onRetry={refetch} />
         </div>
@@ -129,7 +134,10 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
 
   return (
     <div className="min-h-screen">
-      {/* Sticky Header */}
+      {/* App Header */}
+      <AppHeader showBackToLibrary />
+
+      {/* Sticky Book Header */}
       <div ref={headerRef}>
         <BookStickyHeader book={book} onEdit={handleEdit} onDelete={handleDelete} />
       </div>

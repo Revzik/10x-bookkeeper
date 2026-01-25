@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { SeriesTabViewModel } from "@/types";
 import { useSeriesUrlState, useSeriesById } from "./hooks";
+import { AppHeader, APP_HEADER_HEIGHT } from "@/components/shared/AppHeader";
 import { SeriesStickyHeader } from "@/components/series/SeriesStickyHeader";
 import { SeriesTabsBar } from "@/components/series/SeriesTabsBar";
 import { SeriesBooksTabPanel } from "@/components/series/SeriesBooksTabPanel";
@@ -36,6 +37,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Header height tracking for sticky tabs positioning
+  // Note: Total height = AppHeader + SeriesStickyHeader (dynamic)
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
 
@@ -46,7 +48,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
     const updateHeaderHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
-        setHeaderHeight(height);
+        setHeaderHeight(height + APP_HEADER_HEIGHT);
       }
     };
 
@@ -94,6 +96,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   if (loading || !series) {
     return (
       <div className="min-h-screen">
+        <AppHeader showBackToLibrary />
         <div className="container mx-auto px-4 py-16 text-center">
           <p className="text-muted-foreground">Loading series...</p>
         </div>
@@ -105,6 +108,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   if (error) {
     return (
       <div className="min-h-screen">
+        <AppHeader showBackToLibrary />
         <div className="container mx-auto px-4 py-16">
           <InlineBanner error={error} onRetry={refetch} />
         </div>
@@ -114,7 +118,10 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
 
   return (
     <div className="min-h-screen">
-      {/* Sticky Header */}
+      {/* App Header */}
+      <AppHeader showBackToLibrary />
+
+      {/* Sticky Series Header */}
       <div ref={headerRef}>
         <SeriesStickyHeader series={series} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
