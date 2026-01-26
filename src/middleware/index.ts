@@ -7,6 +7,8 @@ import { createSupabaseServerInstance } from "../db/supabase.client.ts";
  * Includes auth pages and auth API endpoints
  */
 const PUBLIC_PATHS = [
+  // Root page (handles its own redirects)
+  "/",
   // Auth pages
   "/login",
   "/signup",
@@ -23,9 +25,22 @@ const PUBLIC_PATHS = [
 
 /**
  * Check if a path is public (doesn't require authentication)
+ * Note: We check exact matches first, then prefix matches only for API routes
  */
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((publicPath) => pathname === publicPath || pathname.startsWith(publicPath));
+  // Exact match check
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return true;
+  }
+
+  // Prefix match only for API routes (to allow /api/v1/auth/*)
+  return PUBLIC_PATHS.some((publicPath) => {
+    // Only use startsWith for paths that should match prefixes (API routes)
+    if (publicPath.startsWith("/api/")) {
+      return pathname.startsWith(publicPath);
+    }
+    return false;
+  });
 }
 
 /**

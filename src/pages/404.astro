@@ -1,0 +1,41 @@
+---
+/**
+ * 404 Error Page - Protected route
+ * Only accessible to authenticated users (middleware enforces this)
+ */
+import Layout from "../layouts/Layout.astro";
+
+export const prerender = false;
+
+// Extra guard: ensure user is authenticated
+// (middleware should already handle this, but being explicit)
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/login");
+}
+---
+
+<Layout title="Page Not Found — Bookkeeper">
+  <main class="flex min-h-screen flex-col items-center justify-center px-4">
+    <div class="text-center space-y-6 max-w-md">
+      <!-- 404 Number -->
+      <h1 class="text-8xl font-bold text-primary">404</h1>
+
+      <!-- Error Message -->
+      <div class="space-y-2">
+        <h2 class="text-2xl font-semibold text-foreground">Page Not Found</h2>
+        <p class="text-muted-foreground">The page you're looking for doesn't exist or has been moved.</p>
+      </div>
+
+      <!-- Back to Library Button -->
+      <div class="pt-4">
+        <a
+          href="/library"
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+        >
+          Back to Library
+        </a>
+      </div>
+    </div>
+  </main>
+</Layout>

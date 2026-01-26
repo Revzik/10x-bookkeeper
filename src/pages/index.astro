@@ -1,0 +1,19 @@
+---
+/**
+ * Root page - redirects based on authentication status
+ * - Authenticated users → /library
+ * - Unauthenticated users → /login
+ */
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+
+// Redirect authenticated users to library
+if (user) {
+  return Astro.redirect("/library");
+}
+
+// Redirect unauthenticated users to login
+return Astro.redirect("/login");
+---

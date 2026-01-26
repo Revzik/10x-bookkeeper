@@ -19,7 +19,7 @@ interface UseBookByIdResult {
  * - Error state with specific 404 handling
  * - Transformation to BookHeaderViewModel
  */
-export const useBookById = (bookId: string, fetchSeries = false): UseBookByIdResult => {
+export const useBookById = (bookId: string): UseBookByIdResult => {
   const [book, setBook] = useState<BookHeaderViewModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorDto | null>(null);
@@ -32,7 +32,7 @@ export const useBookById = (bookId: string, fetchSeries = false): UseBookByIdRes
 
     try {
       const response = await apiClient.getJson<GetBookResponseDto>(`/books/${bookId}`);
-      if (fetchSeries) {
+      if (response.book.series_id) {
         const seriesResponse = await apiClient.getJson<GetSeriesResponseDto>(`/series/${response.book.series_id}`);
         setBook(transformBookHeader(response.book, seriesResponse.series.title));
       } else {
@@ -52,7 +52,7 @@ export const useBookById = (bookId: string, fetchSeries = false): UseBookByIdRes
     } finally {
       setLoading(false);
     }
-  }, [bookId, fetchSeries]);
+  }, [bookId]);
 
   useEffect(() => {
     fetchBook();

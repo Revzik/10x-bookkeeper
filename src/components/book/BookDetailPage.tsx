@@ -33,7 +33,7 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
   const { activeTab, askScope, setActiveTab, setAskScope } = useBookUrlState();
 
   // Book data fetching
-  const { book, loading, error, notFound, refetch } = useBookById(bookId, true);
+  const { book, loading, error, notFound, refetch } = useBookById(bookId);
 
   // Series options for edit dialog
   const { options: seriesOptions } = useSeriesOptions();
