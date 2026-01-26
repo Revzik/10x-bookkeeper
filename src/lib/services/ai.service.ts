@@ -1,8 +1,17 @@
 import type { supabaseClient } from "../../db/supabase.client";
-import type { AiQuerySimpleCommand, AiQueryResponseDtoSimple, NoteEntity, ErrorSource } from "../../types";
+import type { AiQuerySimpleCommand, AiQueryResponseDtoSimple, NoteListItemDto, ErrorSource } from "../../types";
 import { NotFoundError } from "../errors";
 import { verifyBookExists } from "./books.service";
 import { verifySeriesExists } from "./series.service";
+import { listNotes } from "./notes.service";
+import { OpenRouterService } from "../openrouter/openrouter.service";
+import { aiAnswerJsonSchema, aiAnswerZodSchema, type AiAnswer } from "../openrouter/schemas";
+import {
+  OpenRouterAuthError,
+  OpenRouterRateLimitError,
+  OpenRouterTimeoutError,
+  OpenRouterUpstreamError,
+} from "../openrouter/openrouter.errors";
 
 export type SupabaseClientType = typeof supabaseClient;
 
@@ -85,52 +94,70 @@ export async function logSearchError({
 }
 
 /**
- * Fetches notes for AI context based on the provided scope.
- * Applies user filtering and optional book/series scoping.
+ * Builds a formatted context string from notes for LLM prompts.
+ * Groups notes by chapter and includes metadata for better context.
  *
- * @param supabase - Supabase client instance
- * @param userId - User ID to filter by
- * @param scope - Optional scope with book_id or series_id
- * @returns Array of notes matching the scope
- * @throws Error if the query operation fails
+ * @param notes - Array of note items to format
+ * @returns Formatted string with note content suitable for LLM context
  */
-export async function fetchNotesForAiContext({
-  supabase,
-  userId,
-  scope,
-}: {
-  supabase: SupabaseClientType;
-  userId: string;
-  scope?: { book_id?: string | null; series_id?: string | null };
-}): Promise<NoteEntity[]> {
-  // Base query: select notes with chapter and book information
-  let query = supabase
-    .from("notes")
-    .select("*, chapters!inner(id, title, book_id, books!inner(id, title, series_id))")
-    .eq("user_id", userId);
-
-  // Apply scope filters
-  if (scope?.book_id) {
-    query = query.eq("chapters.book_id", scope.book_id);
-  } else if (scope?.series_id) {
-    query = query.eq("chapters.books.series_id", scope.series_id);
+function buildNotesContext(notes: NoteListItemDto[]): string {
+  if (notes.length === 0) {
+    return "No notes available for this query scope.";
   }
 
-  // Limit to prevent excessive context (can be adjusted)
-  query = query.limit(100);
-
-  const { data, error } = await query;
-
-  if (error) {
-    throw error;
+  // Group notes by chapter_id
+  const notesByChapter = new Map<string, NoteListItemDto[]>();
+  for (const note of notes) {
+    const existing = notesByChapter.get(note.chapter_id) || [];
+    existing.push(note);
+    notesByChapter.set(note.chapter_id, existing);
   }
 
-  return data || [];
+  // Build formatted context
+  const contextParts: string[] = [];
+  let noteIndex = 1;
+
+  for (const [, chapterNotes] of notesByChapter) {
+    for (const note of chapterNotes) {
+      contextParts.push(`[Note ${noteIndex}] (ID: ${note.id})`);
+      contextParts.push(note.content);
+      contextParts.push(""); // Empty line between notes
+      noteIndex++;
+    }
+  }
+
+  return contextParts.join("\n");
 }
 
 /**
- * Executes an AI query using a simple chat approach (PoC version with mocked response).
- * Creates a search log, fetches relevant notes, and returns a mocked AI response.
+ * Initializes OpenRouter service for AI queries.
+ *
+ * @returns Configured OpenRouterService instance
+ * @throws Error if OPENROUTER_API_KEY is not configured
+ */
+function initializeOpenRouterService(): OpenRouterService {
+  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new Error("OPENROUTER_API_KEY environment variable is not configured");
+  }
+
+  return new OpenRouterService({
+    apiKey,
+    model: "openai/gpt-4o-mini",
+    schemaName: "AiAnswer",
+    params: {
+      temperature: 0.2,
+      max_tokens: 800,
+    },
+    appName: "10x-bookkeeper",
+    timeoutMs: 60000,
+  });
+}
+
+/**
+ * Executes an AI query using OpenRouter LLM service.
+ * Creates a search log, fetches relevant notes, calls the LLM, and returns the AI response.
  *
  * @param supabase - Supabase client instance
  * @param userId - User ID to scope the query
@@ -149,6 +176,7 @@ export async function queryAiSimpleChat({
   command: AiQuerySimpleCommand;
 }): Promise<AiQueryResponseDtoSimple> {
   let searchLogId: string | null = null;
+  const startTime = Date.now();
 
   try {
     // Step 1: Create search log
@@ -173,42 +201,87 @@ export async function queryAiSimpleChat({
       });
     }
 
-    // Step 3: Fetch notes for context
-    const startTime = Date.now();
-    const notes = await fetchNotesForAiContext({
+    // Step 3: Fetch notes for context using listNotes service
+    const notesQuery = {
+      page: 1,
+      size: 100, // Limit context size to prevent token overflow
+      ...(command.scope.book_id && { book_id: command.scope.book_id }),
+      ...(command.scope.series_id && { series_id: command.scope.series_id }),
+    };
+
+    const { notes } = await listNotes({
       supabase,
       userId,
-      scope: command.scope,
+      query: notesQuery,
     });
 
-    // Step 4: Build prompt (for future LLM integration)
-    // For now, we'll just use the notes count in the mocked response
-    const noteCount = notes.length;
+    // Step 4: Build context from notes
+    const notesContext = buildNotesContext(notes);
 
-    // Step 5: Mocked chat completion
+    // Step 5: Initialize OpenRouter service
+    const openRouterService = initializeOpenRouterService();
+
+    // Step 6: Build prompts for LLM
+    const systemPrompt = `You are a helpful reading assistant for the 10x Bookkeeper application. Your role is to answer questions based ONLY on the user's reading notes provided in the context.
+
+Guidelines:
+- Base your answer exclusively on the notes context provided
+- If you cannot find relevant information in the notes, clearly state that you don't have enough information
+- Set low_confidence to true if:
+  * The notes don't contain sufficient information to answer confidently
+  * The answer requires speculation or assumptions
+  * The relevant information is ambiguous or contradictory
+- Set low_confidence to false if:
+  * You can answer directly from the notes with high certainty
+  * The information is clear and unambiguous
+- Be concise but thorough
+- Use natural, conversational language`;
+
+    const userPrompt = `Context from reading notes:
+${notesContext}
+
+User's question: ${command.query_text}
+
+Please answer the question based on the notes context above. Remember to set low_confidence appropriately based on the quality and relevance of the available information.`;
+
+    // Step 7: Call OpenRouter LLM
+    const result = await openRouterService.chatJson<AiAnswer>({
+      system: systemPrompt,
+      user: userPrompt,
+      jsonSchema: aiAnswerJsonSchema,
+      zodSchema: aiAnswerZodSchema,
+    });
+
+    // Step 8: Calculate latency and return response
     const endTime = Date.now();
     const latencyMs = endTime - startTime;
 
-    // Mocked response based on the query
-    const mockedAnswer = `Based on your ${noteCount} note${noteCount !== 1 ? "s" : ""}, here's what I found regarding "${command.query_text}": This is a mocked response for the PoC implementation. In production, this would be replaced with an actual LLM response generated from your notes.`;
-
-    // Step 6: Return response
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     return {
-      answer: {
-        text: mockedAnswer,
-        low_confidence: false,
-      },
+      answer: result.data,
       usage: {
-        model: "mock-model-v1",
+        model: result.model,
         latency_ms: latencyMs,
       },
     };
   } catch (error) {
-    // Log error to search_errors table
+    // Determine error source for logging
+    let errorSource: ErrorSource = "unknown";
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    const errorSource: ErrorSource = error instanceof NotFoundError ? "unknown" : "database";
 
+    if (error instanceof NotFoundError) {
+      errorSource = "unknown";
+    } else if (
+      error instanceof OpenRouterAuthError ||
+      error instanceof OpenRouterRateLimitError ||
+      error instanceof OpenRouterTimeoutError ||
+      error instanceof OpenRouterUpstreamError
+    ) {
+      errorSource = "llm";
+    } else {
+      errorSource = "database";
+    }
+
+    // Log error to search_errors table
     await logSearchError({
       supabase,
       userId,
