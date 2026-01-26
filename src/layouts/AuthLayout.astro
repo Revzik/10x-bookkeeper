@@ -1,0 +1,24 @@
+---
+import Layout from "./Layout.astro";
+import { AuthHeader } from "@/components/auth/AuthHeader";
+
+interface Props {
+  title: string;
+  showSignInLink?: boolean;
+  showSignUpLink?: boolean;
+}
+
+const { title, showSignInLink = false, showSignUpLink = false } = Astro.props;
+---
+
+<Layout title={title}>
+  <div class="min-h-screen flex flex-col">
+    <!-- Auth-specific header with theme toggle -->
+    <AuthHeader showSignInLink={showSignInLink} showSignUpLink={showSignUpLink} client:load />
+
+    <!-- Centered content container -->
+    <main class="flex-1 flex items-center justify-center p-4">
+      <slot />
+    </main>
+  </div>
+</Layout>

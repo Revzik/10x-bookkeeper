@@ -1,0 +1,52 @@
+---
+import { createSupabaseServerInstance } from "../../db/supabase.client";
+
+export const prerender = false;
+
+/**
+ * /auth/callback - Supabase Auth callback handler
+ *
+ * Handles OAuth and password recovery flows using PKCE (Proof Key for Code Exchange).
+ * This endpoint receives an authorization code from Supabase and exchanges it for a session.
+ *
+ * Flow:
+ * 1. User clicks password reset link in email (or completes OAuth flow)
+ * 2. Supabase redirects to this callback with a 'code' parameter
+ * 3. We exchange the code for a session (sets session cookies)
+ * 4. Redirect to the 'next' parameter (default: /library)
+ *
+ * Query params:
+ * - code: Authorization code from Supabase (required)
+ * - next: Where to redirect after successful exchange (optional)
+ */
+
+const code = Astro.url.searchParams.get("code");
+const next = Astro.url.searchParams.get("next") || "/library";
+
+// If no code provided, redirect to login with error
+if (!code) {
+  return Astro.redirect("/login?error=invalid_callback");
+}
+
+// Create Supabase server instance
+const supabase = createSupabaseServerInstance({
+  cookies: Astro.cookies,
+  headers: Astro.request.headers,
+});
+
+// Exchange the code for a session
+const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+if (error) {
+  // Log minimal error info (without full stack trace)
+  console.error("Auth callback failed:", error.message || "Unknown error");
+  // Redirect to login with error for auth issues
+  // For password reset, redirect to forgot-password instead
+  const isPasswordReset = next.includes("reset-password");
+  const redirectPath = isPasswordReset ? "/forgot-password" : "/login";
+  return Astro.redirect(`${redirectPath}?error=callback_failed`);
+}
+
+// Session is now set via cookies, redirect to next destination
+return Astro.redirect(next);
+---

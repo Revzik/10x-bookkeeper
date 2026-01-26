@@ -10,8 +10,11 @@ const { bookId } = Astro.params;
 if (!bookId) {
   return new Response("Book ID is required", { status: 400 });
 }
+
+// Get user email from middleware
+const userEmail = Astro.locals.user?.email;
 ---
 
 <Layout title="Book — Bookkeeper">
-  <BookDetailPage client:only="react" bookId={bookId} />
+  <BookDetailPage client:only="react" bookId={bookId} userEmail={userEmail} />
 </Layout>

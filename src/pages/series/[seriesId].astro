@@ -10,8 +10,11 @@ const { seriesId } = Astro.params;
 if (!seriesId) {
   return new Response("Series ID is required", { status: 400 });
 }
+
+// Get user email from middleware
+const userEmail = Astro.locals.user?.email;
 ---
 
 <Layout title="Series — Bookkeeper">
-  <SeriesDetailPage client:only="react" seriesId={seriesId} />
+  <SeriesDetailPage client:only="react" seriesId={seriesId} userEmail={userEmail} />
 </Layout>

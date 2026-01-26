@@ -42,6 +42,22 @@ export interface ApiErrorResponseDto {
 }
 
 /**
+ * AUTH
+ */
+export interface AuthUserDto {
+  id: string;
+  email: string;
+}
+
+export interface LoginResponseDto {
+  user: AuthUserDto;
+}
+
+export interface SignupResponseDto {
+  user: AuthUserDto;
+}
+
+/**
  * Database-derived entity aliases
  * These keep DTOs “connected” to the underlying schema without re-declaring fields.
  */

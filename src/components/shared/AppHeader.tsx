@@ -1,6 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronLeft, User, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { apiClient } from "@/lib/api/client";
 
 /**
  * AppHeader height constant - Must match h-14 Tailwind class (3.5rem = 56px)
@@ -10,6 +20,7 @@ export const APP_HEADER_HEIGHT = 56;
 
 interface AppHeaderProps {
   showBackToLibrary?: boolean;
+  userEmail?: string;
 }
 
 /**
@@ -17,14 +28,31 @@ interface AppHeaderProps {
  *
  * Features:
  * - Theme toggle (light/dark mode)
- * - Placeholder user dropdown menu (circle icon)
+ * - User dropdown menu with logout
  * - Optional "Back to library" button for detail pages
  * - Sticky positioning at top of viewport
  * - Responsive layout
  */
-export const AppHeader = ({ showBackToLibrary = false }: AppHeaderProps) => {
+export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderProps) => {
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleBackToLibrary = () => {
     window.location.href = "/library";
+  };
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+    try {
+      await apiClient.postJson("/auth/logout", {});
+      // Redirect to login page after successful logout
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still redirect to login even on error to clear client state
+      window.location.href = "/login";
+    }
   };
 
   return (
@@ -54,12 +82,33 @@ export const AppHeader = ({ showBackToLibrary = false }: AppHeaderProps) => {
           {/* Theme toggle */}
           <ThemeToggle />
 
-          {/* Placeholder user dropdown - just a circle icon for now */}
-          <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" aria-label="User menu" disabled>
-            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-              <User className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </Button>
+          {/* User dropdown menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" aria-label="User menu">
+                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {userEmail && (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Account</p>
+                      <p className="text-xs leading-none text-muted-foreground truncate">{userEmail}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={handleLogout} disabled={loggingOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{loggingOut ? "Logging out..." : "Log out"}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

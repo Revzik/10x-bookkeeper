@@ -13,6 +13,7 @@ import { InlineBanner } from "@/components/library/InlineBanner";
 
 interface SeriesDetailPageProps {
   seriesId: string;
+  userEmail?: string;
 }
 
 /**
@@ -25,7 +26,7 @@ interface SeriesDetailPageProps {
  * - Tab switching and content rendering
  * - Dynamic header height tracking for sticky tabs positioning
  */
-const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
+const SeriesDetailPage = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
   // URL state management (source of truth for active tab)
   const { activeTab, setActiveTab } = useSeriesUrlState();
 
@@ -89,14 +90,14 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
 
   // Handle not found state
   if (notFound) {
-    return <SeriesNotFoundState />;
+    return <SeriesNotFoundState userEmail={userEmail} />;
   }
 
   // Handle loading state
   if (loading || !series) {
     return (
       <div className="min-h-screen">
-        <AppHeader showBackToLibrary />
+        <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16 text-center">
           <p className="text-muted-foreground">Loading series...</p>
         </div>
@@ -108,7 +109,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   if (error) {
     return (
       <div className="min-h-screen">
-        <AppHeader showBackToLibrary />
+        <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16">
           <InlineBanner error={error} onRetry={refetch} />
         </div>
@@ -119,7 +120,7 @@ const SeriesDetailPage = ({ seriesId }: SeriesDetailPageProps) => {
   return (
     <div className="min-h-screen">
       {/* App Header */}
-      <AppHeader showBackToLibrary />
+      <AppHeader showBackToLibrary userEmail={userEmail} />
 
       {/* Sticky Series Header */}
       <SeriesStickyHeader ref={headerRef} series={series} onEdit={handleEdit} onDelete={handleDelete} />

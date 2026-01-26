@@ -17,11 +17,10 @@ export const prerender = false;
 export async function POST(context: APIContext): Promise<Response> {
   const supabase = context.locals.supabase;
 
-  // Get DEV_USER_ID from environment
-  const userId = import.meta.env.DEV_USER_ID;
+  // Get authenticated user from context
+  const userId = context.locals.user?.id;
   if (!userId) {
-    console.error("DEV_USER_ID environment variable is not set");
-    return apiError(500, "INTERNAL_ERROR", "Server configuration error");
+    return apiError(401, "NOT_ALLOWED", "Authentication required");
   }
 
   // Parse and validate request body

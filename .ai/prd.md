@@ -78,14 +78,15 @@ Key pain points include:
   2. Incorrect credentials display a clear error message.
   3. Successful login grants access to the user's private data.
 
-#### US-003: GDPR Account Deletion
-- *Title:* Delete Account
-- *Description:* As a privacy-conscious user, I want to permanently delete my account and all associated data so that my information is removed from the system.
+#### US-003: User Password Reset
+- *Title:* User Password Reset
+- *Description:* As a returning user, I want to have possibility to reset my password so that I can access my account even after I forgot it.
 - *Acceptance Criteria:*
-  1. User can request account deletion from settings.
-  2. System prompts for confirmation.
-  3. Upon confirmation, all user records (auth, notes, vectors, books) are permanently deleted from the database.
-  4. User is logged out and redirected to the landing page.
+  1. User can click "Forgot password?" button on the login form
+  2. User enters their email on displayed form and submits it.
+  3. User receives an e-mail with a password reset link.
+  4. User enters a new password after clicking the link.
+  5. Entering new password grants access to the user's private data.
 
 ### Library & Book Management
 

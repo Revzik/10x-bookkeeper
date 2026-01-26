@@ -1,6 +1,10 @@
 import { AppHeader } from "@/components/shared/AppHeader";
 import { Button } from "@/components/ui/button";
 
+interface SeriesNotFoundStateProps {
+  userEmail?: string;
+}
+
 /**
  * SeriesNotFoundState - Display when series doesn't exist
  *
@@ -9,14 +13,14 @@ import { Button } from "@/components/ui/button";
  * - Invalid series ID format (VALIDATION_ERROR)
  * - Series was deleted
  */
-export const SeriesNotFoundState = () => {
+export const SeriesNotFoundState = ({ userEmail }: SeriesNotFoundStateProps) => {
   const handleBackToLibrary = () => {
     window.location.href = "/library?tab=series";
   };
 
   return (
     <div className="min-h-screen">
-      <AppHeader showBackToLibrary />
+      <AppHeader showBackToLibrary userEmail={userEmail} />
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-md mx-auto">
           <div className="space-y-2">

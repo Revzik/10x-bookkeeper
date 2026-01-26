@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 
 interface BookDetailPageProps {
   bookId: string;
+  userEmail?: string;
 }
 
 /**
@@ -27,7 +28,7 @@ interface BookDetailPageProps {
  * - Tab switching and content rendering
  * - Dynamic header height tracking for sticky tabs positioning
  */
-const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
+const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
   // URL state management (source of truth for active tab and ask scope)
   const { activeTab, askScope, setActiveTab, setAskScope } = useBookUrlState();
 
@@ -96,7 +97,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (notFound) {
     return (
       <div className="min-h-screen">
-        <AppHeader showBackToLibrary />
+        <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold">Book not found</h1>
@@ -112,7 +113,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (loading || !book) {
     return (
       <div className="min-h-screen">
-        <AppHeader showBackToLibrary />
+        <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16 text-center">
           <p className="text-muted-foreground">Loading book...</p>
         </div>
@@ -124,7 +125,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   if (error) {
     return (
       <div className="min-h-screen">
-        <AppHeader showBackToLibrary />
+        <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16">
           <InlineBanner error={error} onRetry={refetch} />
         </div>
@@ -135,7 +136,7 @@ const BookDetailPage = ({ bookId }: BookDetailPageProps) => {
   return (
     <div className="min-h-screen">
       {/* App Header */}
-      <AppHeader showBackToLibrary />
+      <AppHeader showBackToLibrary userEmail={userEmail} />
 
       {/* Sticky Book Header */}
       <BookStickyHeader ref={headerRef} book={book} onEdit={handleEdit} onDelete={handleDelete} />

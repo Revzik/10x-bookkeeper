@@ -9,6 +9,10 @@ import { AddSeriesDialog } from "@/components/library/AddSeriesDialog";
 import { Button } from "@/components/ui/button";
 import { useLibraryUrlState, useBooksList, useSeriesList, useSeriesOptions } from "./hooks";
 
+interface LibraryPageProps {
+  userEmail?: string;
+}
+
 /**
  * LibraryPage - Main view orchestrator for Library
  *
@@ -23,7 +27,7 @@ import { useLibraryUrlState, useBooksList, useSeriesList, useSeriesOptions } fro
  * - Inactive tab: query stored in component state (preserved in memory)
  * - On tab switch: current query saved to inactive state, inactive state restored to URL
  */
-const LibraryPage = () => {
+const LibraryPage = ({ userEmail }: LibraryPageProps) => {
   // URL state management (source of truth for active tab)
   const { activeTab, booksQuery, seriesQuery, setActiveTab, setBooksQuery, setSeriesQuery } = useLibraryUrlState();
 
@@ -89,7 +93,7 @@ const LibraryPage = () => {
   return (
     <div className="min-h-screen">
       {/* App Header */}
-      <AppHeader />
+      <AppHeader userEmail={userEmail} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Page header */}

@@ -1,0 +1,21 @@
+---
+import AuthLayout from "../layouts/AuthLayout.astro";
+import { AuthLoginPage } from "../components/auth/AuthLoginPage";
+
+export const prerender = false;
+
+// Check if user is already authenticated (set by middleware)
+// If so, redirect to the intended destination or library
+if (Astro.locals.user) {
+  const redirectTo = Astro.url.searchParams.get("redirectTo") || "/library";
+  return Astro.redirect(redirectTo);
+}
+
+// Extract query params for the React component
+const redirectTo = Astro.url.searchParams.get("redirectTo") || undefined;
+const emailPrefill = Astro.url.searchParams.get("email") || undefined;
+---
+
+<AuthLayout title="Sign In — 10x Bookkeeper" showSignUpLink={true}>
+  <AuthLoginPage client:only="react" redirectTo={redirectTo} emailPrefill={emailPrefill} />
+</AuthLayout>
