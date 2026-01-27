@@ -1,11 +1,11 @@
 # REST API Plan
 
 ## Assumptions / Scope Notes
-- This API is intended to run as **server-side endpoints** (Astro `src/pages/api/*` and/or Supabase Edge Functions) so **secrets stay off the client** (per tech stack recommendation).
-- **Authentication is temporarily disabled** for this iteration. API endpoints do NOT require a Bearer token.
-- **RLS is bypassed** or simplified for now; the API will operate on all data (or a single default user context if needed for DB schemas).
-- Vectors are generated via OpenRouter-compatible embeddings, but the database schema references OpenAI’s `text-embedding-3-small` dimensionality (1536). We assume the embedding model used returns **1536 dims**.
-- “Chat” responses are treated as **non-persisted by default** (unless you later add a `chat_messages` table); **search logs** are persisted via `search_logs`.
+- This API is intended to run as **server-side endpoints** so **secrets stay off the client**.
+- **Authentication is required** for all non-auth endpoints. The API relies on the authenticated user context provided by Supabase sessions.
+- **RLS is enabled** and data access is scoped to the authenticated user.
+- The Ask feature is implemented as **LLM Q&A grounded in the user’s notes** (no vector similarity retrieval in this scope).
+- “Chat” transcripts are treated as **non-persisted** (in-memory on the client). The server records **query logs and errors** for operational visibility.
 
 ---
 
@@ -14,13 +14,10 @@
 - **Book** → `public.books`
 - **Chapter** → `public.chapters`
 - **Note** → `public.notes`
-- **NoteEmbedding** (internal) → `public.note_embeddings` (Postponed for PoC)
-- **ReadingSession** → `public.reading_sessions` (Postponed for PoC)
-- **SearchLog** (internal/metrics) → `public.search_logs`
-- **EmbeddingErrorLog** (internal) → `public.embedding_errors` (Postponed for PoC)
+- **Auth** (virtual) → Supabase Auth session management
+- **SearchLog** (internal) → `public.search_logs`
 - **SearchErrorLog** (internal) → `public.search_errors`
-- **AI Query (Simple)** (virtual resource) → implemented via context fetching + LLM completion
-- **AI Query (RAG) Postponed for PoC** (virtual resource) → implemented via DB RPC `match_notes` + LLM completion
+- **AI Query (Ask)** (virtual) → context fetching + LLM completion
 
 ---
 
@@ -30,7 +27,9 @@
 - **Base path**: `/api/v1`
 - **Paths below**: listed **relative** to `/api/v1` (e.g., `POST /books` means `POST /api/v1/books`)
 - **Content type**: `application/json; charset=utf-8`
-- **Auth**: None (disabled for MVP iteration).
+- **Auth**:
+  - Required for all non-auth endpoints.
+  - Auth endpoints establish or modify the user session.
 - **Timestamps**: ISO8601 strings
 - **IDs**: UUID strings
 - **Pagination (lists)**:
@@ -58,6 +57,74 @@ Common error codes:
 - `409 CONFLICT` → `CONFLICT`
 - `429 TOO MANY REQUESTS` → `RATE_LIMITED`
 - `500 INTERNAL SERVER ERROR` → `INTERNAL_ERROR`
+
+---
+
+### 2.2 Auth
+
+#### POST `/auth/signup`
+- **Description**: Create a new user account and establish a session.
+- **Request**:
+
+```json
+{ "email": "user@example.com", "password": "string" }
+```
+
+- **Response 201**:
+
+```json
+{ "user": { "id": "uuid", "email": "user@example.com" } }
+```
+
+#### POST `/auth/login`
+- **Description**: Log in with email/password and establish a session.
+- **Request**:
+
+```json
+{ "email": "user@example.com", "password": "string" }
+```
+
+- **Response 200**:
+
+```json
+{ "user": { "id": "uuid", "email": "user@example.com" } }
+```
+
+#### POST `/auth/logout`
+- **Description**: End the current session.
+- **Response 200**:
+
+```json
+{ "ok": true }
+```
+
+#### POST `/auth/password-reset`
+- **Description**: Request a password reset email.
+- **Request**:
+
+```json
+{ "email": "user@example.com" }
+```
+
+- **Response 202**:
+
+```json
+{ "ok": true }
+```
+
+#### POST `/auth/password-update`
+- **Description**: Update the user’s password (requires a valid session from the reset flow).
+- **Request**:
+
+```json
+{ "password": "string" }
+```
+
+- **Response 200**:
+
+```json
+{ "ok": true }
+```
 
 ---
 
@@ -161,40 +228,6 @@ Common error codes:
   - `204 NO CONTENT`
 - **Error codes**:
   - `404 NOT_FOUND`
-
-#### TODO: PATCH `/series/:seriesId/reorder`
-- **Description**: Bulk reorder books within a series. Updates `series_order` for multiple books in a single transaction.
-- **Request**:
-
-```json
-{
-  "books": [
-    { "id": "uuid", "series_order": 1 },
-    { "id": "uuid", "series_order": 2 },
-    { "id": "uuid", "series_order": 3 }
-  ]
-}
-```
-
-- **Response 200**:
-
-```json
-{
-  "updated_count": 3
-}
-```
-
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
-  - `400 VALIDATION_ERROR` (invalid book IDs, duplicate series_order values)
-  - `404 NOT_FOUND` (series not found or book not in this series)
-  - `409 CONFLICT` (concurrent modification)
-- **Notes**:
-  - All updates should happen in a single database transaction for atomicity
-  - Validates that all book IDs belong to the specified series
-  - More performant than individual PATCH calls per book
-  - Frontend currently uses sequential PATCH `/books/:bookId` calls as a workaround
 
 ---
 
@@ -316,7 +349,7 @@ Common error codes:
   - `404 NOT_FOUND` (book or new series not found)
 
 #### DELETE `/books/:bookId`
-- **Description**: Delete a book. Cascades to chapters, notes, embeddings, sessions.
+- **Description**: Delete a book. Cascades to chapters and notes.
 - **Response 204**
 - **Success codes**:
   - `204 NO CONTENT`
@@ -402,9 +435,9 @@ Common error codes:
 ---
 
 ### 2.6 Notes
-> PRD: “Notes are automatically chunked and embedded upon saving… immediately when created or updated.”
 > Schema: `notes(content text not null, embedding_status enum, embedding_duration int)`
-> **Note**: `embedding_status` and `embedding_duration` columns will be ignored or left as defaults in the PoC.
+>
+> Notes include `embedding_status` and `embedding_duration` fields for operational tracking, but this API does not expose an embeddings pipeline or vector retrieval behavior.
 
 #### POST `/chapters/:chapterId/notes`
 - **Description**: Create a note under a chapter.
@@ -453,7 +486,7 @@ Common error codes:
 ```json
 {
   "notes": [
-    { "id": "uuid", "chapter_id": "uuid", "content": "string", "embedding_status": "completed", "created_at": "iso", "updated_at": "iso" }
+    { "id": "uuid", "chapter_id": "uuid", "content": "string", "embedding_status": "pending", "created_at": "iso", "updated_at": "iso" }
   ],
   "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
 }
@@ -482,7 +515,6 @@ Common error codes:
   - `404 NOT_FOUND`
 
 #### PATCH `/notes/:noteId`
-> PRD: “Upon saving changes… recalculates and updates the vector embedding” (Recalculation postponed for PoC)
 - **Description**: Update note content.
 - **Request**:
 
@@ -512,108 +544,11 @@ Common error codes:
 
 ---
 
-### 2.7 Reading Sessions (Postponed for PoC)
-> PRD: “Manual Start/Stop functionality to track time spent reading.”
-> Schema: `reading_sessions(started_at default now, ended_at nullable, end_page int nullable)`
-
-#### POST `/books/:bookId/reading-sessions`
-- **Description**: Start a session for a book. Enforce at most one active session per per user via API constraint.
-- **Request**:
-
-```json
-{ }
-```
-
-- **Response 201**:
-
-```json
-{
-  "reading_session": {
-    "id": "uuid",
-    "book_id": "uuid",
-    "started_at": "iso",
-    "ended_at": null,
-    "end_page": null
-  }
-}
-```
-
-- **Success codes**:
-  - `201 CREATED`
-- **Error codes**:
-  - `409 CONFLICT` (`ACTIVE_SESSION_EXISTS`)
-  - `404 NOT_FOUND` (book not found)
-
-#### POST `/reading-sessions/:sessionId/stop`
-- **Description**: Stop a running session; optionally record `end_page` and update book progress.
-- **Request**:
-
-```json
-{ "ended_at": "optional iso", "end_page": 42, "update_book_progress": true }
-```
-
-- **Response 200**:
-
-```json
-{
-  "reading_session": { "id": "uuid", "ended_at": "iso", "end_page": 42 },
-  "book": { "id": "uuid", "current_page": 42, "status": "reading" }
-}
-```
-
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
-  - `400 VALIDATION_ERROR` (end_page < 0; end_page > total_pages if `update_book_progress`)
-  - `404 NOT_FOUND`
-  - `409 CONFLICT` (`SESSION_ALREADY_ENDED`)
-
-#### GET `/reading-sessions`
-- **Description**: List sessions (history).
-- **Query params**:
-  - `book_id` (filter)
-  - `started_after`, `started_before` (ISO)
-  - `page`, `size`
-  - `sort` in `started_at|ended_at`
-  - `order` in `asc|desc`
-- **Response 200**:
-
-```json
-{
-  "reading_sessions": [
-    { "id": "uuid", "book_id": "uuid", "started_at": "iso", "ended_at": "iso|null", "end_page": 42 }
-  ],
-  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
-}
-```
-
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
-
-#### GET `/reading-sessions/:sessionId`
-- **Description**: Get a session.
-- **Response 200**: `{ "reading_session": { ... } }`
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
-  - `404 NOT_FOUND`
-
-#### DELETE `/reading-sessions/:sessionId`
-- **Description**: Delete a session entry (optional for MVP).
-- **Response 204**
-- **Success codes**:
-  - `204 NO CONTENT`
-- **Error codes**:
-  - `404 NOT_FOUND`
-
----
-
-### 2.8 AI Search (RAG Chat (Postponed for PoC)) (Simple chat)
-> PRD: “Chat-driven Q&A interface … vector similarity search … Low Confidence threshold … citations.”
+### 2.7 Ask (AI Q&A)
+> PRD: “Chat-driven Q&A interface … grounded in the user’s notes … low confidence handling.”
 
 #### POST `/ai/query`
-- **Description**: Ask a question and get an answer grounded in the user’s notes. Also logs the query to `search_logs`.
+- **Description**: Ask a question and get an answer grounded in the user’s notes. The server also records the query in `search_logs`.
 - **Request**:
 
 ```json
@@ -622,16 +557,11 @@ Common error codes:
   "scope": {
     "book_id": "uuid|null",
     "series_id": "uuid|null"
-  },
-  // (Postponed for PoC)
-  // "retrieval": {
-  //   "match_threshold": 0.75,
-  //   "match_count": 8
-  // }
+  }
 }
 ```
 
-- **Response 200** (high confidence):
+- **Response 200**:
 
 ```json
 {
@@ -639,99 +569,36 @@ Common error codes:
     "text": "Based on your notes, ...",
     "low_confidence": false
   },
-  //  (Postponed for PoC)
-  // "citations": [
-  //   {
-  //     "note_embedding_id": "uuid",
-  //     "note_id": "uuid",
-  //     "book_id": "uuid",
-  //     "book_title": "string",
-  //     "chapter_id": "uuid",
-  //     "chapter_title": "string",
-  //     "chunk_content": "string",
-  //     "similarity": 0.87
-  //   }
-  // ],
   "usage": {
-    // "retrieved_chunks": 8,
     "model": "string",
     "latency_ms": 1234
   }
 }
 ```
 
-- **Response 200** (low confidence fallback) (Postponed for PoC):
-
-```json
-{
-  "answer": {
-    "text": "I’m not quite sure based on your notes. Try adding a note about that scene, or broaden your scope.",
-    "low_confidence": true
-  },
-  "citations": [],
-  "usage": { "retrieved_chunks": 0, "model": "string", "latency_ms": 456 }
-}
-```
-
 - **Success codes**:
   - `200 OK`
 - **Error codes**:
-  - `400 VALIDATION_ERROR` (missing query_text; both scope ids provided but invalid combination if you choose to disallow)
-  - `404 NOT_FOUND` (scope references not found)
+  - `400 VALIDATION_ERROR` (missing query_text; invalid scope)
+  - `404 NOT_FOUND` (scope references not found or not accessible)
   - `429 RATE_LIMITED`
-
-**Implementation detail (server-side)** (Postponed for PoC):
-- Step A: Embed `query_text` → `query_embedding vector(1536)`
-- Step B: Call DB RPC `match_notes(query_embedding, match_threshold, match_count, filter_book_id)`; for series scope, either:
-  - add an RPC variant that filters by `series_id`, or
-  - fetch book ids in series and filter in SQL.
-- Step C: If max similarity < threshold → return low confidence response.
-- Step D: Else provide citations + pass retrieved chunks into LLM prompt to generate a grounded answer (no outside knowledge).
-
-**Implementation detail (server-side)**:
-- Step A: Load user notes from `notes` table
-- Step B: Pass retrieved notes into LLM prompt to generate a grounded answer (no outside knowledge).
-
----
-
-### 2.9 Search Logs (metrics postponed for PoC; optional to expose)
-> Schema: `search_logs(query_text text not null, created_at default now)`
-
-#### GET `/search-logs`
-- **Description**: Admin/user-visible query history (optional for MVP).
-- **Query params**:
-  - `page`, `size`
-  - `started_after`, `started_before`
-- **Response 200**:
-
-```json
-{
-  "search_logs": [ { "id": "uuid", "query_text": "string", "created_at": "iso" } ],
-  "meta": { "current_page": 1, "page_size": 10, "total_items": 100, "total_pages": 10 }
-}
-```
-
-- **Success codes**:
-  - `200 OK`
-- **Error codes**:
 
 ---
 
 ## 3. Authentication and Authorization
 
 ### Authentication
-- **Mechanism**: Disabled for this stage. No JWT validation required.
-- **Context**: API acts as a single-user system or operates on global data for testing simplicity.
+- **Mechanism**: Supabase sessions. Endpoints require an authenticated user context.
 
 ### Authorization
-- **RLS**: Temporarily disabled or permissive.
-- **Per-user isolation**: Skipped for now.
+- **RLS**: Enabled for user-owned tables.
+- **Per-user isolation**: Enforced by `user_id` ownership checks and RLS.
 - API layer rules:
   - Return `404 NOT_FOUND` for missing resources.
 
 ### Data security
 - Store OpenRouter keys only server-side.
-- Log minimal PII. If persisting search logs, consider redacting or allowing user to clear history.
+- Log minimal PII.
 
 ---
 
@@ -776,47 +643,16 @@ Common error codes:
   - `chapter_id not null`
   - `content text not null`
   - `embedding_status embedding_status default 'pending' not null`
-- **PRD**:
-  - “optimized for short bullet points … (approx. 500-1000 characters recommended/enforced)”
 - **API validation**:
   - `content` required, trim and non-empty
   - enforce max length (e.g., 2000 chars hard cap)
   - disallow extremely large payloads (request body limit)
-
-#### Note embeddings (`note_embeddings`) (server-managed) (Postponed for PoC)
-- **Schema**:
-  - `chunk_content text not null`
-  - `embedding vector(1536) not null`
-- **Types note**:
-  - In `src/db/database.types.ts`, pgvector values are represented as `string` (including `note_embeddings.embedding` and the `match_notes.query_embedding` argument).
-- **API validation**:
-  - not directly writable by clients
-  - embedding generation validates vector length = 1536
-
-#### Reading sessions (`reading_sessions`) (Postponed for PoC)
-- **Schema**:
-  - `book_id not null`
-  - `started_at default now not null`
-  - `ended_at nullable`
-  - `end_page int nullable`
-- **API validation / rules**:
-  - `end_page` if provided must be integer >= 0 and <= book.total_pages (if updating progress)
-  - enforce `ended_at >= started_at` if client supplies `ended_at`
-  - enforce only one “active” session per book (or per user) at a time (API-level)
 
 #### Search logs (`search_logs`) (server-managed)
 - **Schema**:
   - `query_text text not null`
 - **API validation**:
   - `query_text` required, non-empty; consider max length (e.g., 500 chars)
-
-#### Embedding error logs (`embedding_errors`) (server-managed) (Postponed for PoC)
-- **Schema**:
-  - `error_message text not null`
-  - `note_id uuid nullable`
-- **API validation**:
-  - not directly writable by clients
-  - write only from embedding pipeline on failures
 
 #### Search error logs (`search_errors`) (server-managed)
 - **Schema**:
@@ -841,33 +677,19 @@ Common error codes:
   - list chapters for book: `GET /books/:bookId/chapters`
 
 #### Note-taking + embedding pipeline
-- **Create Note**: `POST /chapters/:chapterId/notes` → set `embedding_status=pending`, enqueue embedding job
-- **Edit Note**: `PATCH /notes/:noteId` → set `embedding_status=pending`, regenerate embeddings
+- **Create Note**: `POST /chapters/:chapterId/notes`
+- **Edit Note**: `PATCH /notes/:noteId`
 - **View Notes**: `GET /notes?book_id=...` (client groups by chapter)
-- **Embedding processing** (server-internal):
-  - Chunk note content into segments (e.g., paragraph/bullet chunks)
-  - For each chunk: upsert into `note_embeddings` with `chunk_content` and `embedding`
-  - Update `notes.embedding_status` to `completed` and set `embedding_duration`
-  - On failure: set `notes.embedding_status=failed`
 
-#### RAG query + low-confidence handling + citations (Postponed for PoC)
+#### Ask (AI Q&A)
 - **Ask question**: `POST /ai/query`
-  - logs query → `search_logs`
-  - embeds query → vector
-  - retrieves via `match_notes` (and optional scope filtering)
-  - if below threshold → low confidence response with empty citations
-  - else → grounded response with citations including book/chapter titles
-
-#### Reading session timer + progress updates (Postponed for PoC)
-- **Start session**: `POST /books/:bookId/reading-sessions`
-- **Stop session**: `POST /reading-sessions/:sessionId/stop` (optionally updates book current_page)
-- **Manual page update**: `POST /books/:bookId/progress` (or `PATCH /books/:bookId`)
+  - Records query → `search_logs` (server-managed)
+  - Records failures → `search_errors` (server-managed)
 
 ---
 
 ## Security and Performance Considerations (from schema/PRD/stack)
-- **Strict data isolation**: use RLS on all tables and JWT auth context.
+- **Strict data isolation**: use RLS on all user-owned tables and authenticated user context.
 - **Cascade deletes**: rely on FK `user_id → auth.users(id) ON DELETE CASCADE` on all core tables; deleting the auth user deletes all user-owned rows. `books.series_id` relies on FK `ON DELETE SET NULL` (and the API may also support an explicit “cascade delete series content” option if desired).
-- **Vector search performance** (Postponed for PoC): use pgvector HNSW index on `note_embeddings(embedding)` with `vector_cosine_ops`; keep `match_count` capped (e.g., max 20).
 - **Input hardening**: request body size limits (especially notes), content sanitization if rendering markdown in UI, and consistent 404-on-not-owned behavior.
 

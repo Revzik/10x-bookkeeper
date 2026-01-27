@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD) - Bookkeeper
 
 ## 1. Product Overview
-Bookkeeper is a responsive web application designed to assist readers in retaining and recalling plot details, character arcs, and specific events from the books they read. The core value proposition centers on a focused note-taking experience specifically designed for "short lists" of key events, combined with a Retrieval-Augmented Generation (RAG) powered search engine. This allows users to ask natural language questions about their own notes to retrieve specific details they may have forgotten.
+Bookkeeper is a responsive web application designed to help readers retain and recall plot details, character arcs, and specific events from the books they read. The core value proposition is a focused, structured note-taking experience (Series → Book → Chapter), paired with an “Ask” interface that lets users ask natural-language questions and get answers grounded in their own notes.
 
-The MVP includes reading session tracking (time and progress) but strictly excludes social features to focus on the personal reading experience.
+The MVP focuses on private, personal use and intentionally excludes social and community features.
 
 ## 2. User Problem
 Readers often face significant challenges in remembering the plot of a book after they have finished it, or even recalling minute details about events or characters while they are still reading. This "memory leak" diminishes the long-term value and enjoyment of reading.
@@ -12,41 +12,44 @@ Key pain points include:
 - Difficulty recalling details from earlier chapters in a dense book.
 - Forgetting character backstories or motivations in long-running series.
 - The friction of traditional note-taking methods which are often disorganized or hard to search.
-- Lack of a centralized tool that combines progress tracking with intelligent recall.
+- Lack of a centralized tool that combines progress tracking with quick recall from personal notes.
 
 ## 3. Functional Requirements
 
 ### 3.1. User Authentication & Security
-- *Authentication:* Secure email/password sign-up and login.
-- *Data Privacy:* Strict data isolation using `user_id` Row Level Security (RLS).
-- *GDPR Compliance:* Mechanisms for users to export their data or request full account deletion (Right to be Forgotten).
+- *Authentication:* Secure email/password sign-up, login, and logout.
+- *Password reset:* Users can request a password reset email and set a new password via a secure flow.
+- *Data privacy:* User content is private by default and visible only to the account owner via RLS.
 
 ### 3.2. Library Management
-- *Hierarchical Structure:* Ability to organize notes by Series > Book > Chapter.
-- *Metadata:* Books track title, author, total pages, sections/chapters (optional section/chapter structure).
+- *Hierarchical structure:* Users can organize reading material by Series → Book → Chapter.
+- *Series (optional):* A book may belong to a series, but can also exist standalone.
+- *Book metadata:* Books track title, author, total pages, and optional cover image URL.
+- *Reading status and progress:* Books track reading status (e.g., want to read / reading / completed) and current page.
+- *Chapters:* Users can create, update, reorder, and delete chapters within a book.
 
 ### 3.3. Note Taking
-- *Format:* Restricted to manual text entry, optimized for short bullet points or paragraph chunks (approx. 500-1000 characters).
-- *Chunking:* Notes are automatically chunked and embedded upon saving to ensure optimal retrieval granularity.
-- *Embedding:* Generates and stores vector embeddings immediately when notes are created or updated.
+- *Format:* Manual text entry optimized for short bullet points or paragraph chunks.
+- *Organization:* Notes are created under a chapter and displayed grouped by chapter for review.
+- *CRUD:* Users can create, edit, and delete notes.
 
-### 3.4. AI & Search (RAG)
+### 3.4. Ask (AI Q&A)
 - *Interface:* Chat-driven Q&A interface (not a traditional search results list).
-- *Scope:* Users can search within a specific book or across an entire series.
-- *Logic:* Vector similarity search retrieves relevant note chunks. A "Low Confidence" threshold triggers a specific UI state if no relevant notes are found.
-- *Citations:* Responses should reference the specific book and chapter where the information was found.
+- *Scope:* Users can ask within a specific book or across an entire series (when a book belongs to a series).
+- *Grounding:* Answers must be based only on the user’s notes within the selected scope.
+- *Low confidence handling:* If there is not enough information in the notes to answer confidently, the system should say so and mark the response as low confidence.
 
-### 3.5. Progress & Session Tracking
-- *Session Timer:* Manual Start/Stop functionality to track time spent reading.
-- *Progress:* Manual entry of current page number, visualized as a percentage bar.
+### 3.5. Progress Tracking
+- *Progress:* Manual entry of current page number and total pages to compute completion percentage.
+- *Status:* Manual updates to reading status.
 
 ## 4. Product Boundaries
 
 ### 4.1. In Scope (MVP)
 - User Account System.
 - CRUD operations for Series, Books, Chapters, and Notes.
-- RAG-powered Chat Interface for querying notes.
-- Reading Session Timer and Page Progress Tracking.
+- Ask (AI Q&A) interface for querying notes within book/series scope.
+- Page progress and reading status tracking.
 - Responsive Web Interface.
 
 ### 4.2. Out of Scope (MVP)
@@ -56,6 +59,10 @@ Key pain points include:
 - "Test Book" / Onboarding interactive tutorial.
 - OCR or scanning of physical book pages.
 - Automated fetching of book metadata from external APIs (users enter details manually for MVP).
+- Reading session timer / time tracking.
+- AI answers that use external knowledge beyond the user’s notes.
+- Source citations and semantic/vector retrieval.
+- Data export tooling and self-serve account deletion.
 
 ## 5. User Stories
 
@@ -105,84 +112,76 @@ Key pain points include:
   2. User can optionally link the book to an existing Series.
   3. Book is saved and displayed in the library.
 
+#### US-006: Update Book Progress
+- *Title:* Update Reading Progress
+- *Description:* As a user, I want to update my current page and reading status so that I can track my progress and completion percentage.
+- *Acceptance Criteria:*
+  1. User can enter/update total pages and current page.
+  2. System prevents current page from exceeding total pages.
+  3. System shows an updated completion percentage.
+  4. User can update reading status (want to read / reading / completed).
+
+### Chapter Management
+
+#### US-007: Manage Chapters
+- *Title:* Create and Organize Chapters
+- *Description:* As a user, I want to create and reorder chapters within a book so that my notes remain organized.
+- *Acceptance Criteria:*
+  1. User can create a chapter with a title.
+  2. User can rename and delete a chapter.
+  3. User can change chapter order.
+
 ### Note Taking
 
-#### US-006: Create Chapter Note
+#### US-008: Create Chapter Note
 - *Title:* Add Chapter Note
 - *Description:* As a user who just finished a chapter, I want to write down key events as bullet points so that I can remember them later.
 - *Acceptance Criteria:*
   1. User navigates to a specific book.
-  2. User selects or enters a Chapter Number/Title.
+  2. User selects a chapter.
   3. User enters text content (limit approx. 1000 chars recommended/enforced).
   4. User clicks save.
-  5. System saves the note and triggers the embedding generation process in the background.
+  5. System saves the note and it is visible in the notes list.
 
-#### US-007: Edit Note
+#### US-009: Edit Note
 - *Title:* Edit Existing Note
 - *Description:* As a user who noticed a typo or missed a detail, I want to edit an existing note so that my records are accurate.
 - *Acceptance Criteria:*
   1. User can select an existing note to edit.
   2. Upon saving changes, the system updates the text content.
-  3. The system automatically recalculates and updates the vector embedding for the modified note.
 
-#### US-008: View Notes
+#### US-010: View Notes
 - *Title:* View Book Notes
 - *Description:* As a user, I want to scroll through my notes for a specific book so that I can manually review what I have read.
 - *Acceptance Criteria:*
   1. User can view a chronological list of notes for a selected book.
   2. Notes are grouped by chapter.
 
-### AI Search & Retrieval
+### Ask (AI Q&A)
 
-#### US-009: Ask Question (RAG)
-- *Title:* Query Notes via Chat
+#### US-011: Ask a Question
+- *Title:* Ask a Question About My Notes
 - *Description:* As a user, I want to ask a natural language question about a book so that I can quickly recall specific details.
 - *Acceptance Criteria:*
   1. User enters a text question in the chat interface.
-  2. System converts the question to a vector and searches the user's notes (filtered by current book or series).
-  3. System retrieves relevant chunks and generates a natural language answer.
-  4. The answer is displayed in the chat window.
+  2. System generates an answer based only on the user’s notes in the selected scope (book or series).
+  3. The answer is displayed in the chat window.
 
-#### US-010: Low Confidence Handling
+#### US-012: Low Confidence Handling
 - *Title:* Handle Missing Information
 - *Description:* As a user asking about something I haven't noted, I want the system to tell me it doesn't know, rather than making things up.
 - *Acceptance Criteria:*
-  1. If vector similarity scores for retrieved chunks are below the defined threshold, the system returns a specific fallback response (e.g., "I'm not quite sure based on your notes...").
-  2. The system does not attempt to hallucinate an answer from outside knowledge.
-
-#### US-011: Source Citations
-- *Title:* View Answer Sources
-- *Description:* As a user, I want to know which chapter the answer came from so I can verify the context.
-- *Acceptance Criteria:*
-  1. The AI response includes references to the specific Chapter(s) where the information was found.
-
-### Progress Tracking
-
-#### US-012: Start/Stop Session
-- *Title:* Track Reading Time
-- *Description:* As a user sitting down to read, I want to start a timer so that I can track how long I spend reading.
-- *Acceptance Criteria:*
-  1. User can click a "Start Session" button.
-  2. A timer is visible showing elapsed time.
-  3. User can click "Stop Session" to end the timer and log the duration.
-
-#### US-013: Update Page Progress
-- *Title:* Update Page Progress
-- *Description:* As a user finishing a session, I want to update my current page number so that I can see my completion percentage.
-- *Acceptance Criteria:*
-  1. User enters the current page number.
-  2. System calculates percentage based on the book's total pages.
-  3. A visual progress bar updates to reflect the new status.
+  1. If the notes do not contain enough information to answer confidently, the system returns a response that clearly communicates the uncertainty.
+  2. The system does not attempt to provide facts not present in the user’s notes.
 
 ## 6. Success Metrics
 To evaluate the success of the Bookkeeper MVP, the following metrics will be tracked:
 
 ### 6.1. Adoption & Engagement
 - *Note-Taking Activity:* 50% of registered users record at least one note during their first week.
-- *Search Usage:* 75% of active users utilize the AI search feature to query their notes at least once.
-- *Value Ratio:* A target ratio of 1:3 for Search-to-Note actions (validating that for every 3 notes taken, users find value in searching at least once).
+- *Ask Usage:* 75% of active users utilize the Ask feature at least once.
+- *Value Ratio:* A target ratio of 1:3 for Ask-to-Note actions (validating that for every 3 notes taken, users find value in asking at least once).
 
 ### 6.3. System Performance
-- *Search Latency:* Average time to generate a chat response is under 3 seconds.
-- *Embedding Success Rate:* 99.9% of saved notes are successfully embedded and indexed within 5 seconds of creation.
+- *Ask Latency:* Average time to generate an Ask response is under 3 seconds.
 
