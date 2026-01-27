@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { SeriesSelectOptionViewModel, ListSeriesResponseDto, ApiErrorDto } from "@/types";
 import { apiClient } from "@/lib/api/client";
 import { transformSeriesOption } from "./transformers";
+import { PAGINATION } from "@/lib/constants";
 
 interface UseSeriesOptionsResult {
   options: SeriesSelectOptionViewModel[];
@@ -26,7 +27,7 @@ export const useSeriesOptions = (): UseSeriesOptionsResult => {
     try {
       const response = await apiClient.getJson<ListSeriesResponseDto>("/series", {
         page: 1,
-        size: 100,
+        size: PAGINATION.MAX_PAGE_SIZE,
         sort: "title",
         order: "asc",
       });

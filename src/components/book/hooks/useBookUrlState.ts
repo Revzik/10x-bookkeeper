@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { BookTabViewModel, BookAskScopeViewModel, BookNotesQueryViewModel } from "@/types";
+import { PAGINATION } from "@/lib/constants";
 
 interface BookUrlState {
   activeTab: BookTabViewModel;
@@ -117,8 +118,8 @@ function getDefaultState(): Omit<BookUrlState, "setActiveTab" | "setAskScope" | 
 function getDefaultNotesQuery(): BookNotesQueryViewModel {
   return {
     chapter_id: undefined,
-    page: 1,
-    size: 20,
+    page: PAGINATION.DEFAULT_PAGE,
+    size: PAGINATION.DEFAULT_PAGE_SIZE,
   };
 }
 
@@ -168,12 +169,12 @@ function parseNotesQuery(searchParams: URLSearchParams): BookNotesQueryViewModel
   const pageNum = parseInt(pageParam || "", 10);
   const page = !isNaN(pageNum) && pageNum >= 1 ? pageNum : defaults.page;
 
-  // Parse size (must be in range [1, 100])
+  // Parse size (must be in range [MIN_PAGE_SIZE, MAX_PAGE_SIZE])
   const sizeParam = searchParams.get("size");
   const sizeNum = parseInt(sizeParam || "", 10);
   let size = defaults.size;
   if (!isNaN(sizeNum)) {
-    size = Math.max(1, Math.min(100, sizeNum));
+    size = Math.max(PAGINATION.MIN_PAGE_SIZE, Math.min(PAGINATION.MAX_PAGE_SIZE, sizeNum));
   }
 
   return { chapter_id, page, size };

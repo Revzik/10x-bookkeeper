@@ -12,6 +12,7 @@ import {
   OpenRouterTimeoutError,
   OpenRouterUpstreamError,
 } from "../openrouter/openrouter.errors";
+import { PAGINATION } from "../constants";
 
 export type SupabaseClientType = typeof supabaseClient;
 
@@ -204,7 +205,7 @@ export async function queryAiSimpleChat({
     // Step 3: Fetch notes for context using listNotes service
     const notesQuery = {
       page: 1,
-      size: 100, // Limit context size to prevent token overflow
+      size: PAGINATION.MAX_PAGE_SIZE, // Limit context size to prevent token overflow
       ...(command.scope.book_id && { book_id: command.scope.book_id }),
       ...(command.scope.series_id && { series_id: command.scope.series_id }),
     };
