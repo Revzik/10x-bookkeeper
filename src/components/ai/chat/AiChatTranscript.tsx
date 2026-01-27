@@ -18,7 +18,12 @@ interface AiChatTranscriptProps {
  * - Renders safe plain text (no HTML)
  * - Shows empty state when no messages
  */
-export const AiChatTranscript = ({ messages, emptyStateText, copiedMessageId, onCopyMessage }: AiChatTranscriptProps) => {
+export const AiChatTranscript = ({
+  messages,
+  emptyStateText,
+  copiedMessageId,
+  onCopyMessage,
+}: AiChatTranscriptProps) => {
   const transcriptRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change

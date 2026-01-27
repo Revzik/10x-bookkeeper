@@ -11,6 +11,7 @@ Bookkeeper is a responsive web application designed to help readers retain and r
 - API plan: `.ai/api-plan.md`
 - DB plan: `.ai/db-plan.md`
 - UI plan: `.ai/ui-plan.md`
+- Test plan: `.ai/test-plan.md`
 - Tech stack rationale: `.ai/tech-stack.md`
 
 ## Table of contents
@@ -19,6 +20,7 @@ Bookkeeper is a responsive web application designed to help readers retain and r
 - [Tech stack](#tech-stack)
 - [Getting started locally](#getting-started-locally)
 - [Available scripts](#available-scripts)
+- [Testing](#testing)
 - [Project scope](#project-scope)
 - [Project status](#project-status)
 - [License](#license)
@@ -41,6 +43,10 @@ Readers often “forget earlier chapters” in dense books and long series. Book
 - **shadcn/ui**: accessible component primitives/patterns (Radix + Tailwind)
 - **Supabase (Postgres)**: Auth + database (with **Row Level Security (RLS)** for per-user isolation)
 - **OpenRouter**: chat completions for the Ask experience
+- **Testing**:
+  - **Unit tests**: **Vitest** (TypeScript-native), with **nock** (or MSW in node mode) for deterministic OpenRouter mocks
+  - **UI/component tests**: **React Testing Library** + **@testing-library/user-event** (with **happy-dom** or **jsdom**)
+  - **E2E tests**: **Playwright**
 - **GitHub Actions / Cloudflare Pages**: recommended CI/CD + hosting approach (see `.ai/tech-stack.md`)
 
 ## Getting started locally
@@ -100,6 +106,56 @@ npm run preview
 - **`npm run lint:fix`**: run ESLint and auto-fix where possible
 - **`npm run format`**: format files with Prettier
 - **`npm run supabase`**: run the Supabase CLI
+- **`npm run test`**: run application tests (more in the section below)
+
+## Testing
+
+This project uses **Vitest** for unit/component tests and **Playwright** for E2E tests.
+
+### Test structure
+
+```
+src/
+├── test/              # Test utilities and setup
+│   ├── setup.ts       # Vitest configuration
+│   ├── utils/         # Custom render helpers
+│   └── mocks/         # MSW API mocks
+├── lib/               # Unit tests co-located with code
+│   └── *.test.ts
+└── components/        # Component tests co-located
+    └── *.test.tsx
+
+e2e/
+├── page-objects/      # Page Object Model classes
+├── fixtures/          # Test data
+└── *.spec.ts          # E2E test files
+```
+
+### Running tests
+
+**Unit & Component Tests:**
+
+```bash
+npm run test              # Run tests once
+npm run test:watch        # Watch mode (recommended during development)
+npm run test:ui           # Visual test interface
+npm run test:coverage     # Generate coverage report
+```
+
+**E2E Tests:**
+
+```bash
+npm run test:e2e          # Run E2E tests
+npm run test:e2e:ui       # Interactive UI mode
+npm run test:e2e:debug    # Debug mode (step through tests)
+npm run test:e2e:report   # View HTML report
+```
+
+### Documentation
+
+- **Unit/component testing guide**: `src/test/README.md`
+- **E2E testing guide**: `e2e/README.md`
+- **Test plan**: `.ai/test-plan.md`
 
 ## Project scope
 

@@ -84,8 +84,8 @@ export const DeleteChapterDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cascade Warning */}
           <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-            <strong>Warning:</strong> This will permanently delete all notes and embeddings associated with this chapter.
-            This action cannot be undone.
+            <strong>Warning:</strong> This will permanently delete all notes and embeddings associated with this
+            chapter. This action cannot be undone.
           </div>
 
           {/* Actions */}

@@ -38,21 +38,42 @@ This document captures the current technology choices for the Bookkeeper MVP and
   - **What it is**: Postgres policies that restrict rows based on the authenticated user context.
   - **Why here**: Directly supports the PRD requirement for strict per-user data isolation using `user_id`.
 
-- **pgvector (Postgres extension)**
-  - **What it is**: Vector data type + indexing/search in Postgres.
-  - **Why here**: Enables vector similarity search for RAG without introducing a separate vector database for MVP.
-
 - **Supabase Edge Functions (recommended)**
   - **What it is**: Server-side functions that run close to users.
   - **Why here**: Keeps secrets off the client (OpenRouter keys), orchestrates embedding generation, and can implement GDPR export/deletion workflows safely.
 
-## AI (RAG)
+## AI
 
 - **OpenRouter**
   - **What it is**: A unified API to access multiple LLM providers/models.
   - **Why here**: Speeds up experimentation and lets us choose cost/performance tradeoffs for:
-    - **Embeddings**: embedding note chunks and queries for retrieval
     - **Chat completions**: generating answers with citations from retrieved notes
+
+## Testing
+
+- **Vitest (unit + integration)**
+  - **What it is**: TypeScript-native test runner.
+  - **Why here**: Fast unit tests for Zod schemas, services, and helpers; supports mocking for deterministic AI tests.
+
+- **React Testing Library + @testing-library/user-event (UI/component tests)**
+  - **What it is**: DOM-focused component testing tools that simulate real user interactions.
+  - **Why here**: Validates key UI behavior (forms, CRUD flows, Ask chat states) with mocked APIs.
+
+- **happy-dom or jsdom (test DOM)**
+  - **What it is**: DOM implementations for running component tests in Node.
+  - **Why here**: Enables RTL tests without a real browser.
+
+- **MSW (API mocking)**
+  - **What it is**: Network-layer mocking for `fetch`/HTTP requests.
+  - **Why here**: Deterministic component tests that mock `/api/v1/*` without brittle stubs.
+
+- **nock (LLM HTTP mocking)**
+  - **What it is**: HTTP mocking for Node.
+  - **Why here**: Deterministic integration/unit tests for OpenRouter calls (alternative to MSW in node mode).
+
+- **Playwright (E2E)**
+  - **What it is**: Cross-browser end-to-end testing framework.
+  - **Why here**: Exercises real user journeys across Astro pages, React islands, and server middleware (auth redirects, CRUD flows, Ask flows).
 
 ## CI/CD and Hosting
 

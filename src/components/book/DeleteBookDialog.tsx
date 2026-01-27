@@ -74,8 +74,8 @@ export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDele
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cascade Warning (always shown, not a toggle) */}
           <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-            <strong>Warning:</strong> This will permanently delete all chapters and notes associated with this book. This
-            action cannot be undone.
+            <strong>Warning:</strong> This will permanently delete all chapters and notes associated with this book.
+            This action cannot be undone.
           </div>
 
           {/* Actions */}
