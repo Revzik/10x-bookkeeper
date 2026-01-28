@@ -23,38 +23,38 @@ export const BookRow = ({ book, onClick }: BookRowProps) => {
           onClick();
         }
       }}
-      data-test-id={`book-card-${book.id}`}
+      data-testid={`book-card-${book.id}`}
     >
       <CardContent className="flex items-center gap-4 p-4">
         {/* Main info */}
         <div className="flex-1">
-          <h3 className="font-semibold text-lg text-card-foreground" data-test-id="book-card-title">
+          <h3 className="font-semibold text-lg text-card-foreground" data-testid="book-card-title">
             {book.title}
           </h3>
-          <p className="text-sm text-muted-foreground" data-test-id="book-card-author">
+          <p className="text-sm text-muted-foreground" data-testid="book-card-author">
             {book.author}
           </p>
         </div>
 
         {/* Status badge */}
-        <div data-test-id="book-card-status">
+        <div data-testid="book-card-status">
           <BookStatusBadge status={book.status} />
         </div>
 
         {/* Progress */}
-        <div className="text-right" data-test-id="book-card-progress">
-          <div className="text-sm font-medium text-foreground" data-test-id="book-card-progress-label">
+        <div className="text-right" data-testid="book-card-progress">
+          <div className="text-sm font-medium text-foreground" data-testid="book-card-progress-label">
             {book.progressLabel}
           </div>
-          <div className="text-xs text-muted-foreground" data-test-id="book-card-progress-percent">
+          <div className="text-xs text-muted-foreground" data-testid="book-card-progress-percent">
             {book.progressPercent}%
           </div>
         </div>
 
         {/* Updated timestamp */}
-        <div className="text-right" data-test-id="book-card-updated">
+        <div className="text-right" data-testid="book-card-updated">
           <div className="text-xs text-muted-foreground">Updated</div>
-          <div className="text-xs text-foreground" data-test-id="book-card-updated-label">
+          <div className="text-xs text-foreground" data-testid="book-card-updated-label">
             {book.updatedAtLabel}
           </div>
         </div>

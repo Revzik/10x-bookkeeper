@@ -359,8 +359,6 @@ Reading sessions are **present in the DB types** (`reading_sessions`) but **post
 - `OPENROUTER_API_KEY` (server-side only)
 
 **E2E Testing (Cloud):**
-- `E2E_SUPABASE_URL` - dedicated cloud Supabase project URL
-- `E2E_SUPABASE_KEY` - dedicated cloud Supabase anon key
 - `E2E_TEST_USER_ID` - UUID of predefined test user
 - `E2E_TEST_USER_EMAIL` - email of predefined test user
 - `E2E_TEST_USER_PASSWORD` - password of predefined test user

@@ -32,7 +32,7 @@ export class AddBookDialog {
   constructor(page: Page) {
     this.page = page;
 
-    // Use data-test-id for resilient selection
+    // Use data-testid for resilient selection
     this.dialog = page.getByTestId("dialog-add-book");
     this.titleInput = page.getByTestId("input-book-title");
     this.authorInput = page.getByTestId("input-book-author");

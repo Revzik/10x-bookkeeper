@@ -103,7 +103,7 @@ const LibraryPage = ({ userEmail }: LibraryPageProps) => {
           </h1>
           <div>
             {activeTab === "books" ? (
-              <Button onClick={() => setIsAddBookOpen(true)} data-test-id="btn-add-book">
+              <Button onClick={() => setIsAddBookOpen(true)} data-testid="btn-add-book">
                 Add Book
               </Button>
             ) : (

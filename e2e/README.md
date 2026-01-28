@@ -24,8 +24,8 @@ E2E tests run against a **dedicated Supabase cloud project** separate from devel
    
    ```bash
    # E2E Testing Cloud Environment
-   E2E_SUPABASE_URL=https://your-project.supabase.co
-   E2E_SUPABASE_KEY=your-public-key
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-public-key
    
    # Predefined Test User
    E2E_TEST_USER_ID=uuid-of-test-user
@@ -53,7 +53,8 @@ For CI/CD pipelines, store E2E credentials as secrets:
 - name: Run E2E tests
   env:
     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-    SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+    SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    SUPABASE_PUBLIC_KEY: ${{ secrets.SUPABASE_PUBLIC_KEY }}
     E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID }}
     E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
     E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}

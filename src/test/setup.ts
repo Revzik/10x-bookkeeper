@@ -15,7 +15,7 @@ afterEach(() => {
 
 // Mock environment variables for tests
 process.env.SUPABASE_URL = "http://localhost:54321";
-process.env.SUPABASE_KEY = "test-anon-key";
+process.env.SUPABASE_KEY = "test-public-key";
 process.env.OPENROUTER_API_KEY = "test-openrouter-key";
 
 // Suppress console warnings in tests (optional - remove if you want to see warnings)

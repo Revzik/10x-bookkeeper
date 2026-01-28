@@ -34,7 +34,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
   return (
     <div className="flex items-center justify-between">
       {/* Page info */}
-      <div className="text-sm text-muted-foreground" data-test-id="pagination-info">
+      <div className="text-sm text-muted-foreground" data-testid="pagination-info">
         Showing {(current_page - 1) * page_size + 1} to {Math.min(current_page * page_size, total_items)} of{" "}
         {total_items} results
       </div>
@@ -44,7 +44,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
         <div className="flex items-center gap-2">
           <Label className="text-sm text-muted-foreground">Per page:</Label>
           <Select value={String(page_size)} onValueChange={(value) => handleSizeChange(Number(value))}>
-            <SelectTrigger className="w-[80px]" data-test-id="select-page-size">
+            <SelectTrigger className="w-[80px]" data-testid="select-page-size">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -71,7 +71,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
             size="sm"
             onClick={handlePrevious}
             disabled={current_page === 1}
-            data-test-id="btn-pagination-previous"
+            data-testid="btn-pagination-previous"
           >
             Previous
           </Button>
@@ -85,7 +85,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
             size="sm"
             onClick={handleNext}
             disabled={current_page === total_pages}
-            data-test-id="btn-pagination-next"
+            data-testid="btn-pagination-next"
           >
             Next
           </Button>

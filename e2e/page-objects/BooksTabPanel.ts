@@ -30,7 +30,7 @@ export class BooksTabPanel {
     // Tab panel
     this.tabPanel = page.getByTestId("tab-panel-books");
 
-    // Toolbar controls - using data-test-id for resilience
+    // Toolbar controls - using data-testid for resilience
     this.searchInput = page.getByTestId("input-books-search");
     this.statusFilter = page.getByTestId("select-books-status-filter");
     this.seriesFilter = page.getByTestId("select-books-series-filter");
@@ -198,9 +198,18 @@ export class BooksTabPanel {
    * Get a book card by title (first match)
    */
   async getBookCardByTitle(title: string) {
-    const titleLocator = this.page.getByTestId("book-card-title").filter({ hasText: title });
-    const card = titleLocator.locator("..").locator("..");
-    const cardId = await card.getAttribute("data-test-id");
+    // Get all book cards
+    const allCards = this.page.locator('[data-testid^="book-card-"]');
+
+    // Find the one containing the title
+    const card = allCards.filter({
+      has: this.page.getByTestId("book-card-title").filter({ hasText: title }),
+    });
+
+    // Wait for the card to be attached to DOM
+    await card.waitFor({ state: "attached" });
+
+    const cardId = await card.getAttribute("data-testid");
 
     if (!cardId) {
       throw new Error(`Book card with title "${title}" not found`);

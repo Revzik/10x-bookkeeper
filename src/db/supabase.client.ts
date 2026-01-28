@@ -5,13 +5,13 @@ import type { AstroCookies } from "astro";
 import type { Database } from "./database.types.ts";
 
 const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
 
 /**
  * Legacy client for backward compatibility
  * @deprecated Use createSupabaseServerInstance for SSR contexts
  */
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = createClient<Database>(supabaseUrl, supabaseKey);
 
 /**
  * Cookie options for Supabase Auth session management
@@ -43,7 +43,7 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
  * @returns Supabase server client configured for cookie-based auth
  */
 export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
-  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookieOptions,
     cookies: {
       getAll() {

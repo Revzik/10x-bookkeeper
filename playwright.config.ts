@@ -43,6 +43,13 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: /.*\.setup\.ts/,
+      teardown: "cleanup",
+    },
+
+    // Cleanup project - runs after all tests to clean database
+    {
+      name: "cleanup",
+      testMatch: /.*\.teardown\.ts/,
     },
 
     // Chromium project with authenticated state

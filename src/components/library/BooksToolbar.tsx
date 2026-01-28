@@ -82,13 +82,13 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
           maxLength={50}
-          data-test-id="input-books-search"
+          data-testid="input-books-search"
         />
       </div>
 
       {/* Status filter */}
       <Select value={query.status || "all"} onValueChange={handleStatusChange}>
-        <SelectTrigger className="w-[180px]" data-test-id="select-books-status-filter">
+        <SelectTrigger className="w-[180px]" data-testid="select-books-status-filter">
           <SelectValue placeholder="All Status" />
         </SelectTrigger>
         <SelectContent>
@@ -109,7 +109,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
 
       {/* Series filter */}
       <Select value={query.series_id || "all"} onValueChange={handleSeriesChange}>
-        <SelectTrigger className="w-[180px]" data-test-id="select-books-series-filter">
+        <SelectTrigger className="w-[180px]" data-testid="select-books-series-filter">
           <SelectValue placeholder="All Series" />
         </SelectTrigger>
         <SelectContent>
@@ -126,7 +126,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
 
       {/* Sort */}
       <Select value={query.sort} onValueChange={handleSortChange}>
-        <SelectTrigger className="w-[140px]" data-test-id="select-books-sort">
+        <SelectTrigger className="w-[140px]" data-testid="select-books-sort">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -154,7 +154,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
         size="icon"
         onClick={handleOrderToggle}
         aria-label={`Sort ${query.order === "asc" ? "ascending" : "descending"}`}
-        data-test-id="btn-books-sort-order"
+        data-testid="btn-books-sort-order"
       >
         {query.order === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </Button>

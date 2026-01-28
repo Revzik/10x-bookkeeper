@@ -23,7 +23,7 @@ export class BookCard {
     // Card container
     this.card = page.getByTestId(`book-card-${bookId}`);
 
-    // Card elements (scoped to this specific card) - using data-test-id for resilience
+    // Card elements (scoped to this specific card) - using data-testid for resilience
     this.title = this.card.getByTestId("book-card-title");
     this.author = this.card.getByTestId("book-card-author");
     this.statusBadge = this.card.getByTestId("book-card-status");

@@ -47,11 +47,11 @@ export class LibraryPage {
   }
 
   async isOnBooksTab() {
-    return (await this.booksTab.getAttribute("data-state")) === "active";
+    return (await this.booksTab.getAttribute("aria-selected")) === "true";
   }
 
   async isOnSeriesTab() {
-    return (await this.seriesTab.getAttribute("data-state")) === "active";
+    return (await this.seriesTab.getAttribute("aria-selected")) === "true";
   }
 
   async switchToBooksTab() {

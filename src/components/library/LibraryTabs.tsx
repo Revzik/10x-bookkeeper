@@ -16,18 +16,18 @@ export const LibraryTabs = ({ activeTab, onTabChange, booksPanel, seriesPanel }:
   return (
     <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as LibraryTabViewModel)}>
       <TabsList>
-        <TabsTrigger value="books" data-test-id="tab-books">
+        <TabsTrigger value="books" data-testid="tab-books">
           Books
         </TabsTrigger>
-        <TabsTrigger value="series" data-test-id="tab-series">
+        <TabsTrigger value="series" data-testid="tab-series">
           Series
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="books" data-test-id="tab-panel-books">
+      <TabsContent value="books" data-testid="tab-panel-books">
         {booksPanel}
       </TabsContent>
-      <TabsContent value="series" data-test-id="tab-panel-series">
+      <TabsContent value="series" data-testid="tab-panel-series">
         {seriesPanel}
       </TabsContent>
     </Tabs>
