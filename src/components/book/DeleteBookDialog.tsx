@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { ApiErrorResponseDto } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useBookMutations } from "@/hooks/useBookMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -18,35 +17,31 @@ interface DeleteBookDialogProps {
  * Features:
  * - Clear warning about cascade behavior (deletes chapters, notes, embeddings, sessions)
  * - Destructive styling
- * - Handles NOT_FOUND (already deleted)
+ * - Handles NOT_FOUND (already deleted) - treats as success
+ * - Uses custom hook for consistent state management and error handling
  */
 export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDeleted }: DeleteBookDialogProps) => {
-  const [submitting, setSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { deleteBook, isDeleting } = useBookMutations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    setSubmitting(true);
 
-    try {
-      await apiClient.delete(`/books/${bookId}`);
+    const result = await deleteBook(bookId);
 
+    if (result.success) {
       onDeleted();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
+    } else {
       // Handle NOT_FOUND (already deleted) - treat as success
-      if (apiError.error?.code === "NOT_FOUND") {
+      if (result.error?.generalError?.includes("not found")) {
         onDeleted();
         onOpenChange(false);
         return;
       }
 
-      setGeneralError(apiError.error?.message || "Failed to delete book");
-    } finally {
-      setSubmitting(false);
+      setGeneralError(result.error?.generalError || "Failed to delete book");
     }
   };
 
@@ -80,11 +75,11 @@ export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDele
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" disabled={submitting}>
-              {submitting ? "Deleting..." : "Delete Book"}
+            <Button type="submit" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete Book"}
             </Button>
           </div>
         </form>

@@ -1,18 +1,14 @@
 import { useState, useEffect } from "react";
-import type {
-  ChapterSelectOptionViewModel,
-  CreateNoteCommand,
-  CreateNoteResponseDto,
-  ApiErrorResponseDto,
-} from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ChapterSelectOptionViewModel } from "@/types";
+import { createNoteFormSchema, type CreateNoteFormData, MAX_CONTENT_LENGTH } from "@/lib/validation/note-form.schemas";
+import { useNoteMutations } from "@/hooks/useNoteMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const MAX_CONTENT_LENGTH = 10000;
 
 interface AddNoteDialogProps {
   open: boolean;
@@ -26,10 +22,12 @@ interface AddNoteDialogProps {
  * AddNoteDialog - Create a new note for a book chapter
  *
  * Features:
+ * - React Hook Form for state management
  * - Chapter selection (required)
  * - Content textarea with validation (required, max 10,000 chars)
  * - Character counter
- * - Error handling for validation and API errors
+ * - Zod validation schema
+ * - Field-level and general error handling
  */
 export const AddNoteDialog = ({
   open,
@@ -38,98 +36,64 @@ export const AddNoteDialog = ({
   initialChapterId,
   onCreated,
 }: AddNoteDialogProps) => {
-  const [formState, setFormState] = useState({
-    chapter_id: initialChapterId || "",
-    content: "",
-  });
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { createNote, isCreating } = useNoteMutations();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+    reset,
+    setError,
+    watch,
+  } = useForm<CreateNoteFormData>({
+    resolver: zodResolver(createNoteFormSchema),
+    defaultValues: {
+      chapter_id: initialChapterId || "",
+      content: "",
+    },
+  });
 
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setFormState({
+      reset({
         chapter_id: initialChapterId || "",
         content: "",
       });
-      setErrors({});
       setGeneralError(null);
     }
-  }, [open, initialChapterId]);
+  }, [open, initialChapterId, reset]);
 
-  const contentLength = formState.content.length;
-  const trimmedLength = formState.content.trim().length;
+  const contentValue = watch("content");
+  const contentLength = contentValue.length;
+  const trimmedLength = contentValue.trim().length;
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH;
   const isContentEmpty = trimmedLength === 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const onSubmit = async (data: CreateNoteFormData) => {
     setGeneralError(null);
 
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
+    const result = await createNote(data.chapter_id, {
+      content: data.content.trim(),
+    });
 
-    if (!formState.chapter_id) {
-      newErrors.chapter_id = "Chapter is required";
-    }
-
-    if (isContentEmpty) {
-      newErrors.content = "Content is required";
-    }
-
-    if (isContentTooLong) {
-      newErrors.content = `Content must be ${MAX_CONTENT_LENGTH} characters or less`;
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const command: CreateNoteCommand = {
-        content: formState.content.trim(),
-      };
-
-      await apiClient.postJson<CreateNoteCommand, CreateNoteResponseDto>(
-        `/chapters/${formState.chapter_id}/notes`,
-        command
-      );
-
+    if (result.success) {
       onCreated();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (chapter was deleted)
-      if (apiError.error?.code === "NOT_FOUND") {
-        setGeneralError("This chapter no longer exists. Please refresh and try again.");
-        return;
-      }
-
-      // Handle validation errors
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        const zodIssues = apiError.error.details as { path: string[]; message: string }[];
-        const fieldErrors: Record<string, string> = {};
-
-        zodIssues.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+    } else {
+      // Handle field-level errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof CreateNoteFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else if (apiError.error?.code === "RATE_LIMITED") {
-        setGeneralError("Too many requests. Please wait a moment and try again.");
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to create note");
       }
-    } finally {
-      setSubmitting(false);
+
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
@@ -155,36 +119,38 @@ export const AddNoteDialog = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Chapter select */}
           <div className="space-y-2">
             <Label htmlFor="note-chapter">
               Chapter <span className="text-destructive">*</span>
             </Label>
-            <Select
-              value={formState.chapter_id}
-              onValueChange={(value) => setFormState({ ...formState, chapter_id: value })}
-              disabled={submitting}
-            >
-              <SelectTrigger
-                id="note-chapter"
-                className="w-full"
-                aria-invalid={!!errors.chapter_id}
-                aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
-              >
-                <SelectValue placeholder="Select a chapter" />
-              </SelectTrigger>
-              <SelectContent>
-                {chapterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="chapter_id"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange} disabled={isCreating}>
+                  <SelectTrigger
+                    id="note-chapter"
+                    className="w-full"
+                    aria-invalid={!!errors.chapter_id}
+                    aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
+                  >
+                    <SelectValue placeholder="Select a chapter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {chapterOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.chapter_id && (
               <p id="note-chapter-error" className="text-sm text-destructive" role="alert">
-                {errors.chapter_id}
+                {errors.chapter_id.message}
               </p>
             )}
           </div>
@@ -201,9 +167,8 @@ export const AddNoteDialog = ({
             </div>
             <Textarea
               id="note-content"
-              value={formState.content}
-              onChange={(e) => setFormState({ ...formState, content: e.target.value })}
-              disabled={submitting}
+              {...register("content")}
+              disabled={isCreating}
               placeholder="Enter your note content..."
               rows={10}
               aria-invalid={!!errors.content}
@@ -212,18 +177,18 @@ export const AddNoteDialog = ({
             />
             {errors.content && (
               <p id="note-content-error" className="text-sm text-destructive" role="alert">
-                {errors.content}
+                {errors.content.message}
               </p>
             )}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || isContentEmpty || isContentTooLong}>
-              {submitting ? "Creating..." : "Create Note"}
+            <Button type="submit" disabled={isCreating || isContentEmpty || isContentTooLong}>
+              {isCreating ? "Creating..." : "Create Note"}
             </Button>
           </div>
         </form>

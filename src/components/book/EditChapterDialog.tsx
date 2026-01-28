@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import type {
-  ChapterListItemViewModel,
-  UpdateChapterCommand,
-  UpdateChapterResponseDto,
-  ApiErrorResponseDto,
-} from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ChapterListItemViewModel } from "@/types";
+import { updateChapterFormSchema, type UpdateChapterFormData } from "@/lib/validation/chapter-form.schemas";
+import { useChapterMutations } from "@/hooks/useChapterMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,68 +20,57 @@ interface EditChapterDialogProps {
  * EditChapterDialog - Edit chapter title and/or order
  *
  * Features:
+ * - React Hook Form for state management
  * - Pre-populated with existing chapter data
  * - Only sends changed fields to PATCH endpoint
- * - Client-side validation (at least one field must change)
+ * - Automatic change detection via dirtyFields
+ * - Zod validation schema
  * - Server error mapping to form fields
  */
 export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: EditChapterDialogProps) => {
-  const [formState, setFormState] = useState({
-    title: chapter.title,
-    order: chapter.order.toString(),
-  });
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { updateChapter, isUpdating } = useChapterMutations();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, dirtyFields },
+    reset,
+    setError,
+  } = useForm<UpdateChapterFormData>({
+    resolver: zodResolver(updateChapterFormSchema),
+    defaultValues: {
+      title: chapter.title,
+      order: chapter.order,
+    },
+  });
 
   // Reset form when chapter changes or dialog opens
   useEffect(() => {
     if (open) {
-      setFormState({
+      reset({
         title: chapter.title,
-        order: chapter.order.toString(),
+        order: chapter.order,
       });
-      setErrors({});
       setGeneralError(null);
     }
-  }, [open, chapter]);
+  }, [open, chapter, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const onSubmit = async (data: UpdateChapterFormData) => {
     setGeneralError(null);
 
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
-
-    // Title validation (if being changed)
-    const titleChanged = formState.title.trim() !== chapter.title;
-    if (titleChanged && !formState.title.trim()) {
-      newErrors.title = "Title cannot be empty";
-    }
-
-    // Order validation (if being changed)
-    const orderParsed = parseInt(formState.order, 10);
-    const orderChanged = orderParsed !== chapter.order;
-    if (orderChanged && (isNaN(orderParsed) || orderParsed < 0)) {
-      newErrors.order = "Order must be 0 or greater";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     // Build command - only include fields that changed
-    const command: UpdateChapterCommand = {};
+    const command: {
+      title?: string;
+      order?: number;
+    } = {};
 
-    if (titleChanged) {
-      command.title = formState.title.trim();
+    if (dirtyFields.title) {
+      command.title = data.title.trim();
     }
 
-    if (orderChanged) {
-      command.order = orderParsed;
+    if (dirtyFields.order) {
+      command.order = data.order;
     }
 
     // If nothing changed, show message and don't submit
@@ -92,44 +79,28 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
       return;
     }
 
-    setSubmitting(true);
+    const result = await updateChapter(chapter.id, command);
 
-    try {
-      await apiClient.patchJson<UpdateChapterCommand, UpdateChapterResponseDto>(`/chapters/${chapter.id}`, command);
-
+    if (result.success) {
       onUpdated();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (chapter was deleted)
-      if (apiError.error?.code === "NOT_FOUND") {
-        setGeneralError("This chapter no longer exists");
-        return;
-      }
-
-      // Handle validation errors
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        const zodIssues = apiError.error.details as { path: string[]; message: string }[];
-        const fieldErrors: Record<string, string> = {};
-
-        zodIssues.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+    } else {
+      // Handle field-level errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof UpdateChapterFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to update chapter");
       }
-    } finally {
-      setSubmitting(false);
+
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setErrors({});
     setGeneralError(null);
   };
 
@@ -151,7 +122,7 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="edit-title">
@@ -160,15 +131,14 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
             <Input
               id="edit-title"
               type="text"
-              value={formState.title}
-              onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-              disabled={submitting}
+              {...register("title")}
+              disabled={isUpdating}
               aria-invalid={!!errors.title}
               aria-describedby={errors.title ? "edit-title-error" : undefined}
             />
             {errors.title && (
               <p id="edit-title-error" className="text-sm text-destructive" role="alert">
-                {errors.title}
+                {errors.title.message}
               </p>
             )}
           </div>
@@ -181,26 +151,25 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
               type="number"
               min="0"
               step="1"
-              value={formState.order}
-              onChange={(e) => setFormState({ ...formState, order: e.target.value })}
-              disabled={submitting}
+              {...register("order")}
+              disabled={isUpdating}
               aria-invalid={!!errors.order}
               aria-describedby={errors.order ? "edit-order-error" : undefined}
             />
             {errors.order && (
               <p id="edit-order-error" className="text-sm text-destructive" role="alert">
-                {errors.order}
+                {errors.order.message}
               </p>
             )}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isUpdating}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

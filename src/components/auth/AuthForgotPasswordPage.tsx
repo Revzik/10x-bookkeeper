@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthCard } from "./AuthCard";
 import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
-import { forgotPasswordSchema } from "@/lib/auth/schemas";
-import { apiClient } from "@/lib/api/client";
-import type { ApiErrorResponseDto } from "@/types";
+import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/auth/schemas";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 
 /**
  * AuthForgotPasswordPage - Request password reset email
@@ -21,57 +22,36 @@ import type { ApiErrorResponseDto } from "@/types";
  * - Loading state during submission
  */
 export const AuthForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const { requestPasswordReset } = useAuthMutations();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setError(null);
 
-    // Client-side validation using Zod schema
-    const result = forgotPasswordSchema.safeParse({ email });
+    const result = await requestPasswordReset(data);
 
-    if (!result.success) {
-      setError(result.error.errors[0].message);
+    // Always show success state (prevents account enumeration)
+    // The hook handles returning success for most errors
+    if (result.success) {
+      setSubmitted(true);
       return;
     }
 
-    setSubmitting(true);
-
-    try {
-      // Call the password reset API endpoint
-      const { email: validatedEmail } = result.data;
-      await apiClient.postJson<typeof result.data, { ok: boolean }>("/auth/password-reset", {
-        email: validatedEmail,
-      });
-
-      // Always show success state (prevents account enumeration)
-      setSubmitted(true);
-    } catch (error) {
-      // Handle API errors
-      const apiError = error as ApiErrorResponseDto;
-
-      if (apiError.error) {
-        // Only show error for rate limiting or validation
-        switch (apiError.error.code) {
-          case "RATE_LIMITED":
-            setError("Too many requests. Please try again later.");
-            break;
-          case "VALIDATION_ERROR":
-            setError(apiError.error.message);
-            break;
-          default:
-            // For all other errors, still show success to prevent enumeration
-            setSubmitted(true);
-        }
-      } else {
-        // Unknown error format, show success to prevent enumeration
-        setSubmitted(true);
-      }
-    } finally {
-      setSubmitting(false);
+    // Only rate limiting or validation errors are shown
+    if (result.error?.generalError) {
+      setError(result.error.generalError);
     }
   };
 
@@ -129,7 +109,7 @@ export const AuthForgotPasswordPage = () => {
       {error && <AuthErrorBanner message={error} />}
 
       {/* Request form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="forgot-email">
@@ -139,16 +119,16 @@ export const AuthForgotPasswordPage = () => {
             id="forgot-email"
             type="email"
             autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={submitting}
             placeholder="you@example.com"
+            disabled={isSubmitting}
+            {...register("email")}
           />
+          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
 
         {/* Submit button */}
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Sending..." : "Send reset link"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Sending..." : "Send reset link"}
         </Button>
       </form>
 

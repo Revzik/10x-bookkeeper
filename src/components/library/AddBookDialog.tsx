@@ -1,12 +1,9 @@
 import { useState } from "react";
-import type {
-  BookStatus,
-  SeriesSelectOptionViewModel,
-  CreateBookCommand,
-  CreateBookResponseDto,
-  ApiErrorResponseDto,
-} from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { SeriesSelectOptionViewModel, CreateBookCommand } from "@/types";
+import { bookFormSchema, type BookFormData } from "@/lib/validation/book-form.schemas";
+import { useBookMutations } from "@/hooks/useBookMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,118 +19,87 @@ interface AddBookDialogProps {
 
 /**
  * AddBookDialog - Create book flow
+ *
+ * Features:
+ * - React Hook Form for state management
+ * - Zod validation schema
+ * - Automatic form reset after successful creation
+ * - Field-level and general error handling
  */
 export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: AddBookDialogProps) => {
-  const [formState, setFormState] = useState({
-    title: "",
-    author: "",
-    total_pages: "",
-    status: "want_to_read" as BookStatus,
-    series_id: "",
-    series_order: "",
-    cover_image_url: "",
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const { createBook, isCreating } = useBookMutations();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+    reset,
+    setError,
+    watch,
+  } = useForm({
+    resolver: zodResolver(bookFormSchema),
+    defaultValues: {
+      title: "",
+      author: "",
+      total_pages: 0,
+      current_page: 0,
+      status: "want_to_read" as const,
+      series_id: "",
+      series_order: undefined as number | null | undefined,
+      cover_image_url: "",
+    },
   });
 
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const onSubmit = async (data: BookFormData) => {
     setGeneralError(null);
 
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
-
-    if (!formState.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    if (!formState.author.trim()) {
-      newErrors.author = "Author is required";
-    }
-
-    const totalPages = parseInt(formState.total_pages, 10);
-    if (!formState.total_pages || isNaN(totalPages) || totalPages <= 0) {
-      newErrors.total_pages = "Total pages must be a positive number";
-    }
-
-    if (formState.series_order) {
-      const seriesOrder = parseInt(formState.series_order, 10);
-      if (isNaN(seriesOrder) || seriesOrder < 1) {
-        newErrors.series_order = "Series order must be at least 1";
-      }
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Build command
+    // Build command - only include fields that are present
     const command: CreateBookCommand = {
-      title: formState.title.trim(),
-      author: formState.author.trim(),
-      total_pages: totalPages,
-      status: formState.status,
+      title: data.title.trim(),
+      author: data.author.trim(),
+      total_pages: data.total_pages,
+      status: data.status,
     };
 
-    if (formState.series_id) {
-      command.series_id = formState.series_id;
+    if (data.series_id) {
+      command.series_id = data.series_id;
     }
 
-    if (formState.series_order) {
-      command.series_order = parseInt(formState.series_order, 10);
+    if (data.series_order) {
+      command.series_order = data.series_order;
     }
 
-    if (formState.cover_image_url.trim()) {
-      command.cover_image_url = formState.cover_image_url.trim();
+    if (data.cover_image_url && data.cover_image_url.trim()) {
+      command.cover_image_url = data.cover_image_url.trim();
     }
 
-    setSubmitting(true);
+    const result = await createBook(command);
 
-    try {
-      await apiClient.postJson<CreateBookCommand, CreateBookResponseDto>("/books", command);
-
+    if (result.success) {
       onCreated();
-
-      // Reset form
-      setFormState({
-        title: "",
-        author: "",
-        total_pages: "",
-        status: "want_to_read",
-        series_id: "",
-        series_order: "",
-        cover_image_url: "",
-      });
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        // Map Zod validation errors to form fields
-        const fieldErrors: Record<string, string> = {};
-
-        apiError.error.details.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+      reset(); // Reset form to default values
+    } else {
+      // Handle errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof BookFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to create book");
       }
-    } finally {
-      setSubmitting(false);
+
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setErrors({});
     setGeneralError(null);
   };
+
+  const seriesIdValue = watch("series_id");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,20 +114,14 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
               Title <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="title"
-              type="text"
-              value={formState.title}
-              onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-              data-testid="input-book-title"
-            />
-            {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
+            <Input id="title" type="text" {...register("title")} disabled={isCreating} data-testid="input-book-title" />
+            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
           {/* Author */}
@@ -172,11 +132,11 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
             <Input
               id="author"
               type="text"
-              value={formState.author}
-              onChange={(e) => setFormState({ ...formState, author: e.target.value })}
+              {...register("author")}
+              disabled={isCreating}
               data-testid="input-book-author"
             />
-            {errors.author && <p className="text-sm text-destructive">{errors.author}</p>}
+            {errors.author && <p className="text-sm text-destructive">{errors.author.message}</p>}
           </div>
 
           {/* Total Pages */}
@@ -188,74 +148,88 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               id="total_pages"
               type="number"
               min="1"
-              value={formState.total_pages}
-              onChange={(e) => setFormState({ ...formState, total_pages: e.target.value })}
+              {...register("total_pages", { valueAsNumber: true })}
+              disabled={isCreating}
               data-testid="input-book-total-pages"
             />
-            {errors.total_pages && <p className="text-sm text-destructive">{errors.total_pages}</p>}
+            {errors.total_pages && <p className="text-sm text-destructive">{errors.total_pages.message}</p>}
           </div>
 
           {/* Status */}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select
-              value={formState.status}
-              onValueChange={(value) => setFormState({ ...formState, status: value as BookStatus })}
-            >
-              <SelectTrigger data-testid="select-book-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="want_to_read" data-testid="option-book-status-want-to-read">
-                  Want to Read
-                </SelectItem>
-                <SelectItem value="reading" data-testid="option-book-status-reading">
-                  Reading
-                </SelectItem>
-                <SelectItem value="completed" data-testid="option-book-status-completed">
-                  Completed
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange} disabled={isCreating}>
+                  <SelectTrigger data-testid="select-book-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="want_to_read" data-testid="option-book-status-want-to-read">
+                      Want to Read
+                    </SelectItem>
+                    <SelectItem value="reading" data-testid="option-book-status-reading">
+                      Reading
+                    </SelectItem>
+                    <SelectItem value="completed" data-testid="option-book-status-completed">
+                      Completed
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {/* Series */}
           <div className="space-y-2">
             <Label htmlFor="series_id">Series</Label>
-            <Select
-              value={formState.series_id || "none"}
-              onValueChange={(value) => setFormState({ ...formState, series_id: value === "none" ? "" : value })}
-            >
-              <SelectTrigger data-testid="select-book-series">
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" data-testid="option-book-series-none">
-                  None
-                </SelectItem>
-                {seriesOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} data-testid={`option-book-series-${option.value}`}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.series_id && <p className="text-sm text-destructive">{errors.series_id}</p>}
+            <Controller
+              control={control}
+              name="series_id"
+              render={({ field }) => (
+                <Select
+                  value={field.value || "none"}
+                  onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
+                  disabled={isCreating}
+                >
+                  <SelectTrigger data-testid="select-book-series">
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" data-testid="option-book-series-none">
+                      None
+                    </SelectItem>
+                    {seriesOptions.map((option) => (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        data-testid={`option-book-series-${option.value}`}
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.series_id && <p className="text-sm text-destructive">{errors.series_id.message}</p>}
           </div>
 
           {/* Series Order */}
-          {formState.series_id && (
+          {seriesIdValue && (
             <div className="space-y-2">
               <Label htmlFor="series_order">Order in Series</Label>
               <Input
                 id="series_order"
                 type="number"
                 min="1"
-                value={formState.series_order}
-                onChange={(e) => setFormState({ ...formState, series_order: e.target.value })}
+                {...register("series_order", { valueAsNumber: true })}
+                disabled={isCreating}
                 data-testid="input-book-series-order"
               />
-              {errors.series_order && <p className="text-sm text-destructive">{errors.series_order}</p>}
+              {errors.series_order && <p className="text-sm text-destructive">{errors.series_order.message}</p>}
             </div>
           )}
 
@@ -265,11 +239,11 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
             <Input
               id="cover_image_url"
               type="url"
-              value={formState.cover_image_url}
-              onChange={(e) => setFormState({ ...formState, cover_image_url: e.target.value })}
+              {...register("cover_image_url")}
+              disabled={isCreating}
               data-testid="input-book-cover-image-url"
             />
-            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url}</p>}
+            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
           </div>
 
           {/* Actions */}
@@ -278,13 +252,13 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={submitting}
+              disabled={isCreating}
               data-testid="btn-cancel-add-book"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting} data-testid="btn-create-book">
-              {submitting ? "Creating..." : "Create Book"}
+            <Button type="submit" disabled={isCreating} data-testid="btn-create-book">
+              {isCreating ? "Creating..." : "Create Book"}
             </Button>
           </div>
         </form>

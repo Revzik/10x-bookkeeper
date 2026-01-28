@@ -1,6 +1,9 @@
-import { useState } from "react";
-import type { CreateSeriesCommand, CreateSeriesResponseDto, ApiErrorResponseDto } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { CreateSeriesCommand } from "@/types";
+import { seriesFormSchema, type SeriesFormData } from "@/lib/validation/series-form.schemas";
+import { useSeriesMutations } from "@/hooks/useSeriesMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,87 +18,81 @@ interface AddSeriesDialogProps {
 
 /**
  * AddSeriesDialog - Create series flow
+ *
+ * Features:
+ * - React Hook Form for state management
+ * - Zod validation schema
+ * - Field-level and general error handling
  */
 export const AddSeriesDialog = ({ open, onOpenChange, onCreated }: AddSeriesDialogProps) => {
-  const [formState, setFormState] = useState({
-    title: "",
-    description: "",
-    cover_image_url: "",
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const { createSeries, isCreating } = useSeriesMutations();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setError,
+  } = useForm<SeriesFormData>({
+    resolver: zodResolver(seriesFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      cover_image_url: "",
+    },
   });
 
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setGeneralError(null);
-
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
-
-    if (!formState.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Build command
-    const command: CreateSeriesCommand = {
-      title: formState.title.trim(),
-    };
-
-    if (formState.description.trim()) {
-      command.description = formState.description.trim();
-    }
-
-    if (formState.cover_image_url.trim()) {
-      command.cover_image_url = formState.cover_image_url.trim();
-    }
-
-    setSubmitting(true);
-
-    try {
-      await apiClient.postJson<CreateSeriesCommand, CreateSeriesResponseDto>("/series", command);
-
-      onCreated();
-
-      // Reset form
-      setFormState({
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      reset({
         title: "",
         description: "",
         cover_image_url: "",
       });
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
+      setGeneralError(null);
+    }
+  }, [open, reset]);
 
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        // Map Zod validation errors to form fields
-        const zodIssues = apiError.error.details as { path: string[]; message: string }[];
-        const fieldErrors: Record<string, string> = {};
+  const onSubmit = async (data: SeriesFormData) => {
+    setGeneralError(null);
 
-        zodIssues.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+    // Build command - only include non-empty optional fields
+    const command: CreateSeriesCommand = {
+      title: data.title.trim(),
+    };
+
+    if (data.description.trim()) {
+      command.description = data.description.trim();
+    }
+
+    if (data.cover_image_url.trim()) {
+      command.cover_image_url = data.cover_image_url.trim();
+    }
+
+    const result = await createSeries(command);
+
+    if (result.success) {
+      onCreated();
+      onOpenChange(false);
+    } else {
+      // Handle field-level errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof SeriesFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to create series");
       }
-    } finally {
-      setSubmitting(false);
+
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setErrors({});
-    setGeneralError(null);
   };
 
   return (
@@ -111,52 +108,37 @@ export const AddSeriesDialog = ({ open, onOpenChange, onCreated }: AddSeriesDial
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
               Title <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="title"
-              type="text"
-              value={formState.title}
-              onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-            />
-            {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
+            <Input id="title" type="text" {...register("title")} disabled={isCreating} />
+            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              rows={4}
-              value={formState.description}
-              onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-            />
-            {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
+            <Textarea id="description" rows={4} {...register("description")} disabled={isCreating} />
+            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
           </div>
 
           {/* Cover Image URL */}
           <div className="space-y-2">
             <Label htmlFor="cover_image_url">Cover Image URL</Label>
-            <Input
-              id="cover_image_url"
-              type="url"
-              value={formState.cover_image_url}
-              onChange={(e) => setFormState({ ...formState, cover_image_url: e.target.value })}
-            />
-            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url}</p>}
+            <Input id="cover_image_url" type="url" {...register("cover_image_url")} disabled={isCreating} />
+            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Creating..." : "Create Series"}
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create Series"}
             </Button>
           </div>
         </form>

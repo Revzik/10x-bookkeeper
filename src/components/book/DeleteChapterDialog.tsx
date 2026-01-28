@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { ApiErrorResponseDto } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useChapterMutations } from "@/hooks/useChapterMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -27,32 +26,23 @@ export const DeleteChapterDialog = ({
   chapterTitle,
   onDeleted,
 }: DeleteChapterDialogProps) => {
-  const [submitting, setSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { deleteChapter, isDeleting } = useChapterMutations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    setSubmitting(true);
 
-    try {
-      await apiClient.delete(`/chapters/${chapterId}`);
+    const result = await deleteChapter(chapterId);
 
+    if (result.success) {
       onDeleted();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (already deleted) - treat as success
-      if (apiError.error?.code === "NOT_FOUND") {
-        onDeleted();
-        onOpenChange(false);
-        return;
+    } else {
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
       }
-
-      setGeneralError(apiError.error?.message || "Failed to delete chapter");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -90,11 +80,11 @@ export const DeleteChapterDialog = ({
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" disabled={submitting}>
-              {submitting ? "Deleting..." : "Delete Chapter"}
+            <Button type="submit" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete Chapter"}
             </Button>
           </div>
         </form>

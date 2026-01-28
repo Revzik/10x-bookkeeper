@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthCard } from "./AuthCard";
 import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginSchema } from "@/lib/auth/schemas";
-import { apiClient } from "@/lib/api/client";
-import type { LoginResponseDto, ApiErrorResponseDto } from "@/types";
+import { loginSchema, type LoginFormData } from "@/lib/auth/schemas";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 
 interface AuthLoginPageProps {
   redirectTo?: string;
@@ -24,77 +25,49 @@ interface AuthLoginPageProps {
  * - Loading state during submission
  */
 export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) => {
-  const [formState, setFormState] = useState({
-    email: emailPrefill || "",
-    password: "",
-  });
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { login } = useAuthMutations();
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: emailPrefill || "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setGeneralError(null);
 
-    // Client-side validation using Zod schema
-    const result = loginSchema.safeParse({
-      email: formState.email,
-      password: formState.password,
-    });
+    const result = await login(data);
 
-    if (!result.success) {
-      const newErrors: Record<string, string> = {};
-      result.error.errors.forEach((error) => {
-        const field = error.path[0] as string;
-        newErrors[field] = error.message;
-      });
-      setErrors(newErrors);
+    if (result.success) {
+      // On success, redirect to the intended destination
+      // Use full page navigation to allow middleware to set up auth state
+      window.location.assign(redirectTo ?? "/library");
       return;
     }
 
-    setSubmitting(true);
+    // Handle errors
+    if (result.error?.fieldErrors) {
+      // Set field-specific errors
+      Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+        setError(field as keyof LoginFormData, { message });
+      });
+    }
 
-    try {
-      // Call the login API endpoint
-      const { email, password } = result.data;
-      await apiClient.postJson<typeof result.data, LoginResponseDto>("/auth/login", { email, password });
-
-      // On success, redirect to the intended destination
-      // Use full page navigation to allow middleware to set up auth state
-      window.location.href = redirectTo ?? "/library";
-    } catch (error) {
-      // Handle API errors
-      const apiError = error as ApiErrorResponseDto;
-
-      if (apiError.error) {
-        // Map error codes to user-friendly messages
-        switch (apiError.error.code) {
-          case "NOT_ALLOWED":
-            setGeneralError("Incorrect email or password.");
-            break;
-          case "VALIDATION_ERROR":
-            // Show field-specific validation errors if available
-            if (apiError.error.details && apiError.error.details.length > 0) {
-              const newErrors: Record<string, string> = {};
-              apiError.error.details.forEach((detail) => {
-                const field = detail.path[0] as string;
-                newErrors[field] = detail.message;
-              });
-              setErrors(newErrors);
-            } else {
-              setGeneralError(apiError.error.message);
-            }
-            break;
-          default:
-            setGeneralError("An error occurred. Please try again.");
-        }
+    if (result.error?.generalError) {
+      // Map NOT_ALLOWED to more user-friendly message
+      if (result.error.generalError.includes("Authentication failed")) {
+        setGeneralError("Incorrect email or password.");
       } else {
-        setGeneralError("An error occurred. Please try again.");
+        setGeneralError(result.error.generalError);
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -110,7 +83,7 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
       {generalError && <AuthErrorBanner message={generalError} />}
 
       {/* Login form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="login-email">
@@ -120,13 +93,12 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
             id="login-email"
             type="email"
             autoComplete="email"
-            value={formState.email}
-            onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-            disabled={submitting}
             placeholder="you@example.com"
             data-testid="login-email"
+            disabled={isSubmitting}
+            {...register("email")}
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
 
         {/* Password */}
@@ -138,13 +110,12 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
             id="login-password"
             type="password"
             autoComplete="current-password"
-            value={formState.password}
-            onChange={(e) => setFormState({ ...formState, password: e.target.value })}
-            disabled={submitting}
             placeholder="Enter your password"
             data-testid="login-password"
+            disabled={isSubmitting}
+            {...register("password")}
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
 
         {/* Forgot password link */}
@@ -159,8 +130,8 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
         </div>
 
         {/* Submit button */}
-        <Button type="submit" className="w-full" disabled={submitting} data-testid="login-submit">
-          {submitting ? "Signing in..." : "Sign in"}
+        <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="login-submit">
+          {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 

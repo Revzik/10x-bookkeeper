@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import type { CreateChapterCommand, CreateChapterResponseDto, ApiErrorResponseDto } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createChapterFormSchema, type CreateChapterFormData } from "@/lib/validation/chapter-form.schemas";
+import { useChapterMutations } from "@/hooks/useChapterMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,112 +20,81 @@ interface AddChapterDialogProps {
  * AddChapterDialog - Create a new chapter under the current book
  *
  * Features:
+ * - React Hook Form for state management
  * - Title (required)
  * - Order (optional, defaults to suggestedOrder or 0)
- * - Client-side validation
+ * - Zod validation schema
  * - Server error mapping to form fields
  */
 export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, onCreated }: AddChapterDialogProps) => {
-  const [formState, setFormState] = useState({
-    title: "",
-    order: "",
-  });
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { createChapter, isCreating } = useChapterMutations();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setError,
+  } = useForm<CreateChapterFormData>({
+    resolver: zodResolver(createChapterFormSchema),
+    defaultValues: {
+      title: "",
+      order: null,
+    },
+  });
 
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setFormState({
+      reset({
         title: "",
-        order: "",
+        order: null,
       });
-      setErrors({});
       setGeneralError(null);
     }
-  }, [open]);
+  }, [open, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const onSubmit = async (data: CreateChapterFormData) => {
     setGeneralError(null);
 
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
-
-    // Title validation
-    if (!formState.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    // Order validation (only if provided)
-    let orderValue: number | undefined;
-    if (formState.order.trim()) {
-      const parsed = parseInt(formState.order, 10);
-      if (isNaN(parsed) || parsed < 0) {
-        newErrors.order = "Order must be 0 or greater";
-      } else {
-        orderValue = parsed;
-      }
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     // Build command
-    const command: CreateChapterCommand = {
-      title: formState.title.trim(),
+    const command: {
+      title: string;
+      order?: number;
+    } = {
+      title: data.title.trim(),
     };
 
-    // Include order if provided, otherwise let server use default or suggestedOrder
-    if (orderValue !== undefined) {
-      command.order = orderValue;
+    // Include order if provided by user, otherwise use suggestedOrder if available
+    if (data.order !== null && data.order !== undefined) {
+      command.order = data.order;
     } else if (suggestedOrder !== undefined) {
       command.order = suggestedOrder;
     }
 
-    setSubmitting(true);
+    const result = await createChapter(bookId, command);
 
-    try {
-      await apiClient.postJson<CreateChapterCommand, CreateChapterResponseDto>(`/books/${bookId}/chapters`, command);
-
+    if (result.success) {
       onCreated();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (book was deleted)
-      if (apiError.error?.code === "NOT_FOUND") {
-        setGeneralError("This book no longer exists");
-        return;
-      }
-
-      // Handle validation errors
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        const zodIssues = apiError.error.details as { path: string[]; message: string }[];
-        const fieldErrors: Record<string, string> = {};
-
-        zodIssues.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+    } else {
+      // Handle field-level errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof CreateChapterFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to create chapter");
       }
-    } finally {
-      setSubmitting(false);
+
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setErrors({});
     setGeneralError(null);
   };
 
@@ -145,7 +116,7 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="add-title">
@@ -154,16 +125,15 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
             <Input
               id="add-title"
               type="text"
-              value={formState.title}
-              onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-              disabled={submitting}
+              {...register("title")}
+              disabled={isCreating}
               placeholder="Enter chapter title"
               aria-invalid={!!errors.title}
               aria-describedby={errors.title ? "add-title-error" : undefined}
             />
             {errors.title && (
               <p id="add-title-error" className="text-sm text-destructive" role="alert">
-                {errors.title}
+                {errors.title.message}
               </p>
             )}
           </div>
@@ -181,27 +151,26 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
               type="number"
               min="0"
               step="1"
-              value={formState.order}
-              onChange={(e) => setFormState({ ...formState, order: e.target.value })}
-              disabled={submitting}
+              {...register("order")}
+              disabled={isCreating}
               placeholder="Auto"
               aria-invalid={!!errors.order}
               aria-describedby={errors.order ? "add-order-error" : undefined}
             />
             {errors.order && (
               <p id="add-order-error" className="text-sm text-destructive" role="alert">
-                {errors.order}
+                {errors.order.message}
               </p>
             )}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Creating..." : "Create Chapter"}
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create Chapter"}
             </Button>
           </div>
         </form>

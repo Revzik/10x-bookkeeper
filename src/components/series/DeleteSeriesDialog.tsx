@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { ApiErrorResponseDto } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useSeriesMutations } from "@/hooks/useSeriesMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -13,10 +13,15 @@ interface DeleteSeriesDialogProps {
   onDeleted: () => void;
 }
 
+interface DeleteSeriesFormData {
+  cascade: boolean;
+}
+
 /**
  * DeleteSeriesDialog - Confirm and execute series deletion
  *
  * Features:
+ * - React Hook Form for state management
  * - Explains default vs cascade behavior
  * - Explicit cascade toggle
  * - Destructive styling
@@ -29,47 +34,46 @@ export const DeleteSeriesDialog = ({
   seriesTitle,
   onDeleted,
 }: DeleteSeriesDialogProps) => {
-  const [cascade, setCascade] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const { deleteSeries, isDeleting } = useSeriesMutations();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, reset, watch } = useForm<DeleteSeriesFormData>({
+    defaultValues: {
+      cascade: false,
+    },
+  });
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      reset({
+        cascade: false,
+      });
+      setGeneralError(null);
+    }
+  }, [open, reset]);
+
+  const onSubmit = async (data: DeleteSeriesFormData) => {
     setGeneralError(null);
-    setSubmitting(true);
 
-    try {
-      // Build endpoint with optional cascade query param
-      const endpoint = cascade ? `/series/${seriesId}?cascade=true` : `/series/${seriesId}`;
+    const result = await deleteSeries(seriesId, data.cascade);
 
-      await apiClient.delete(endpoint);
-
+    if (result.success) {
       onDeleted();
       onOpenChange(false);
-
-      // Reset state
-      setCascade(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (already deleted) - treat as success
-      if (apiError.error?.code === "NOT_FOUND") {
-        onDeleted();
-        onOpenChange(false);
-        return;
+    } else {
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
       }
-
-      setGeneralError(apiError.error?.message || "Failed to delete series");
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setGeneralError(null);
-    setCascade(false);
   };
+
+  const cascadeValue = watch("cascade");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,15 +91,14 @@ export const DeleteSeriesDialog = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Cascade Toggle */}
           <div className="flex items-center space-x-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
             <input
               type="checkbox"
               id="cascade"
-              checked={cascade}
-              onChange={(e) => setCascade(e.target.checked)}
-              disabled={submitting}
+              {...register("cascade")}
+              disabled={isDeleting}
               className="h-4 w-4 rounded border-destructive text-destructive focus:ring-destructive"
             />
             <Label htmlFor="cascade" className="cursor-pointer text-sm font-semibold text-destructive">
@@ -103,7 +106,7 @@ export const DeleteSeriesDialog = ({
             </Label>
           </div>
 
-          {cascade && (
+          {cascadeValue && (
             <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
               <strong>Warning:</strong> This will permanently delete all content in this series. This action cannot be
               undone.
@@ -112,11 +115,11 @@ export const DeleteSeriesDialog = ({
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" disabled={submitting}>
-              {submitting ? "Deleting..." : cascade ? "Delete Everything" : "Delete Series"}
+            <Button type="submit" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : cascadeValue ? "Delete Everything" : "Delete Series"}
             </Button>
           </div>
         </form>

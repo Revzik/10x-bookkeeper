@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthCard } from "./AuthCard";
 import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
-import { resetPasswordSchema } from "@/lib/auth/schemas";
-import { apiClient } from "@/lib/api/client";
-import type { ApiErrorResponseDto } from "@/types";
+import { resetPasswordSchema, type ResetPasswordFormData } from "@/lib/auth/schemas";
+import { useAuthMutations } from "@/hooks/useAuthMutations";
 
 interface AuthResetPasswordPageProps {
   hasValidRecoverySession: boolean;
@@ -26,15 +27,25 @@ interface AuthResetPasswordPageProps {
  * - Success redirect to library
  */
 export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPasswordPageProps) => {
-  const [formState, setFormState] = useState({
-    password: "",
-    confirmPassword: "",
+  const { resetPassword, logout, isLoggingOut } = useAuthMutations();
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const [submitting, setSubmitting] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<string | null>(null);
+  // Watch password for showing hint
+  const password = watch("password");
 
   /**
    * Handle "Back to sign in" - logs out user and redirects to login
@@ -42,18 +53,12 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
    */
   const handleBackToLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setLoggingOut(true);
 
-    try {
-      // Call logout endpoint to invalidate session
-      await apiClient.postJson("/auth/logout", {});
-    } catch {
-      // Even if logout fails, still redirect to login
-      // Silent failure is acceptable here since we're navigating away
-    }
+    // Call logout endpoint (always redirects even if it fails)
+    await logout();
 
     // Redirect to login page
-    window.location.href = "/login";
+    window.location.assign("/login");
   };
 
   // Expired/invalid recovery session state
@@ -84,82 +89,43 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
         <div className="text-center">
           <button
             onClick={handleBackToLogin}
-            disabled={loggingOut}
+            disabled={isLoggingOut}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
           >
-            {loggingOut ? "Redirecting..." : "Back to sign in"}
+            {isLoggingOut ? "Redirecting..." : "Back to sign in"}
           </button>
         </div>
       </AuthCard>
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const onSubmit = async (data: ResetPasswordFormData) => {
     setGeneralError(null);
 
-    // Client-side validation using Zod schema
-    const result = resetPasswordSchema.safeParse({
-      password: formState.password,
-      confirmPassword: formState.confirmPassword,
-    });
+    const result = await resetPassword(data);
 
-    if (!result.success) {
-      const newErrors: Record<string, string> = {};
-      result.error.errors.forEach((error) => {
-        const field = error.path[0] as string;
-        newErrors[field] = error.message;
-      });
-      setErrors(newErrors);
+    if (result.success) {
+      // On success, redirect to library
+      // Use full page navigation to allow middleware to set up auth state
+      window.location.assign("/library");
       return;
     }
 
-    setSubmitting(true);
-
-    try {
-      // Call the password update API endpoint
-      const { password, confirmPassword } = result.data;
-      await apiClient.postJson<typeof result.data, { ok: boolean }>("/auth/password-update", {
-        password,
-        confirmPassword,
+    // Handle errors
+    if (result.error?.fieldErrors) {
+      // Set field-specific errors
+      Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+        setError(field as keyof ResetPasswordFormData, { message });
       });
+    }
 
-      // On success, redirect to library
-      // Use full page navigation to allow middleware to set up auth state
-      window.location.href = "/library";
-    } catch (error) {
-      // Handle API errors
-      const apiError = error as ApiErrorResponseDto;
-
-      if (apiError.error) {
-        // Map error codes to user-friendly messages
-        switch (apiError.error.code) {
-          case "NOT_ALLOWED":
-            // Session expired, show the expired state instead of just an error
-            setGeneralError("Your reset link has expired. Please request a new one.");
-            break;
-          case "VALIDATION_ERROR":
-            // Show field-specific validation errors if available
-            if (apiError.error.details && apiError.error.details.length > 0) {
-              const newErrors: Record<string, string> = {};
-              apiError.error.details.forEach((detail) => {
-                const field = detail.path[0] as string;
-                newErrors[field] = detail.message;
-              });
-              setErrors(newErrors);
-            } else {
-              setGeneralError(apiError.error.message);
-            }
-            break;
-          default:
-            setGeneralError("An error occurred. Please try again.");
-        }
+    if (result.error?.generalError) {
+      // Map NOT_ALLOWED to more specific message about expired link
+      if (result.error.generalError.includes("Authentication failed")) {
+        setGeneralError("Your reset link has expired. Please request a new one.");
       } else {
-        setGeneralError("An error occurred. Please try again.");
+        setGeneralError(result.error.generalError);
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -176,7 +142,7 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
       {generalError && <AuthErrorBanner message={generalError} />}
 
       {/* Reset password form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="reset-password">
@@ -186,13 +152,12 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
             id="reset-password"
             type="password"
             autoComplete="new-password"
-            value={formState.password}
-            onChange={(e) => setFormState({ ...formState, password: e.target.value })}
-            disabled={submitting}
             placeholder="At least 8 characters with a number"
+            disabled={isSubmitting}
+            {...register("password")}
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-          {!errors.password && formState.password && (
+          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+          {!errors.password && password && (
             <p className="text-xs text-muted-foreground">
               Password must be at least 8 characters and include at least one number
             </p>
@@ -208,17 +173,16 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
             id="reset-confirm-password"
             type="password"
             autoComplete="new-password"
-            value={formState.confirmPassword}
-            onChange={(e) => setFormState({ ...formState, confirmPassword: e.target.value })}
-            disabled={submitting}
             placeholder="Re-enter your new password"
+            disabled={isSubmitting}
+            {...register("confirmPassword")}
           />
-          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
         </div>
 
         {/* Submit button */}
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Resetting password..." : "Reset password"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Resetting password..." : "Reset password"}
         </Button>
       </form>
 
@@ -226,10 +190,10 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
       <div className="text-center">
         <button
           onClick={handleBackToLogin}
-          disabled={submitting || loggingOut}
+          disabled={isSubmitting || isLoggingOut}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         >
-          {loggingOut ? "Redirecting..." : "Back to sign in"}
+          {isLoggingOut ? "Redirecting..." : "Back to sign in"}
         </button>
       </div>
     </AuthCard>

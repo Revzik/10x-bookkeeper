@@ -1,21 +1,20 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   NoteListItemViewModel,
   ChapterSelectOptionViewModel,
   UpdateNoteCommand,
-  UpdateNoteResponseDto,
-  ApiErrorResponseDto,
   ExistingNoteDialogModeViewModel,
 } from "@/types";
-import { apiClient } from "@/lib/api/client";
+import { updateNoteFormSchema, type UpdateNoteFormData, MAX_CONTENT_LENGTH } from "@/lib/validation/note-form.schemas";
+import { useNoteMutations } from "@/hooks/useNoteMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
-
-const MAX_CONTENT_LENGTH = 10000;
 
 interface ViewEditNoteDialogProps {
   open: boolean;
@@ -32,7 +31,8 @@ interface ViewEditNoteDialogProps {
  * Features:
  * - View mode: Read-only content display with Edit and Delete buttons
  * - Editing mode: Editable textarea and chapter selector with Save and Discard buttons
- * - Content validation (required, max 10,000 chars)
+ * - React Hook Form for state management
+ * - Content validation (required, max 10,000 chars) via Zod
  * - Character counter
  * - Chapter reassignment support
  * - Delete confirmation
@@ -46,44 +46,49 @@ export const ViewEditNoteDialog = ({
   chapterTitle,
   onUpdated,
 }: ViewEditNoteDialogProps) => {
-  const [editingMode, setEditingMode] = useState<ExistingNoteDialogModeViewModel>("view");
-  const [content, setContent] = useState(note.content);
-  const [chapterId, setChapterId] = useState(note.chapterId);
-  const [originalContent, setOriginalContent] = useState(note.content);
-  const [originalChapterId, setOriginalChapterId] = useState(note.chapterId);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [mode, setMode] = useState<ExistingNoteDialogModeViewModel>("view");
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { updateNote, isUpdating } = useNoteMutations();
 
-  // Reset state when dialog opens or note changes
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, dirtyFields },
+    control,
+    reset,
+    setError,
+    watch,
+  } = useForm<UpdateNoteFormData>({
+    resolver: zodResolver(updateNoteFormSchema),
+    defaultValues: {
+      chapter_id: note.chapterId,
+      content: note.content,
+    },
+  });
+
+  // Reset form when dialog opens or note changes
   useEffect(() => {
     if (open) {
-      setContent(note.content);
-      setChapterId(note.chapterId);
-      setOriginalContent(note.content);
-      setOriginalChapterId(note.chapterId);
-      setEditingMode("view");
-      setErrors({});
+      reset({
+        chapter_id: note.chapterId,
+        content: note.content,
+      });
+      setMode("view");
       setGeneralError(null);
     }
-  }, [open, note]);
+  }, [open, note, reset]);
 
-  const contentLength = content.length;
-  const trimmedLength = content.trim().length;
+  const contentValue = watch("content");
+  const contentLength = contentValue.length;
+  const trimmedLength = contentValue.trim().length;
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH;
   const isContentEmpty = trimmedLength === 0;
 
   // Check if there are any changes
-  const hasChanges = useMemo(() => {
-    const contentChanged = content.trim() !== originalContent.trim();
-    const chapterChanged = chapterId !== originalChapterId;
-    return contentChanged || chapterChanged;
-  }, [content, originalContent, chapterId, originalChapterId]);
+  const hasChanges = Object.keys(dirtyFields).length > 0;
 
-  const handleUpdate = async () => {
-    setErrors({});
+  const onSubmit = async (data: UpdateNoteFormData) => {
     setGeneralError(null);
 
     if (!hasChanges) {
@@ -91,76 +96,34 @@ export const ViewEditNoteDialog = ({
       return;
     }
 
-    // Check if anything changed
-    const contentChanged = content.trim() !== originalContent.trim();
-    const chapterChanged = chapterId !== originalChapterId;
+    // Build command - only include changed fields
+    const command: UpdateNoteCommand = {};
 
-    // Client-side validation
-    const newErrors: Record<string, string> = {};
-
-    if (isContentEmpty) {
-      newErrors.content = "Content is required";
+    if (dirtyFields.content) {
+      command.content = data.content.trim();
     }
 
-    if (isContentTooLong) {
-      newErrors.content = `Content must be ${MAX_CONTENT_LENGTH} characters or less`;
+    if (dirtyFields.chapter_id) {
+      command.chapter_id = data.chapter_id;
     }
 
-    if (!chapterId) {
-      newErrors.chapter_id = "Chapter is required";
-    }
+    const result = await updateNote(note.id, command);
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const command: UpdateNoteCommand = {};
-
-      if (contentChanged) {
-        command.content = content.trim();
-      }
-
-      if (chapterChanged) {
-        command.chapter_id = chapterId;
-      }
-
-      await apiClient.patchJson<UpdateNoteCommand, UpdateNoteResponseDto>(`/notes/${note.id}`, command);
-
+    if (result.success) {
       onUpdated();
       onOpenChange(false);
-    } catch (error) {
-      const apiError = error as ApiErrorResponseDto;
-
-      // Handle NOT_FOUND (note was deleted)
-      if (apiError.error?.code === "NOT_FOUND") {
-        // Treat as success - it was deleted elsewhere
-        onUpdated();
-        onOpenChange(false);
-        return;
-      }
-
-      // Handle validation errors
-      if (apiError.error?.code === "VALIDATION_ERROR" && apiError.error.details) {
-        const zodIssues = apiError.error.details as { path: string[]; message: string }[];
-        const fieldErrors: Record<string, string> = {};
-
-        zodIssues.forEach((issue) => {
-          const fieldName = issue.path.join(".");
-          fieldErrors[fieldName] = issue.message;
+    } else {
+      // Handle field-level errors
+      if (result.error?.fieldErrors) {
+        Object.entries(result.error.fieldErrors).forEach(([field, message]) => {
+          setError(field as keyof UpdateNoteFormData, { message });
         });
-
-        setErrors(fieldErrors);
-      } else if (apiError.error?.code === "RATE_LIMITED") {
-        setGeneralError("Too many requests. Please wait a moment and try again.");
-      } else {
-        setGeneralError(apiError.error?.message || "Failed to update note");
       }
-    } finally {
-      setSubmitting(false);
+
+      // Handle general errors
+      if (result.error?.generalError) {
+        setGeneralError(result.error.generalError);
+      }
     }
   };
 
@@ -175,24 +138,17 @@ export const ViewEditNoteDialog = ({
   };
 
   const handleEnterEditMode = () => {
-    setEditingMode("editing");
-    setErrors({});
+    setMode("editing");
     setGeneralError(null);
   };
 
   const handleDiscard = () => {
-    setContent(originalContent);
-    setChapterId(originalChapterId);
-    setEditingMode("view");
-    setErrors({});
+    reset({
+      chapter_id: note.chapterId,
+      content: note.content,
+    });
+    setMode("view");
     setGeneralError(null);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingMode === "editing") {
-      handleUpdate();
-    }
   };
 
   const handleClose = () => {
@@ -216,33 +172,39 @@ export const ViewEditNoteDialog = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Chapter (editing mode only) */}
-          {editingMode === "editing" && (
+          {mode === "editing" && (
             <div className="space-y-2">
               <Label htmlFor="note-chapter">
                 Chapter <span className="text-destructive">*</span>
               </Label>
-              <Select value={chapterId} onValueChange={setChapterId} disabled={submitting}>
-                <SelectTrigger
-                  id="note-chapter"
-                  className="w-full"
-                  aria-invalid={!!errors.chapter_id}
-                  aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
-                >
-                  <SelectValue placeholder="Select a chapter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chapterOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="chapter_id"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange} disabled={isUpdating}>
+                    <SelectTrigger
+                      id="note-chapter"
+                      className="w-full"
+                      aria-invalid={!!errors.chapter_id}
+                      aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
+                    >
+                      <SelectValue placeholder="Select a chapter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chapterOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.chapter_id && (
                 <p id="note-chapter-error" className="text-sm text-destructive" role="alert">
-                  {errors.chapter_id}
+                  {errors.chapter_id.message}
                 </p>
               )}
             </div>
@@ -254,18 +216,17 @@ export const ViewEditNoteDialog = ({
               <Label htmlFor="note-content">
                 Content <span className="text-destructive">*</span>
               </Label>
-              {editingMode === "editing" && (
+              {mode === "editing" && (
                 <span className={`text-xs ${isContentTooLong ? "text-destructive" : "text-muted-foreground"}`}>
                   {contentLength} / {MAX_CONTENT_LENGTH}
                 </span>
               )}
             </div>
-            {editingMode === "editing" ? (
+            {mode === "editing" ? (
               <Textarea
                 id="note-content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                disabled={submitting}
+                {...register("content")}
+                disabled={isUpdating}
                 placeholder="Enter your note content..."
                 rows={10}
                 aria-invalid={!!errors.content}
@@ -274,12 +235,12 @@ export const ViewEditNoteDialog = ({
               />
             ) : (
               <div className="whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-3 text-sm">
-                {content}
+                {contentValue}
               </div>
             )}
             {errors.content && (
               <p id="note-content-error" className="text-sm text-destructive" role="alert">
-                {errors.content}
+                {errors.content.message}
               </p>
             )}
           </div>
@@ -291,7 +252,7 @@ export const ViewEditNoteDialog = ({
               type="button"
               variant="destructive"
               onClick={handleOpenDeleteDialog}
-              disabled={submitting}
+              disabled={isUpdating}
               size="sm"
             >
               Delete
@@ -299,7 +260,7 @@ export const ViewEditNoteDialog = ({
 
             {/* Right side: Mode-specific actions */}
             <div className="ml-auto flex gap-3">
-              {editingMode === "view" && (
+              {mode === "view" && (
                 <>
                   <Button type="button" variant="outline" onClick={handleClose}>
                     Close
@@ -310,13 +271,13 @@ export const ViewEditNoteDialog = ({
                 </>
               )}
 
-              {editingMode === "editing" && (
+              {mode === "editing" && (
                 <>
-                  <Button type="button" variant="outline" onClick={handleDiscard} disabled={submitting}>
+                  <Button type="button" variant="outline" onClick={handleDiscard} disabled={isUpdating}>
                     Discard
                   </Button>
-                  <Button type="submit" disabled={submitting || isContentEmpty || isContentTooLong || !hasChanges}>
-                    {submitting ? "Saving..." : "Save"}
+                  <Button type="submit" disabled={isUpdating || isContentEmpty || isContentTooLong || !hasChanges}>
+                    {isUpdating ? "Saving..." : "Save"}
                   </Button>
                 </>
               )}
