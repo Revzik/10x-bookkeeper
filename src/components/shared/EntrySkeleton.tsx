@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface EntrySkeletonProps {
   count?: number;
+  "data-test-id"?: string;
 }
 
 /**
@@ -10,9 +11,9 @@ interface EntrySkeletonProps {
  * Used across Books, Series, and other list views to provide
  * consistent loading state UI
  */
-export const EntrySkeleton = ({ count = 5 }: EntrySkeletonProps) => {
+export const EntrySkeleton = ({ count = 5, "data-test-id": dataTestId }: EntrySkeletonProps) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-test-id={dataTestId}>
       {[...Array(count)].map((_, i) => (
         <div key={i} className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-4">

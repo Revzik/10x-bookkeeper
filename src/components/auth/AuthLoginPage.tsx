@@ -124,6 +124,7 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
             onChange={(e) => setFormState({ ...formState, email: e.target.value })}
             disabled={submitting}
             placeholder="you@example.com"
+            data-testid="login-email"
           />
           {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
         </div>
@@ -141,19 +142,24 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
             onChange={(e) => setFormState({ ...formState, password: e.target.value })}
             disabled={submitting}
             placeholder="Enter your password"
+            data-testid="login-password"
           />
           {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
         </div>
 
         {/* Forgot password link */}
         <div className="text-right">
-          <a href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <a
+            href="/forgot-password"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="link-forgot-password"
+          >
             Forgot password?
           </a>
         </div>
 
         {/* Submit button */}
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full" disabled={submitting} data-testid="login-submit">
           {submitting ? "Signing in..." : "Sign in"}
         </Button>
       </form>
@@ -161,7 +167,7 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
       {/* Sign up link */}
       <div className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <a href="/signup" className="text-foreground hover:underline font-medium">
+        <a href="/signup" className="text-foreground hover:underline font-medium" data-testid="link-signup">
           Create account
         </a>
       </div>

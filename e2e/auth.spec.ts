@@ -1,6 +1,8 @@
 /**
  * Example E2E test for authentication flow
  * Demonstrates Playwright patterns and Page Object Model
+ *
+ * Note: These tests reset storage state to test unauthenticated flows
  */
 
 import { test, expect } from "@playwright/test";
@@ -9,6 +11,8 @@ import { LibraryPage } from "./page-objects/LibraryPage";
 import { testUsers } from "./fixtures/test-users";
 
 test.describe("Authentication", () => {
+  // Reset storage state for authentication tests to start unauthenticated
+  test.use({ storageState: { cookies: [], origins: [] } });
   test.describe("Login", () => {
     test("should redirect unauthenticated users to login page", async ({ page }) => {
       await page.goto("/library");

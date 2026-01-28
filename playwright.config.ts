@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
-
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.test" });
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -24,7 +25,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:4321",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -38,9 +39,21 @@ export default defineConfig({
 
   /* Configure projects for major browsers - Chromium only per guidelines */
   projects: [
+    // Setup project - runs authentication before all tests
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+    },
+
+    // Chromium project with authenticated state
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use prepared auth state from setup project
+        storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["setup"],
     },
   ],
 

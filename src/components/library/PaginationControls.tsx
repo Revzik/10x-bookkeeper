@@ -34,7 +34,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
   return (
     <div className="flex items-center justify-between">
       {/* Page info */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground" data-test-id="pagination-info">
         Showing {(current_page - 1) * page_size + 1} to {Math.min(current_page * page_size, total_items)} of{" "}
         {total_items} results
       </div>
@@ -44,21 +44,35 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
         <div className="flex items-center gap-2">
           <Label className="text-sm text-muted-foreground">Per page:</Label>
           <Select value={String(page_size)} onValueChange={(value) => handleSizeChange(Number(value))}>
-            <SelectTrigger className="w-[80px]">
+            <SelectTrigger className="w-[80px]" data-test-id="select-page-size">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="10" data-testid="option-page-size-10">
+                10
+              </SelectItem>
+              <SelectItem value="20" data-testid="option-page-size-20">
+                20
+              </SelectItem>
+              <SelectItem value="50" data-testid="option-page-size-50">
+                50
+              </SelectItem>
+              <SelectItem value="100" data-testid="option-page-size-100">
+                100
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Page navigation */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevious} disabled={current_page === 1}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevious}
+            disabled={current_page === 1}
+            data-test-id="btn-pagination-previous"
+          >
             Previous
           </Button>
 
@@ -66,7 +80,13 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
             Page {current_page} of {total_pages}
           </span>
 
-          <Button variant="outline" size="sm" onClick={handleNext} disabled={current_page === total_pages}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNext}
+            disabled={current_page === total_pages}
+            data-test-id="btn-pagination-next"
+          >
             Next
           </Button>
         </div>

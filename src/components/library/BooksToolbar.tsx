@@ -82,31 +82,42 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
           maxLength={50}
+          data-test-id="input-books-search"
         />
       </div>
 
       {/* Status filter */}
       <Select value={query.status || "all"} onValueChange={handleStatusChange}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px]" data-test-id="select-books-status-filter">
           <SelectValue placeholder="All Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="want_to_read">Want to Read</SelectItem>
-          <SelectItem value="reading">Reading</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="all" data-testid="option-status-all">
+            All Status
+          </SelectItem>
+          <SelectItem value="want_to_read" data-testid="option-status-want-to-read">
+            Want to Read
+          </SelectItem>
+          <SelectItem value="reading" data-testid="option-status-reading">
+            Reading
+          </SelectItem>
+          <SelectItem value="completed" data-testid="option-status-completed">
+            Completed
+          </SelectItem>
         </SelectContent>
       </Select>
 
       {/* Series filter */}
       <Select value={query.series_id || "all"} onValueChange={handleSeriesChange}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px]" data-test-id="select-books-series-filter">
           <SelectValue placeholder="All Series" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Series</SelectItem>
+          <SelectItem value="all" data-testid="option-series-all">
+            All Series
+          </SelectItem>
           {seriesOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={option.value} data-testid={`option-series-${option.value}`}>
               {option.label}
             </SelectItem>
           ))}
@@ -115,15 +126,25 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
 
       {/* Sort */}
       <Select value={query.sort} onValueChange={handleSortChange}>
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-[140px]" data-test-id="select-books-sort">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="updated_at">Updated</SelectItem>
-          <SelectItem value="created_at">Created</SelectItem>
-          <SelectItem value="title">Title</SelectItem>
-          <SelectItem value="author">Author</SelectItem>
-          <SelectItem value="status">Status</SelectItem>
+          <SelectItem value="updated_at" data-testid="option-sort-updated">
+            Updated
+          </SelectItem>
+          <SelectItem value="created_at" data-testid="option-sort-created">
+            Created
+          </SelectItem>
+          <SelectItem value="title" data-testid="option-sort-title">
+            Title
+          </SelectItem>
+          <SelectItem value="author" data-testid="option-sort-author">
+            Author
+          </SelectItem>
+          <SelectItem value="status" data-testid="option-sort-status">
+            Status
+          </SelectItem>
         </SelectContent>
       </Select>
 
@@ -133,6 +154,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
         size="icon"
         onClick={handleOrderToggle}
         aria-label={`Sort ${query.order === "asc" ? "ascending" : "descending"}`}
+        data-test-id="btn-books-sort-order"
       >
         {query.order === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </Button>

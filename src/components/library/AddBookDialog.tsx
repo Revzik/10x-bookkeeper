@@ -137,7 +137,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" data-test-id="dialog-add-book">
         <DialogHeader>
           <DialogTitle>Add Book</DialogTitle>
         </DialogHeader>
@@ -159,6 +159,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               type="text"
               value={formState.title}
               onChange={(e) => setFormState({ ...formState, title: e.target.value })}
+              data-test-id="input-book-title"
             />
             {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
           </div>
@@ -173,6 +174,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               type="text"
               value={formState.author}
               onChange={(e) => setFormState({ ...formState, author: e.target.value })}
+              data-test-id="input-book-author"
             />
             {errors.author && <p className="text-sm text-destructive">{errors.author}</p>}
           </div>
@@ -188,6 +190,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               min="1"
               value={formState.total_pages}
               onChange={(e) => setFormState({ ...formState, total_pages: e.target.value })}
+              data-test-id="input-book-total-pages"
             />
             {errors.total_pages && <p className="text-sm text-destructive">{errors.total_pages}</p>}
           </div>
@@ -199,13 +202,19 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               value={formState.status}
               onValueChange={(value) => setFormState({ ...formState, status: value as BookStatus })}
             >
-              <SelectTrigger>
+              <SelectTrigger data-test-id="select-book-status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="want_to_read">Want to Read</SelectItem>
-                <SelectItem value="reading">Reading</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="want_to_read" data-testid="option-book-status-want-to-read">
+                  Want to Read
+                </SelectItem>
+                <SelectItem value="reading" data-testid="option-book-status-reading">
+                  Reading
+                </SelectItem>
+                <SelectItem value="completed" data-testid="option-book-status-completed">
+                  Completed
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -217,13 +226,15 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               value={formState.series_id || "none"}
               onValueChange={(value) => setFormState({ ...formState, series_id: value === "none" ? "" : value })}
             >
-              <SelectTrigger>
+              <SelectTrigger data-test-id="select-book-series">
                 <SelectValue placeholder="None" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="none" data-testid="option-book-series-none">
+                  None
+                </SelectItem>
                 {seriesOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value} data-testid={`option-book-series-${option.value}`}>
                     {option.label}
                   </SelectItem>
                 ))}
@@ -242,6 +253,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
                 min="1"
                 value={formState.series_order}
                 onChange={(e) => setFormState({ ...formState, series_order: e.target.value })}
+                data-test-id="input-book-series-order"
               />
               {errors.series_order && <p className="text-sm text-destructive">{errors.series_order}</p>}
             </div>
@@ -255,16 +267,23 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               type="url"
               value={formState.cover_image_url}
               onChange={(e) => setFormState({ ...formState, cover_image_url: e.target.value })}
+              data-test-id="input-book-cover-image-url"
             />
             {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url}</p>}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={submitting}
+              data-test-id="btn-cancel-add-book"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting} data-test-id="btn-create-book">
               {submitting ? "Creating..." : "Create Book"}
             </Button>
           </div>

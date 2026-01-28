@@ -15,6 +15,7 @@ pnpm-debug.log*
 
 # environment variables
 .env
+.env.test
 .env.production
 
 # macOS-specific files
@@ -30,3 +31,4 @@ coverage/
 playwright-report/
 test-results/
 playwright/.cache/
+playwright/.auth/

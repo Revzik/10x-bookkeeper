@@ -339,25 +339,58 @@ Reading sessions are **present in the DB types** (`reading_sessions`) but **post
 
 - **Local development**
   - Astro dev server (`astro dev`)
-  - Supabase local stack via Supabase CLI (recommended)
+  - Supabase local stack via Supabase CLI (recommended for unit/integration tests)
   - Mocked OpenRouter to keep tests deterministic
+- **E2E Testing (Cloud environment)**
+  - Dedicated Supabase cloud project separate from development and production
+  - Astro dev server or deployed preview environment
+  - Predefined test user account with known credentials
+  - Real OpenRouter integration (or test-mode API key if available)
+  - Environment isolated from development to prevent test data pollution
 - **CI**
   - Typecheck + lint already present; add unit/integration/E2E as pipeline evolves
-  - Prefer local Supabase in CI runner
+  - Unit/Integration: prefer local Supabase in CI runner
+  - E2E: use dedicated cloud Supabase project with secure credential management
 
 **Core configuration needs**
 
+**Development & Integration Testing:**
 - `SUPABASE_URL`, `SUPABASE_KEY` (SSR server client uses anon key; RLS relies on auth context)
 - `OPENROUTER_API_KEY` (server-side only)
-- HTTPS/cookie behavior note:
-  - `src/db/supabase.client.ts` sets cookies `secure: true`; local tests should run in an HTTPS-capable setup (or provide a documented local override strategy) to avoid false negatives around auth cookies.
+
+**E2E Testing (Cloud):**
+- `E2E_SUPABASE_URL` - dedicated cloud Supabase project URL
+- `E2E_SUPABASE_KEY` - dedicated cloud Supabase anon key
+- `E2E_TEST_USER_ID` - UUID of predefined test user
+- `E2E_TEST_USER_EMAIL` - email of predefined test user
+- `E2E_TEST_USER_PASSWORD` - password of predefined test user
+
+**HTTPS/cookie behavior note:**
+- `src/db/supabase.client.ts` sets cookies `secure: true`; local tests should run in an HTTPS-capable setup (or provide a documented local override strategy) to avoid false negatives around auth cookies.
+- E2E cloud environment should use HTTPS for production-like behavior
 
 **Test data**
 
-- Seed data sets:
-  - User A: series + books + chapters + notes (mix of statuses, progress values)
-  - User B: overlapping entity IDs in attempts (for negative authorization tests)
-- Use deterministic fixtures for AI
+**Unit/Integration Tests:**
+- Ephemeral test data created per test run (local Supabase)
+- Cleaned up after test completion
+
+**E2E Tests (Cloud):**
+- Predefined test user account (manually created in E2E Supabase project):
+  - User ID, email, and password stored in environment variables
+  - User should have RLS policies applied like production
+- Test data approach:
+  - Tests create their own test data during test setup and clean up after completion
+- Use deterministic fixtures for AI queries
+
+**E2E Environment Setup Checklist:**
+1. Create dedicated Supabase cloud project for E2E testing
+2. Run all migrations on E2E project
+3. Create test user account manually via Supabase dashboard or auth API
+4. Document test user credentials in secure location (e.g., CI secrets, password manager)
+5. Configure environment variables in `.env.local` or CI/CD platform
+6. Verify RLS policies are enabled and functioning correctly
+7. Test isolation: ensure tests don't interfere with each other (use unique data or cleanup strategies)
 
 ### 6) Testing Tools (Recommended)
 
@@ -376,6 +409,8 @@ Reading sessions are **present in the DB types** (`reading_sessions`) but **post
 **E2E**
 
 - **Playwright**: cross-browser flows; strong for Astro + React islands
+- **Cloud Supabase**: dedicated E2E Supabase project for production-like testing
+- **Environment variables**: test user credentials and E2E Supabase configuration loaded from `.env.local` or CI secrets
 
 **Quality gates**
 
@@ -386,8 +421,14 @@ Reading sessions are **present in the DB types** (`reading_sessions`) but **post
 
 **Phase 0 — Setup (1–2 days)**
 
-- Establish environments (Supabase local/staging), seed data, and a deterministic OpenRouter mock strategy.
-- Add baseline smoke suite and CI execution (non-blocking at first).
+- Establish environments:
+  - Local Supabase for unit/integration tests
+  - Dedicated cloud Supabase project for E2E tests
+  - Configure environment variables for E2E (test user credentials, Supabase URL/key)
+- Create test user in E2E Supabase project and document credentials securely
+- Set up deterministic OpenRouter mock strategy for unit/integration tests
+- Configure CI/CD secrets for E2E environment
+- Add baseline smoke suite and CI execution (non-blocking at first)
 
 **Phase 1 — High-risk functional coverage (3–5 days)**
 

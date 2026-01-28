@@ -20,6 +20,7 @@ export const AuthErrorBanner = ({ message, children }: AuthErrorBannerProps) => 
       className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
       role="alert"
       aria-live="polite"
+      data-testid="auth-error-banner"
     >
       <div>{message}</div>
       {children}

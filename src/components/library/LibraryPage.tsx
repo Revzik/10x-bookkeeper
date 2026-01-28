@@ -98,12 +98,18 @@ const LibraryPage = ({ userEmail }: LibraryPageProps) => {
       <div className="container mx-auto px-4 py-8">
         {/* Page header */}
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Library</h1>
+          <h1 className="text-3xl font-bold" data-testid="library-heading">
+            Library
+          </h1>
           <div>
             {activeTab === "books" ? (
-              <Button onClick={() => setIsAddBookOpen(true)}>Add Book</Button>
+              <Button onClick={() => setIsAddBookOpen(true)} data-test-id="btn-add-book">
+                Add Book
+              </Button>
             ) : (
-              <Button onClick={() => setIsAddSeriesOpen(true)}>Add Series</Button>
+              <Button onClick={() => setIsAddSeriesOpen(true)} data-testid="btn-add-series">
+                Add Series
+              </Button>
             )}
           </div>
         </div>

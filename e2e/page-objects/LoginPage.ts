@@ -17,13 +17,13 @@ export class LoginPage {
   constructor(page: Page) {
     this.page = page;
 
-    // Use resilient locators (role, label, test-id)
-    this.emailInput = page.getByLabel("Email");
-    this.passwordInput = page.getByLabel("Password");
-    this.loginButton = page.getByRole("button", { name: /log in|sign in/i });
-    this.errorBanner = page.getByRole("alert");
-    this.signupLink = page.getByRole("link", { name: /sign up|create account/i });
-    this.forgotPasswordLink = page.getByRole("link", { name: /forgot password/i });
+    // Use data-testid for resilient selection
+    this.emailInput = page.getByTestId("login-email");
+    this.passwordInput = page.getByTestId("login-password");
+    this.loginButton = page.getByTestId("login-submit");
+    this.errorBanner = page.getByTestId("auth-error-banner");
+    this.signupLink = page.getByTestId("link-signup");
+    this.forgotPasswordLink = page.getByTestId("link-forgot-password");
   }
 
   async goto() {

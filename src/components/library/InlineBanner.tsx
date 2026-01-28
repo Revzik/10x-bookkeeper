@@ -25,7 +25,7 @@ export const InlineBanner = ({ error, onRetry }: InlineBannerProps) => {
   }
 
   return (
-    <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+    <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4" data-test-id="error-banner">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className="font-semibold text-destructive">{title}</h3>
@@ -36,7 +36,7 @@ export const InlineBanner = ({ error, onRetry }: InlineBannerProps) => {
         </div>
 
         {onRetry && (
-          <Button variant="outline" size="sm" onClick={onRetry} className="ml-4">
+          <Button variant="outline" size="sm" onClick={onRetry} className="ml-4" data-test-id="btn-error-retry">
             Retry
           </Button>
         )}
