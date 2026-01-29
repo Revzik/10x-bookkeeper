@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import type { BookHeaderViewModel, BookAskScopeViewModel, AiChatComposerViewModel } from "@/types";
+import { useState } from "react";
+import type { BookHeaderViewModel, BookAskScopeViewModel } from "@/types";
 import { useBookAskChat } from "./hooks";
+import { useClipboardCopy } from "@/hooks/useClipboardCopy";
+import { useAiChatValidation } from "@/hooks/useAiChatValidation";
 import { BookAskScopeBar } from "./ask";
 import { InlineBanner } from "@/components/library/InlineBanner";
 import {
@@ -31,7 +33,6 @@ interface BookAskTabPanelProps {
  */
 export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanelProps) => {
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   // Chat state management (per-scope transcripts)
   const {
@@ -49,24 +50,15 @@ export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanel
     clearChat,
   } = useBookAskChat(book, askScope);
 
+  // Clipboard operations
+  const { copiedId, copyText } = useClipboardCopy();
+
+  // Validation state for composer
+  const composer = useAiChatValidation(draftText);
+
   // Determine series scope availability
   const canUseSeriesScope = book.seriesId !== null;
   const showSeriesDisabledHint = !canUseSeriesScope && askScope === "book";
-
-  // Compute validation state for composer
-  const composerViewModel: AiChatComposerViewModel = useMemo(() => {
-    const trimmedLength = draftText.trim().length;
-    const isEmpty = trimmedLength === 0;
-    const isTooLong = trimmedLength > 500;
-
-    return {
-      trimmedLength,
-      isEmpty,
-      isTooLong,
-      validationError: isEmpty ? "Type a question to send" : isTooLong ? "Max 500 characters" : null,
-      charCountLabel: `${trimmedLength} / 500`,
-    };
-  }, [draftText]);
 
   // Handle scope change
   const handleScopeChange = (nextScope: BookAskScopeViewModel) => {
@@ -78,22 +70,10 @@ export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanel
     setAskScope(nextScope);
   };
 
-  // Handle copy message content
-  const handleCopyMessage = async (content: string, messageId: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedMessageId(messageId);
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopiedMessageId(null), 2000);
-    } catch {
-      // Silently fail - clipboard API might not be available
-    }
-  };
-
   // Handle copy last answer (from dropdown)
   const handleCopyLastAnswer = async () => {
     if (!lastAssistantMessage) return;
-    await handleCopyMessage(lastAssistantMessage.content, lastAssistantMessage.id);
+    await copyText(lastAssistantMessage.content, lastAssistantMessage.id);
   };
 
   // Handle clear chat - open confirmation dialog
@@ -138,8 +118,8 @@ export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanel
       <AiChatTranscript
         messages={messages}
         emptyStateText={emptyStateText}
-        copiedMessageId={copiedMessageId}
-        onCopyMessage={handleCopyMessage}
+        copiedMessageId={copiedId}
+        onCopyMessage={copyText}
       />
 
       {/* Low Confidence Panel */}
@@ -154,7 +134,7 @@ export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanel
         value={draftText}
         disabled={isSubmitting}
         placeholder={placeholder}
-        composer={composerViewModel}
+        composer={composer}
         canCopyLastAnswer={canCopyLastAnswer}
         canClear={canClear}
         onChange={setDraftText}

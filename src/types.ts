@@ -735,22 +735,6 @@ export interface AiChatComposerViewModel {
 }
 
 /**
- * BACKWARDS-COMPATIBLE ALIASES
- * Allows existing Series Ask implementation to migrate gradually without breaking changes.
- */
-export type SeriesAiChatRoleViewModel = AiChatRoleViewModel;
-export type SeriesAiChatMessageStatusViewModel = AiChatMessageStatusViewModel;
-export type SeriesAiChatMessageViewModel = AiChatMessageViewModel;
-export type SeriesAskComposerViewModel = AiChatComposerViewModel;
-
-/**
- * Extended state for Series Ask (includes legacy lastResponseLowConfidence field)
- */
-export interface SeriesAiChatStateViewModel extends AiChatStateViewModel {
-  lastResponseLowConfidence: boolean;
-}
-
-/**
  * VIEW MODELS (Book Detail View)
  * These types are specific to the Book Detail view and derived from DTOs for UI rendering.
  */
