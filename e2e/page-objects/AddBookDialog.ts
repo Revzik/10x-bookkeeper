@@ -75,7 +75,9 @@ export class AddBookDialog {
       completed: "option-book-status-completed",
     };
 
-    await this.page.getByTestId(statusTestIds[status]).click();
+    const option = this.page.getByTestId(statusTestIds[status]);
+    await option.waitFor({ state: "visible" });
+    await option.click();
   }
 
   async selectSeries(seriesId: string) {
