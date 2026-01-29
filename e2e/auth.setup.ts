@@ -3,6 +3,7 @@
  * This setup authenticates once and saves the browser state for all tests
  *
  * Following Playwright's recommended approach:
+ * - Validates all required E2E environment variables first
  * - Authenticates once in the setup project
  * - Saves authenticated state to playwright/.auth/user.json
  * - All tests reuse this state to start already authenticated
@@ -11,8 +12,13 @@
 import { test as setup, expect } from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
+import { validateE2EEnvironment } from "./fixtures/validate-env";
 import { testUsers } from "./fixtures/test-users";
 import { LoginPage } from "./page-objects/LoginPage";
+
+// Validate environment before any tests run
+// This will fail fast with a clear error message if variables are missing
+validateE2EEnvironment();
 
 // Path to store authenticated browser state
 const __filename = fileURLToPath(import.meta.url);

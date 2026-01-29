@@ -5,6 +5,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/db/database.types";
+import { validateE2EEnvironment } from "./validate-env";
 import { testUsers } from "./test-users";
 
 export interface AuthenticatedTestClient {
@@ -19,26 +20,15 @@ export interface AuthenticatedTestClient {
  * @throws Error if required environment variables are not set
  */
 export async function createAuthenticatedTestClient(): Promise<AuthenticatedTestClient> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
-  const testUserId = process.env.E2E_TEST_USER_ID;
-  const testUserEmail = testUsers.validUser.email;
-  const testUserPassword = testUsers.validUser.password;
+  // Validate all required environment variables
+  const env = validateE2EEnvironment();
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error("SUPABASE_URL and SUPABASE_KEY environment variables must be set");
-  }
-
-  if (!testUserId) {
-    throw new Error("E2E_TEST_USER_ID environment variable must be set");
-  }
-
-  const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY);
 
   // Authenticate as test user to pass RLS policies
   const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: testUserEmail,
-    password: testUserPassword,
+    email: testUsers.validUser.email,
+    password: testUsers.validUser.password,
   });
 
   if (signInError) {
@@ -47,7 +37,7 @@ export async function createAuthenticatedTestClient(): Promise<AuthenticatedTest
 
   return {
     supabase,
-    userId: testUserId,
+    userId: testUsers.validUser.id,
   };
 }
 

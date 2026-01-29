@@ -3,6 +3,7 @@
  * This teardown cleans up test data after all tests have completed
  *
  * Following Playwright's recommended approach:
+ * - Validates all required E2E environment variables first
  * - Runs after all dependent projects complete
  * - Cleans series and books tables for the test user
  * - Uses Supabase client with authentication to respect RLS policies
@@ -59,10 +60,11 @@ teardown("cleanup database", async () => {
 
     console.log("Database cleanup completed successfully");
   } catch (error) {
-    // Handle authentication errors (e.g., missing environment variables)
-    if (error instanceof Error && error.message.includes("environment variable")) {
-      console.warn(`Skipping database cleanup: ${error.message}`);
-      return;
+    // Handle environment validation errors
+    if (error instanceof Error && error.message.includes("E2E test environment validation failed")) {
+      console.error("Database cleanup failed due to missing environment variables:");
+      console.error(error.message);
+      throw error;
     }
 
     console.error("Database cleanup failed:", error);

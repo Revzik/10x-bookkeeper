@@ -43,13 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint]
     environment: integration
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID }}
-      E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
-      E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -65,9 +58,9 @@ jobs:
           supabase-url: ${{ secrets.SUPABASE_URL }}
           supabase-key: ${{ secrets.SUPABASE_KEY }}
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
-          e2e-test-user-id: ${{ secrets.E2E_TEST_USER_ID }}
-          e2e-test-user-email: ${{ secrets.E2E_TEST_USER_EMAIL }}
-          e2e-test-user-password: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+          e2e-test-user-id: ${{ vars.E2E_TEST_USER_ID }}
+          e2e-test-user-email: ${{ vars.E2E_TEST_USER_EMAIL }}
+          e2e-test-user-password: ${{ vars.E2E_TEST_USER_PASSWORD }}
 
       - name: Run E2E tests
         run: npm run test:e2e
@@ -84,6 +77,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: [lint, unit-test, e2e-test]
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
