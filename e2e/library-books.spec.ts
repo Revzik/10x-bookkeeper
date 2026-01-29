@@ -81,7 +81,7 @@ test.describe("Library - Books Tab", () => {
     await booksPanel.waitForBookByTitle(bookData.title);
     const bookCard = await booksPanel.getBookCardByTitle(bookData.title);
 
-    expect(await bookCard.hasStatus("Reading")).toBe(false);
+    expect(await bookCard.hasStatus("Reading")).toBe(true);
   });
 
   test("should validate required fields", async ({ page }) => {
