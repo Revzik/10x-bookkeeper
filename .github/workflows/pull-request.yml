@@ -1,0 +1,196 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node and dependencies
+        uses: ./.github/actions/setup-node-deps
+        with:
+          node-version: '22.14.0'
+
+      - name: Run linter
+        run: npm run lint
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node and dependencies
+        uses: ./.github/actions/setup-node-deps
+        with:
+          node-version: '22.14.0'
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: unit-coverage
+          path: coverage/
+          retention-days: 7
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    environment: integration
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID }}
+      E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+      E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node and dependencies
+        uses: ./.github/actions/setup-node-deps
+        with:
+          node-version: '22.14.0'
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Create .env.test file
+        run: |
+          cat > .env.test << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          E2E_TEST_USER_ID=${{ secrets.E2E_TEST_USER_ID }}
+          E2E_TEST_USER_EMAIL=${{ secrets.E2E_TEST_USER_EMAIL }}
+          E2E_TEST_USER_PASSWORD=${{ secrets.E2E_TEST_USER_PASSWORD }}
+          EOF
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: playwright-report/
+          retention-days: 7
+
+  status-comment:
+    name: PR Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: unit-coverage
+          path: coverage/
+
+      - name: Download E2E artifacts
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: e2e-artifacts
+          path: e2e-artifacts/
+
+      - name: Determine overall status
+        id: status
+        run: |
+          LINT_STATUS="${{ needs.lint.result }}"
+          UNIT_STATUS="${{ needs.unit-test.result }}"
+          E2E_STATUS="${{ needs.e2e-test.result }}"
+          
+          echo "lint_status=${LINT_STATUS}" >> $GITHUB_OUTPUT
+          echo "unit_status=${UNIT_STATUS}" >> $GITHUB_OUTPUT
+          echo "e2e_status=${E2E_STATUS}" >> $GITHUB_OUTPUT
+          
+          if [[ "${LINT_STATUS}" == "success" && "${UNIT_STATUS}" == "success" && "${E2E_STATUS}" == "success" ]]; then
+            echo "overall_status=success" >> $GITHUB_OUTPUT
+            echo "overall_emoji=✅" >> $GITHUB_OUTPUT
+          else
+            echo "overall_status=failure" >> $GITHUB_OUTPUT
+            echo "overall_emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const lintStatus = '${{ steps.status.outputs.lint_status }}';
+            const unitStatus = '${{ steps.status.outputs.unit_status }}';
+            const e2eStatus = '${{ steps.status.outputs.e2e_status }}';
+            const overallStatus = '${{ steps.status.outputs.overall_status }}';
+            const overallEmoji = '${{ steps.status.outputs.overall_emoji }}';
+            
+            const statusEmoji = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'cancelled') return '⚠️';
+              return '❓';
+            };
+            
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            const body = `## ${overallEmoji} Pull Request CI Status
+            
+            **Overall Status:** ${overallStatus === 'success' ? 'All checks passed!' : 'Some checks failed'}
+            
+            | Job | Status |
+            |-----|--------|
+            | Lint | ${statusEmoji(lintStatus)} ${lintStatus} |
+            | Unit Tests | ${statusEmoji(unitStatus)} ${unitStatus} |
+            | E2E Tests | ${statusEmoji(e2eStatus)} ${e2eStatus} |
+            
+            [View detailed workflow run](${runUrl})
+            
+            ---
+            *Updated at: ${new Date().toUTCString()}*`;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Pull Request CI Status')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
