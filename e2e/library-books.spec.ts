@@ -8,6 +8,8 @@
 
 import { test, expect } from "@playwright/test";
 import { LibraryPage } from "./page-objects";
+import { createAuthenticatedTestClient, signOutTestClient } from "./fixtures/supabase-test-client";
+import { createBook, deleteBookById } from "../src/lib/services/books.service";
 
 test.describe("Library - Books Tab", () => {
   test("should create a new book without series", async ({ page }) => {
@@ -136,6 +138,9 @@ test.describe("Library - Books Tab", () => {
     await addBookDialog.waitForDialogToClose();
     await booksPanel.waitForLoaded();
 
+    // Wait for the book to appear in the list (ensures successful load)
+    await booksPanel.waitForBookByTitle(uniqueTitle);
+
     // Search for the book
     await booksPanel.search(uniqueTitle);
     await booksPanel.waitForLoaded();
@@ -199,21 +204,41 @@ test.describe("Library - Books Tab", () => {
     const libraryPage = new LibraryPage(page);
     const booksPanel = libraryPage.booksPanel;
 
-    await libraryPage.gotoBooks();
+    // Setup: Create authenticated test client and test book
+    const { supabase, userId } = await createAuthenticatedTestClient();
 
-    const count = await booksPanel.getBooksCount();
+    // Create a test book
+    const testBook = await createBook({
+      supabase,
+      userId,
+      command: {
+        title: "Navigation Test Book",
+        author: "Test Author",
+        total_pages: 300,
+        status: "reading",
+      },
+    });
 
-    if (count > 0) {
-      const titles = await booksPanel.getBookTitles();
-      const firstBookCard = await booksPanel.getBookCardByTitle(titles[0]);
+    try {
+      // Navigate to library books tab
+      await libraryPage.gotoBooks();
+      await booksPanel.waitForLoaded();
 
-      // Click card
-      await firstBookCard.click();
+      // Find and click the test book card
+      const bookCard = await booksPanel.getBookCardByTitle(testBook.title);
+      await bookCard.click();
 
-      // Should navigate to book detail page
-      await expect(page).toHaveURL(/\/books\/.+/);
-    } else {
-      test.skip();
+      // Should navigate to book detail page with the correct book ID
+      await expect(page).toHaveURL(new RegExp(`/books/${testBook.id}`));
+    } finally {
+      // Cleanup: Delete the test book
+      await deleteBookById({
+        supabase,
+        userId,
+        bookId: testBook.id,
+      });
+
+      await signOutTestClient(supabase);
     }
   });
 });
