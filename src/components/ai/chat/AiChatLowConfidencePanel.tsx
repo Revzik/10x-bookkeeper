@@ -1,5 +1,3 @@
-import type { BookAskScopeViewModel } from "@/types";
-
 interface AiChatLowConfidencePanelProps {
   visible: boolean;
   scope: "book" | "series";

@@ -59,7 +59,7 @@ describe("paginationOrderSchema", () => {
   });
 
   it("should reject invalid order values", () => {
-    expect(() => paginationOrderSchema.parse("invalid" as any)).toThrow();
+    expect(() => paginationOrderSchema.parse("invalid")).toThrow();
   });
 });
 
