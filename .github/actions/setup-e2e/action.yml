@@ -1,0 +1,41 @@
+name: 'Setup E2E Testing'
+description: 'Composite action to setup E2E testing environment with Playwright'
+
+inputs:
+  supabase-url:
+    description: 'Supabase URL'
+    required: true
+  supabase-key:
+    description: 'Supabase Key'
+    required: true
+  openrouter-api-key:
+    description: 'OpenRouter API Key'
+    required: true
+  e2e-test-user-id:
+    description: 'E2E Test User ID'
+    required: true
+  e2e-test-user-email:
+    description: 'E2E Test User Email'
+    required: true
+  e2e-test-user-password:
+    description: 'E2E Test User Password'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Playwright browsers
+      shell: bash
+      run: npx playwright install chromium --with-deps
+
+    - name: Create .env.test file
+      shell: bash
+      run: |
+        cat > .env.test << EOF
+        SUPABASE_URL=${{ inputs.supabase-url }}
+        SUPABASE_KEY=${{ inputs.supabase-key }}
+        OPENROUTER_API_KEY=${{ inputs.openrouter-api-key }}
+        E2E_TEST_USER_ID=${{ inputs.e2e-test-user-id }}
+        E2E_TEST_USER_EMAIL=${{ inputs.e2e-test-user-email }}
+        E2E_TEST_USER_PASSWORD=${{ inputs.e2e-test-user-password }}
+        EOF

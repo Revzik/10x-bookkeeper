@@ -22,13 +22,10 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-  test:
-    name: Test
+  unit-test:
+    name: Unit Tests
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    needs: [lint]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -41,14 +38,52 @@ jobs:
       - name: Run unit tests
         run: npm run test
 
-  build:
-    name: Build
+  e2e-test:
+    name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint]
+    environment: integration
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID }}
+      E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+      E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node and dependencies
+        uses: ./.github/actions/setup-node-deps
+        with:
+          node-version: '22.14.0'
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/setup-e2e
+        with:
+          supabase-url: ${{ secrets.SUPABASE_URL }}
+          supabase-key: ${{ secrets.SUPABASE_KEY }}
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
+          e2e-test-user-id: ${{ secrets.E2E_TEST_USER_ID }}
+          e2e-test-user-email: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          e2e-test-user-password: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: playwright-report/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
