@@ -69,7 +69,6 @@ export async function GET(context: APIContext): Promise<Response> {
 /**
  * PATCH /api/v1/notes/:noteId
  * Updates a note's content.
- * Sets embedding_status to "pending" (PoC requirement).
  */
 export async function PATCH(context: APIContext): Promise<Response> {
   const supabase = context.locals.supabase;
@@ -126,7 +125,6 @@ export async function PATCH(context: APIContext): Promise<Response> {
 /**
  * DELETE /api/v1/notes/:noteId
  * Deletes a note by ID.
- * Database cascades will handle deletion of related embeddings.
  */
 export async function DELETE(context: APIContext): Promise<Response> {
   const supabase = context.locals.supabase;

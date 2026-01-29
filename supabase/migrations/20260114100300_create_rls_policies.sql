@@ -1,6 +1,6 @@
 -- Migration: Create Row Level Security Policies
 -- Purpose: Implement RLS policies for all tables to ensure single-tenant data isolation
--- Affected: All tables (series, books, chapters, notes, note_embeddings, reading_sessions, search_logs, embedding_errors, search_errors)
+-- Affected: All tables (series, books, chapters, notes, search_logs, search_errors)
 -- Special considerations: Granular policies per operation (select, insert, update, delete) for authenticated role only
 -- Security Model: Users can only access rows where user_id matches their authenticated ID (auth.uid())
 
@@ -136,7 +136,7 @@ to authenticated
 with check (user_id = auth.uid());
 
 -- Policy: Allow authenticated users to UPDATE their own notes
--- Rationale: Users can edit note content and embedding status
+-- Rationale: Users can edit note content
 create policy "Authenticated users can update their own notes"
 on public.notes
 for update
@@ -148,80 +148,6 @@ with check (user_id = auth.uid());
 -- Rationale: Users can remove notes they no longer want
 create policy "Authenticated users can delete their own notes"
 on public.notes
-for delete
-to authenticated
-using (user_id = auth.uid());
-
--- ============================================================
--- RLS Policies for: note_embeddings
--- ============================================================
-
--- Policy: Allow authenticated users to SELECT their own note embeddings
--- Rationale: Users should only access embeddings generated from their notes
-create policy "Authenticated users can select their own note embeddings"
-on public.note_embeddings
-for select
-to authenticated
-using (user_id = auth.uid());
-
--- Policy: Allow authenticated users to INSERT their own note embeddings
--- Rationale: Background jobs create embeddings for user's notes
-create policy "Authenticated users can insert their own note embeddings"
-on public.note_embeddings
-for insert
-to authenticated
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to UPDATE their own note embeddings
--- Rationale: Embeddings may need to be regenerated if content changes
-create policy "Authenticated users can update their own note embeddings"
-on public.note_embeddings
-for update
-to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to DELETE their own note embeddings
--- Rationale: Embeddings should be removed when notes are deleted or regenerated
-create policy "Authenticated users can delete their own note embeddings"
-on public.note_embeddings
-for delete
-to authenticated
-using (user_id = auth.uid());
-
--- ============================================================
--- RLS Policies for: reading_sessions
--- ============================================================
-
--- Policy: Allow authenticated users to SELECT their own reading sessions
--- Rationale: Users should only see their own reading history
-create policy "Authenticated users can select their own reading sessions"
-on public.reading_sessions
-for select
-to authenticated
-using (user_id = auth.uid());
-
--- Policy: Allow authenticated users to INSERT their own reading sessions
--- Rationale: Users create reading sessions when they start reading
-create policy "Authenticated users can insert their own reading sessions"
-on public.reading_sessions
-for insert
-to authenticated
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to UPDATE their own reading sessions
--- Rationale: Sessions need to be updated when reading stops (ended_at, end_page)
-create policy "Authenticated users can update their own reading sessions"
-on public.reading_sessions
-for update
-to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to DELETE their own reading sessions
--- Rationale: Users may want to remove erroneous session entries
-create policy "Authenticated users can delete their own reading sessions"
-on public.reading_sessions
 for delete
 to authenticated
 using (user_id = auth.uid());
@@ -259,43 +185,6 @@ with check (user_id = auth.uid());
 -- Rationale: Users may want to clear their search history
 create policy "Authenticated users can delete their own search logs"
 on public.search_logs
-for delete
-to authenticated
-using (user_id = auth.uid());
-
--- ============================================================
--- RLS Policies for: embedding_errors
--- ============================================================
-
--- Policy: Allow authenticated users to SELECT their own embedding errors
--- Rationale: Users and admin tools should see embedding failures for their notes
-create policy "Authenticated users can select their own embedding errors"
-on public.embedding_errors
-for select
-to authenticated
-using (user_id = auth.uid());
-
--- Policy: Allow authenticated users to INSERT their own embedding errors
--- Rationale: Background processes log embedding failures for debugging
-create policy "Authenticated users can insert their own embedding errors"
-on public.embedding_errors
-for insert
-to authenticated
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to UPDATE their own embedding errors
--- Rationale: Error records may need status updates or annotations
-create policy "Authenticated users can update their own embedding errors"
-on public.embedding_errors
-for update
-to authenticated
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
-
--- Policy: Allow authenticated users to DELETE their own embedding errors
--- Rationale: Users may want to clear resolved errors
-create policy "Authenticated users can delete their own embedding errors"
-on public.embedding_errors
 for delete
 to authenticated
 using (user_id = auth.uid());

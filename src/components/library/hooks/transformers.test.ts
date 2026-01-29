@@ -225,13 +225,12 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-123",
         title: "Harry Potter",
-        book_count: 7,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
 
       // Act
-      const result = transformSeriesListItem(dto);
+      const result = transformSeriesListItem(dto, 7);
 
       // Assert
       expect(result).toEqual({
@@ -250,13 +249,12 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-123",
         title: "Empty Series",
-        book_count: 0,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
 
       // Act
-      const result = transformSeriesListItem(dto);
+      const result = transformSeriesListItem(dto, 0);
 
       // Assert
       expect(result.bookCount).toBe(0);
@@ -267,13 +265,12 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-123",
         title: "Test Series",
-        book_count: 5,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-20T12:00:00Z",
       };
 
       // Act
-      const result = transformSeriesListItem(dto);
+      const result = transformSeriesListItem(dto, 5);
 
       // Assert
       expect(result.createdAtIso).toBe("2024-01-01T00:00:00Z");
@@ -287,13 +284,12 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-123",
         title: "Long Series",
-        book_count: 999,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
 
       // Act
-      const result = transformSeriesListItem(dto);
+      const result = transformSeriesListItem(dto, 999);
 
       // Assert
       expect(result.bookCount).toBe(999);
@@ -306,7 +302,6 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-123",
         title: "The Lord of the Rings",
-        book_count: 3,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
@@ -326,7 +321,6 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-456",
         title: "Foundation",
-        book_count: 7,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
@@ -345,7 +339,6 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-789",
         title: "Discworld",
-        book_count: 41,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
@@ -365,7 +358,6 @@ describe("transformers", () => {
       const dto: SeriesListItemDto = {
         id: "series-999",
         title: "A Song of Ice & Fire: The Chronicles",
-        book_count: 5,
         created_at: "2024-01-10T08:00:00Z",
         updated_at: "2024-01-15T10:30:00Z",
       };
@@ -426,21 +418,20 @@ describe("transformers", () => {
         {
           id: "series-1",
           title: "Series 1",
-          book_count: 3,
           created_at: "2024-01-01T00:00:00Z",
           updated_at: "2024-01-15T10:30:00Z",
         },
         {
           id: "series-2",
           title: "Series 2",
-          book_count: 5,
           created_at: "2024-01-05T00:00:00Z",
           updated_at: "2024-01-20T10:30:00Z",
         },
       ];
 
       // Act
-      const viewModels = dtos.map(transformSeriesListItem);
+      const bookCounts = [3, 5];
+      const viewModels = dtos.map((dto, index) => transformSeriesListItem(dto, bookCounts[index]));
       const options = dtos.map(transformSeriesOption);
 
       // Assert

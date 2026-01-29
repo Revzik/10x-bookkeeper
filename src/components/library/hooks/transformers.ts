@@ -29,12 +29,13 @@ export const transformBookListItem = (dto: BookListItemDto): BookListItemViewMod
 
 /**
  * Transform SeriesListItemDto to SeriesListItemViewModel
+ * Note: bookCount is defaulted to 0. To display actual count, query books separately.
  */
-export const transformSeriesListItem = (dto: SeriesListItemDto): SeriesListItemViewModel => {
+export const transformSeriesListItem = (dto: SeriesListItemDto, bookCount = 0): SeriesListItemViewModel => {
   return {
     id: dto.id,
     title: dto.title,
-    bookCount: dto.book_count,
+    bookCount,
     createdAtIso: dto.created_at,
     createdAtLabel: formatRelativeTime(dto.created_at),
     updatedAtIso: dto.updated_at,

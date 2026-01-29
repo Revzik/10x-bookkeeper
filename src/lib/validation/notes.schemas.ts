@@ -23,7 +23,6 @@ export const listNotesQuerySchema = z.object({
   book_id: z.string().uuid("Invalid book ID format").optional(),
   chapter_id: z.string().uuid("Invalid chapter ID format").optional(),
   series_id: z.string().uuid("Invalid series ID format").optional(),
-  embedding_status: z.enum(["pending", "processing", "completed", "failed"]).optional(),
   sort: z.enum(["created_at", "updated_at"]).optional().default("updated_at"),
   order: paginationOrderSchema,
 });
@@ -44,6 +43,7 @@ export const noteGetQuerySchema = z
 
 /**
  * Validation schema for PATCH /api/v1/notes/:noteId request body
+ * Supports updating content and/or reassigning to a different chapter
  */
 export const updateNoteBodySchema = z
   .object({
@@ -51,9 +51,14 @@ export const updateNoteBodySchema = z
       .string()
       .trim()
       .min(1, "Content is required and cannot be empty")
-      .max(10000, "Content cannot exceed 10,000 characters"),
+      .max(10000, "Content cannot exceed 10,000 characters")
+      .optional(),
+    chapter_id: z.string().uuid("Invalid chapter ID format").optional(),
   })
-  .strict(); // Reject unknown fields
+  .strict() // Reject unknown fields
+  .refine((data) => data.content !== undefined || data.chapter_id !== undefined, {
+    message: "At least one field (content or chapter_id) must be provided",
+  });
 
 export type CreateNoteBody = z.infer<typeof createNoteBodySchema>;
 export type ListNotesQuery = z.infer<typeof listNotesQuerySchema>;

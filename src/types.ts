@@ -1,4 +1,4 @@
-import type { Database, Enums, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
+import type { Enums, Tables, TablesInsert, TablesUpdate } from "./db/database.types";
 import type { ZodIssue } from "zod";
 
 /**
@@ -65,17 +65,13 @@ export type SeriesEntity = Tables<"series">;
 export type BookEntity = Tables<"books">;
 export type ChapterEntity = Tables<"chapters">;
 export type NoteEntity = Tables<"notes">;
-export type ReadingSessionEntity = Tables<"reading_sessions">;
 export type SearchLogEntity = Tables<"search_logs">;
-export type EmbeddingErrorEntity = Tables<"embedding_errors">;
 export type SearchErrorEntity = Tables<"search_errors">;
-export type NoteEmbeddingEntity = Tables<"note_embeddings">;
 
 /**
  * Enums (derived from DB enums)
  */
 export type BookStatus = Enums<"book_status">;
-export type EmbeddingStatus = Enums<"embedding_status">;
 export type ErrorSource = Enums<"error_source">;
 
 /**
@@ -83,10 +79,10 @@ export type ErrorSource = Enums<"error_source">;
  */
 export type SeriesDto = Pick<
   SeriesEntity,
-  "id" | "title" | "description" | "cover_image_url" | "book_count" | "created_at" | "updated_at"
+  "id" | "title" | "description" | "cover_image_url" | "created_at" | "updated_at"
 >;
 
-export type SeriesListItemDto = Pick<SeriesEntity, "id" | "title" | "book_count" | "created_at" | "updated_at">;
+export type SeriesListItemDto = Pick<SeriesEntity, "id" | "title" | "created_at" | "updated_at">;
 
 export type CreateSeriesCommand = Pick<TablesInsert<"series">, "title"> &
   Partial<Pick<TablesInsert<"series">, "description" | "cover_image_url">>;
@@ -218,20 +214,9 @@ export interface UpdateChapterResponseDto {
 /**
  * NOTES
  */
-export type NoteDto = Pick<
-  NoteEntity,
-  "id" | "chapter_id" | "content" | "embedding_status" | "embedding_duration" | "created_at" | "updated_at"
->;
+export type NoteDto = Pick<NoteEntity, "id" | "chapter_id" | "content" | "created_at" | "updated_at">;
 
-/**
- * NOTE (PoC): The API plan states `embedding_status` + `embedding_duration` are currently
- * ignored/left as defaults. They remain in DTOs because they exist in the DB schema and will
- * be used once embeddings are implemented.
- */
-export type NoteListItemDto = Pick<
-  NoteEntity,
-  "id" | "chapter_id" | "content" | "embedding_status" | "created_at" | "updated_at"
->;
+export type NoteListItemDto = Pick<NoteEntity, "id" | "chapter_id" | "content" | "created_at" | "updated_at">;
 
 export type CreateNoteCommand = Pick<TablesInsert<"notes">, "content">;
 export type UpdateNoteCommand = Partial<Pick<TablesUpdate<"notes">, "content" | "chapter_id">>;
@@ -242,7 +227,6 @@ export interface NotesListQueryDto {
   book_id?: Uuid;
   chapter_id?: NoteEntity["chapter_id"];
   series_id?: Uuid;
-  embedding_status?: EmbeddingStatus;
   sort?: "created_at" | "updated_at";
   order?: SortOrderDto;
 }
@@ -270,114 +254,18 @@ export interface GetNoteResponseDto {
   context?: NoteContextDto;
 }
 export interface UpdateNoteResponseDto {
-  note: Pick<NoteEntity, "id" | "content" | "embedding_status" | "updated_at">;
+  note: Pick<NoteEntity, "id" | "content" | "chapter_id" | "updated_at">;
 }
 
 /**
- * READING SESSIONS
+ * AI SEARCH
  */
-/**
- * POSTPONED (PoC): Reading sessions are not implemented yet per `.ai/api-plan.md`.
- * These types are intentionally kept so follow-up work can enable the endpoints without
- * re-deriving models, but they should not be used by current API routes/UI.
- *
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type ReadingSessionDto = Pick<ReadingSessionEntity, "id" | "book_id" | "started_at" | "ended_at" | "end_page">;
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type StartReadingSessionCommand = Record<never, never>;
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface StopReadingSessionCommand {
-  ended_at?: IsoDateTimeString;
-  // DB column is `number | null`; client payload should be a concrete number when provided.
-  end_page?: Exclude<ReadingSessionEntity["end_page"], null>;
-  update_book_progress?: boolean;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface ReadingSessionsListQueryDto {
-  page?: number;
-  size?: number;
-  book_id?: ReadingSessionEntity["book_id"];
-  started_after?: IsoDateTimeString;
-  started_before?: IsoDateTimeString;
-  sort?: "started_at" | "ended_at";
-  order?: SortOrderDto;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface StartReadingSessionResponseDto {
-  reading_session: ReadingSessionDto;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface StopReadingSessionResponseDto {
-  reading_session: Pick<ReadingSessionEntity, "id" | "ended_at" | "end_page">;
-  book: Pick<BookEntity, "id" | "current_page" | "status">;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface ListReadingSessionsResponseDto {
-  reading_sessions: ReadingSessionDto[];
-  meta: PaginationMetaDto;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface GetReadingSessionResponseDto {
-  reading_session: ReadingSessionDto;
-}
-
-/**
- * AI SEARCH (RAG)
- */
-/**
- * POSTPONED (PoC): RAG retrieval via `match_notes` + `note_embeddings` is not implemented yet.
- * The PoC uses "simple chat" by loading note context from `notes` and sending it to the LLM.
- *
- * These types are kept to preserve the intended future contract once RAG is enabled.
- *
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type MatchNotesRpcRow = Database["public"]["Functions"]["match_notes"]["Returns"][number];
-
-/**
- * API plan calls this field `note_embedding_id`, but the RPC returns `id`.
- * This type performs a “rename” while still being fully derived from the RPC return type.
- */
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type AiCitationDto = Omit<MatchNotesRpcRow, "id"> & { note_embedding_id: MatchNotesRpcRow["id"] };
-
 export interface AiAnswerDto {
   text: string;
   low_confidence: boolean;
 }
 
 export interface AiUsageDto {
-  /**
-   * POSTPONED (PoC): `retrieved_chunks` is only meaningful for RAG retrieval. In the current
-   * "simple chat" PoC, this may be omitted/unused by the implementation.
-   *
-   * @deprecated Postponed for PoC; do not rely on this field yet.
-   */
-  retrieved_chunks: number;
   model: string;
   latency_ms: number;
 }
@@ -385,25 +273,6 @@ export interface AiUsageDto {
 export interface AiQueryScopeDto {
   book_id?: Uuid | null;
   series_id?: Uuid | null;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type AiQueryRetrievalDto = Pick<
-  Database["public"]["Functions"]["match_notes"]["Args"],
-  "match_threshold" | "match_count"
->;
-
-export interface AiQueryCommand {
-  query_text: SearchLogEntity["query_text"];
-  scope: AiQueryScopeDto;
-  /**
-   * POSTPONED (PoC): RAG retrieval parameters are not used in the current "simple chat" plan.
-   *
-   * @deprecated Postponed for PoC; do not send/expect this yet.
-   */
-  retrieval: AiQueryRetrievalDto;
 }
 
 /**
@@ -427,18 +296,6 @@ export interface AiQueryResponseDtoSimple {
   };
 }
 
-export interface AiQueryResponseDto {
-  answer: AiAnswerDto;
-  /**
-   * POSTPONED (PoC): citations come from vector retrieval; the current PoC response does not
-   * include citations.
-   *
-   * @deprecated Postponed for PoC; do not rely on this field yet.
-   */
-  citations: AiCitationDto[];
-  usage: AiUsageDto;
-}
-
 /**
  * SEARCH LOGS (optional exposure)
  */
@@ -454,43 +311,6 @@ export interface SearchLogsListQueryDto {
 export interface ListSearchLogsResponseDto {
   search_logs: SearchLogDto[];
   meta: PaginationMetaDto;
-}
-
-/**
- * EMBEDDING ERRORS (optional exposure)
- */
-/**
- * POSTPONED (PoC): Embedding pipeline + error surfacing is not implemented yet per `.ai/api-plan.md`.
- * Types are kept for the later embedding rollout.
- *
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export type EmbeddingErrorDto = Pick<EmbeddingErrorEntity, "id" | "note_id" | "error_message" | "created_at">;
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface EmbeddingErrorsListQueryDto {
-  page?: number;
-  size?: number;
-  note_id?: EmbeddingErrorEntity["note_id"];
-  sort?: "created_at";
-  order?: SortOrderDto;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface ListEmbeddingErrorsResponseDto {
-  embedding_errors: EmbeddingErrorDto[];
-  meta: PaginationMetaDto;
-}
-
-/**
- * @deprecated Postponed for PoC; do not use in current implementation.
- */
-export interface GetEmbeddingErrorResponseDto {
-  embedding_error: EmbeddingErrorDto;
 }
 
 /**
@@ -590,28 +410,6 @@ export interface SeriesSelectOptionViewModel {
 }
 
 /**
- * Controlled form state for AddBookDialog
- */
-export interface CreateBookFormViewModel {
-  title: string;
-  author: string;
-  total_pages: string;
-  status?: BookStatus;
-  series_id: string;
-  series_order: string;
-  cover_image_url: string;
-}
-
-/**
- * Controlled form state for AddSeriesDialog
- */
-export interface CreateSeriesFormViewModel {
-  title: string;
-  description: string;
-  cover_image_url: string;
-}
-
-/**
  * VIEW MODELS (Series Detail View)
  * These types are specific to the Series Detail view and derived from DTOs for UI rendering.
  */
@@ -637,22 +435,6 @@ export interface SeriesHeaderViewModel {
 }
 
 /**
- * Controlled form state for EditSeriesDialog
- */
-export interface UpdateSeriesFormViewModel {
-  title: string;
-  description: string;
-  cover_image_url: string;
-}
-
-/**
- * Controlled state for DeleteSeriesDialog
- */
-export interface DeleteSeriesConfirmViewModel {
-  cascade: boolean;
-}
-
-/**
  * UI-ready book row for series books with reorder metadata
  * Extends BookListItemViewModel with position and move controls state
  */
@@ -660,29 +442,6 @@ export interface SeriesBookRowViewModel extends BookListItemViewModel {
   position: number;
   isMoveUpDisabled: boolean;
   isMoveDownDisabled: boolean;
-}
-
-/**
- * Reorder state for series books tab
- */
-export interface SeriesBooksReorderStateViewModel {
-  isEditing: boolean;
-  isDirty: boolean;
-  isSaving: boolean;
-  serverOrderIds: string[];
-  draftOrderIds: string[];
-  saveError: ApiErrorDto | null;
-}
-
-/**
- * Series Detail view state aggregator
- */
-export interface SeriesDetailStateViewModel {
-  series: SeriesHeaderViewModel | null;
-  seriesLoading: boolean;
-  seriesError: ApiErrorDto | null;
-  seriesNotFound: boolean;
-  activeTab: SeriesTabViewModel;
 }
 
 /**
@@ -784,32 +543,6 @@ export interface BookHeaderViewModel {
 }
 
 /**
- * Controlled form state for EditBookDialog
- */
-export interface UpdateBookFormViewModel {
-  title: string;
-  author: string;
-  total_pages: string;
-  current_page: string;
-  status: BookStatus;
-  series_id: string;
-  series_order: string;
-  cover_image_url: string;
-}
-
-/**
- * Book Detail view state aggregator
- */
-export interface BookDetailStateViewModel {
-  book: BookHeaderViewModel | null;
-  bookLoading: boolean;
-  bookError: ApiErrorDto | null;
-  bookNotFound: boolean;
-  activeTab: BookTabViewModel;
-  askScope: BookAskScopeViewModel;
-}
-
-/**
  * UI-ready chapter list item derived from ChapterListItemDto
  */
 export interface ChapterListItemViewModel {
@@ -822,16 +555,6 @@ export interface ChapterListItemViewModel {
 }
 
 /**
- * Chapter row with reorder metadata
- * Extends ChapterListItemViewModel with position and move controls state
- */
-export interface BookChapterRowViewModel extends ChapterListItemViewModel {
-  position: number;
-  isMoveUpDisabled: boolean;
-  isMoveDownDisabled: boolean;
-}
-
-/**
  * Reorder state for chapters tab
  */
 export interface BookChaptersReorderStateViewModel {
@@ -841,22 +564,6 @@ export interface BookChaptersReorderStateViewModel {
   serverOrderIds: string[];
   draftOrderIds: string[];
   saveError: ApiErrorDto | null;
-}
-
-/**
- * Controlled form state for AddChapterDialog
- */
-export interface CreateChapterFormViewModel {
-  title: string;
-  order: string;
-}
-
-/**
- * Controlled form state for EditChapterDialog
- */
-export interface UpdateChapterFormViewModel {
-  title: string;
-  order: string;
 }
 
 /**
@@ -897,19 +604,6 @@ export interface NoteListItemViewModel {
 export type NotesByChapterViewModel = Record<string, NoteListItemViewModel[]>;
 
 /**
- * Note dialog mode - create new or view/edit existing
- */
-export type UpsertNoteModeViewModel = "create" | "existing";
-
-/**
  * Existing note dialog mode - view or editing
  */
 export type ExistingNoteDialogModeViewModel = "view" | "editing";
-
-/**
- * Controlled form state for NoteDialog
- */
-export interface UpsertNoteFormViewModel {
-  chapter_id: string;
-  content: string;
-}

@@ -72,7 +72,7 @@ export async function createSeries({
       description: command.description ?? null,
       cover_image_url: command.cover_image_url ?? null,
     })
-    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
+    .select("id, title, description, cover_image_url, created_at, updated_at")
     .single();
 
   if (error) {
@@ -113,7 +113,7 @@ export async function listSeries({
   // Build query
   let dbQuery = supabase
     .from("series")
-    .select("id, title, book_count, created_at, updated_at", { count: "exact" })
+    .select("id, title, created_at, updated_at", { count: "exact" })
     .eq("user_id", userId);
 
   // Apply search filter if provided
@@ -164,7 +164,7 @@ export async function getSeriesById({
 }): Promise<SeriesDto> {
   const { data, error } = await supabase
     .from("series")
-    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
+    .select("id, title, description, cover_image_url, created_at, updated_at")
     .eq("id", seriesId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -224,7 +224,7 @@ export async function updateSeriesById({
     .update(command)
     .eq("id", seriesId)
     .eq("user_id", userId)
-    .select("id, title, description, cover_image_url, book_count, created_at, updated_at")
+    .select("id, title, description, cover_image_url, created_at, updated_at")
     .single();
 
   if (error) {

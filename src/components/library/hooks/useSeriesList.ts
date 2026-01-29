@@ -39,7 +39,23 @@ export const useSeriesList = (query: LibrarySeriesQueryViewModel): UseSeriesList
         order: query.order,
       });
 
-      setItems(response.series.map(transformSeriesListItem));
+      // Fetch book counts for each series in parallel
+      const seriesWithCounts = await Promise.all(
+        response.series.map(async (series) => {
+          try {
+            const booksResponse = await apiClient.getJson<{ books: unknown[]; meta: PaginationMetaDto }>("/books", {
+              series_id: series.id,
+              size: 1, // We only need the count, not the actual books
+            });
+            return transformSeriesListItem(series, booksResponse.meta.total_items);
+          } catch {
+            // If fetching book count fails, default to 0
+            return transformSeriesListItem(series, 0);
+          }
+        })
+      );
+
+      setItems(seriesWithCounts);
       setMeta(response.meta);
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };

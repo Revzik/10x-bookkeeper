@@ -16,7 +16,6 @@ export type SupabaseClientType = typeof supabaseClient;
 
 /**
  * Creates a new note under a specific chapter.
- * The note is created with `embedding_status = "pending"` to enqueue embedding generation.
  *
  * @param supabase - Supabase client instance
  * @param userId - User ID to associate with the note
@@ -40,16 +39,15 @@ export async function createNote({
   // Verify the chapter exists and belongs to the user
   await verifyChapterExists({ supabase, userId, chapterId });
 
-  // Insert the note with embedding_status = "pending"
+  // Insert the note
   const { data, error } = await supabase
     .from("notes")
     .insert({
       user_id: userId,
       chapter_id: chapterId,
       content: command.content,
-      embedding_status: "pending",
     })
-    .select("id, chapter_id, content, embedding_status, embedding_duration, created_at, updated_at")
+    .select("id, chapter_id, content, created_at, updated_at")
     .single();
 
   if (error) {
@@ -65,7 +63,7 @@ export async function createNote({
 
 /**
  * Lists notes with pagination and filters.
- * Supports filtering by chapter_id, book_id, series_id, and embedding_status.
+ * Supports filtering by chapter_id, book_id, and series_id.
  *
  * @param supabase - Supabase client instance
  * @param userId - User ID to filter notes by
@@ -89,13 +87,12 @@ export async function listNotes({
 
   // Build select clause based on filters
   // If we need to filter by book_id or series_id, we need to include the join in the select
-  let selectClause = "id, chapter_id, content, embedding_status, created_at, updated_at";
+  let selectClause = "id, chapter_id, content, created_at, updated_at";
 
   if (query.book_id) {
-    selectClause = "id, chapter_id, content, embedding_status, created_at, updated_at, chapters!inner(book_id)";
+    selectClause = "id, chapter_id, content, created_at, updated_at, chapters!inner(book_id)";
   } else if (query.series_id) {
-    selectClause =
-      "id, chapter_id, content, embedding_status, created_at, updated_at, chapters!inner(books!inner(series_id))";
+    selectClause = "id, chapter_id, content, created_at, updated_at, chapters!inner(books!inner(series_id))";
   }
 
   // Build base query with the appropriate select clause
@@ -104,10 +101,6 @@ export async function listNotes({
   // Apply filters
   if (query.chapter_id) {
     dbQuery = dbQuery.eq("chapter_id", query.chapter_id);
-  }
-
-  if (query.embedding_status) {
-    dbQuery = dbQuery.eq("embedding_status", query.embedding_status);
   }
 
   if (query.book_id) {
@@ -142,7 +135,6 @@ export async function listNotes({
       id: row.id as string,
       chapter_id: row.chapter_id as string,
       content: row.content as string,
-      embedding_status: row.embedding_status as NoteListItemDto["embedding_status"],
       created_at: row.created_at as string,
       updated_at: row.updated_at as string,
     })) ?? [];
@@ -207,7 +199,7 @@ async function fetchNoteWithoutContext({
 }): Promise<NoteDto> {
   const { data, error } = await supabase
     .from("notes")
-    .select("id, chapter_id, content, embedding_status, embedding_duration, created_at, updated_at")
+    .select("id, chapter_id, content, created_at, updated_at")
     .eq("id", noteId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -249,8 +241,6 @@ async function fetchNoteWithContext({
       id,
       chapter_id,
       content,
-      embedding_status,
-      embedding_duration,
       created_at,
       updated_at,
       chapters!inner(
@@ -281,8 +271,6 @@ async function fetchNoteWithContext({
     id: data.id,
     chapter_id: data.chapter_id,
     content: data.content,
-    embedding_status: data.embedding_status,
-    embedding_duration: data.embedding_duration,
     created_at: data.created_at,
     updated_at: data.updated_at,
   };
@@ -342,15 +330,14 @@ export async function getNoteById({
 }
 
 /**
- * Updates a note's content by ID.
- * Sets embedding_status to "pending" to trigger re-embedding (PoC requirement).
+ * Updates a note's content and/or chapter assignment by ID.
  *
  * @param supabase - Supabase client instance
  * @param userId - User ID to verify ownership
  * @param noteId - Note ID to update
- * @param command - Update command with new content
- * @returns Updated note with id, content, embedding_status, and updated_at
- * @throws NotFoundError if the note doesn't exist for the user
+ * @param command - Update command with new content and/or chapter_id
+ * @returns Updated note with id, content, chapter_id, and updated_at
+ * @throws NotFoundError if the note or chapter doesn't exist for the user
  * @throws Error if the update operation fails
  */
 export async function updateNoteById({
@@ -363,16 +350,27 @@ export async function updateNoteById({
   userId: string;
   noteId: string;
   command: UpdateNoteCommand;
-}): Promise<Pick<NoteDto, "id" | "content" | "embedding_status" | "updated_at">> {
+}): Promise<Pick<NoteDto, "id" | "content" | "chapter_id" | "updated_at">> {
+  // If chapter_id is being updated, verify the new chapter exists and belongs to the user
+  if (command.chapter_id !== undefined) {
+    await verifyChapterExists({ supabase, userId, chapterId: command.chapter_id });
+  }
+
+  // Build update object with only provided fields
+  const updateData: Record<string, unknown> = {};
+  if (command.content !== undefined) {
+    updateData.content = command.content;
+  }
+  if (command.chapter_id !== undefined) {
+    updateData.chapter_id = command.chapter_id;
+  }
+
   const { data, error } = await supabase
     .from("notes")
-    .update({
-      content: command.content,
-      embedding_status: "pending", // PoC requirement: mark for re-embedding
-    })
+    .update(updateData)
     .eq("id", noteId)
     .eq("user_id", userId)
-    .select("id, content, embedding_status, updated_at")
+    .select("id, content, chapter_id, updated_at")
     .maybeSingle();
 
   if (error) {
@@ -388,7 +386,6 @@ export async function updateNoteById({
 
 /**
  * Deletes a note by ID.
- * Database cascades will handle deletion of related embeddings.
  *
  * @param supabase - Supabase client instance
  * @param userId - User ID to verify ownership

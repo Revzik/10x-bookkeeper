@@ -32,7 +32,21 @@ export const useSeriesById = (seriesId: string): UseSeriesByIdResult => {
 
     try {
       const response = await apiClient.getJson<GetSeriesResponseDto>(`/series/${seriesId}`);
-      setSeries(transformSeriesHeader(response.series));
+
+      // Fetch book count for this series
+      let bookCount = 0;
+      try {
+        const booksResponse = await apiClient.getJson<{ books: unknown[]; meta: { total_items: number } }>("/books", {
+          series_id: seriesId,
+          size: 1, // We only need the count, not the actual books
+        });
+        bookCount = booksResponse.meta.total_items;
+      } catch {
+        // If fetching book count fails, default to 0
+        bookCount = 0;
+      }
+
+      setSeries(transformSeriesHeader(response.series, bookCount));
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
       const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch series" };
