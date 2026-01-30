@@ -5,6 +5,7 @@
 
 import { render as rtlRender, type RenderOptions } from "@testing-library/react";
 import { type ReactElement, type ReactNode } from "react";
+import { I18nProvider } from "@/i18n/react";
 
 /**
  * Custom render function that wraps components with necessary providers
@@ -14,7 +15,7 @@ function customRender(ui: ReactElement, options?: Omit<RenderOptions, "wrapper">
   const Wrapper = ({ children }: { children: ReactNode }) => {
     // Add providers here
     // Example: <ThemeProvider><QueryClientProvider>{children}</QueryClientProvider></ThemeProvider>
-    return <>{children}</>;
+    return <I18nProvider locale="en">{children}</I18nProvider>;
   };
 
   return rtlRender(ui, { wrapper: Wrapper, ...options });
