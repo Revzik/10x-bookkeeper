@@ -9,7 +9,11 @@
     "account": "Account",
     "loggingOut": "Logging out...",
     "logOut": "Log out",
-    "userMenu": "User menu"
+    "userMenu": "User menu",
+    "language": {
+      "label": "Language",
+      "menuLabel": "Language menu"
+    }
   },
   "library": {
     "title": "Library",
@@ -137,6 +141,9 @@
       "hideDetails": "Hide details"
     },
     "loading": "Loading...",
+    "time": {
+      "justNow": "just now"
+    },
     "theme": {
       "loading": "Theme toggle loading",
       "switchToDark": "Switch to dark mode",

@@ -1,6 +1,15 @@
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { I18nProvider, useT } from "@/i18n/react";
-import { withLocalePath } from "@/i18n";
+import { withLocalePath, type Locale } from "@/i18n";
 
 interface AuthHeaderProps {
   showSignInLink?: boolean;
@@ -22,6 +31,49 @@ const AuthHeaderContent = ({ showSignInLink, showSignUpLink }: AuthHeaderProps) 
   const loginPath = withLocalePath(locale, "/login");
   const signupPath = withLocalePath(locale, "/signup");
 
+  const FlagIcon = ({ locale: targetLocale, className }: { locale: Locale; className?: string }) => {
+    const wrapperClass = `inline-flex h-4 w-4 items-center justify-center overflow-hidden rounded-sm border border-border ${
+      className ?? ""
+    }`;
+
+    if (targetLocale === "pl") {
+      return (
+        <span className={wrapperClass} aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="h-full w-full">
+            <rect width="24" height="12" y="0" fill="#ffffff" />
+            <rect width="24" height="12" y="12" fill="#dc2626" />
+          </svg>
+        </span>
+      );
+    }
+
+    return (
+      <span className={wrapperClass} aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="h-full w-full">
+          <rect width="24" height="24" fill="#ffffff" />
+          <rect x="10" width="4" height="24" fill="#dc2626" />
+          <rect y="10" width="24" height="4" fill="#dc2626" />
+        </svg>
+      </span>
+    );
+  };
+
+  const getLocaleSwitchHref = (targetLocale: Locale) => {
+    if (typeof window === "undefined") {
+      return withLocalePath(targetLocale, "/");
+    }
+
+    const { pathname, search, hash } = window.location;
+    const basePath = locale === "pl" ? pathname.replace(/^\/pl(\/|$)/, "/") || "/" : pathname || "/";
+    const targetPath = withLocalePath(targetLocale, basePath);
+
+    return `${targetPath}${search}${hash}`;
+  };
+
+  const handleLocaleSwitch = (targetLocale: Locale) => {
+    window.location.href = getLocaleSwitchHref(targetLocale);
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
@@ -42,6 +94,23 @@ const AuthHeaderContent = ({ showSignInLink, showSignUpLink }: AuthHeaderProps) 
               {t("auth.login.createAccount")}
             </a>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Language menu">
+                {locale === "pl" ? "PL" : "EN"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuLabel>{t("header.language.label")}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleLocaleSwitch("en")} disabled={locale === "en"}>
+                EN English
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLocaleSwitch("pl")} disabled={locale === "pl"}>
+                PL Polski
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ThemeToggle />
         </div>
       </div>

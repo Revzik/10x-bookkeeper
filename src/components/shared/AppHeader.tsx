@@ -12,7 +12,7 @@ import { ChevronLeft, User, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/i18n/react";
-import { withLocalePath } from "@/i18n";
+import { withLocalePath, type Locale } from "@/i18n";
 
 /**
  * AppHeader height constant - Must match h-14 Tailwind class (3.5rem = 56px)
@@ -40,6 +40,22 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
   const [loggingOut, setLoggingOut] = useState(false);
   const libraryPath = withLocalePath(locale, "/library");
   const loginPath = withLocalePath(locale, "/login");
+
+  const getLocaleSwitchHref = (targetLocale: Locale) => {
+    if (typeof window === "undefined") {
+      return withLocalePath(targetLocale, "/");
+    }
+
+    const { pathname, search, hash } = window.location;
+    const basePath = locale === "pl" ? pathname.replace(/^\/pl(\/|$)/, "/") || "/" : pathname || "/";
+    const targetPath = withLocalePath(targetLocale, basePath);
+
+    return `${targetPath}${search}${hash}`;
+  };
+
+  const handleLocaleSwitch = (targetLocale: Locale) => {
+    window.location.href = getLocaleSwitchHref(targetLocale);
+  };
 
   const handleBackToLibrary = () => {
     window.location.href = libraryPath;
@@ -84,6 +100,24 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
 
         {/* Right section - Theme toggle and user menu */}
         <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Language menu">
+                {locale === "pl" ? "PL" : "EN"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuLabel>{t("header.language.label")}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleLocaleSwitch("en")} disabled={locale === "en"}>
+                EN English
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLocaleSwitch("pl")} disabled={locale === "pl"}>
+                PL Polski
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Theme toggle */}
           <ThemeToggle />
 

@@ -9,7 +9,11 @@
     "account": "Konto",
     "loggingOut": "Wylogowywanie...",
     "logOut": "Wyloguj się",
-    "userMenu": "Menu użytkownika"
+    "userMenu": "Menu użytkownika",
+    "language": {
+      "label": "Język",
+      "menuLabel": "Menu języka"
+    }
   },
   "library": {
     "title": "Biblioteka",
@@ -137,6 +141,9 @@
       "hideDetails": "Ukryj szczegóły"
     },
     "loading": "Ładowanie...",
+    "time": {
+      "justNow": "przed chwilą"
+    },
     "theme": {
       "loading": "Ładowanie przełącznika motywu",
       "switchToDark": "Przełącz na tryb ciemny",

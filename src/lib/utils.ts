@@ -1,9 +1,22 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { type Locale, normalizeLocale, t } from "@/i18n";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const getRelativeTimeLocale = (): Locale => {
+  if (typeof document !== "undefined") {
+    return normalizeLocale(document.documentElement.lang);
+  }
+
+  if (typeof navigator !== "undefined") {
+    return normalizeLocale(navigator.language);
+  }
+
+  return "en";
+};
 
 /**
  * Format ISO timestamp to relative time string or date
@@ -14,6 +27,7 @@ export function cn(...inputs: ClassValue[]) {
  * - >= 24 hours: Formatted date (e.g., "Jan 15, 2024")
  */
 export function formatRelativeTime(isoString: string): string {
+  const locale = getRelativeTimeLocale();
   const date = new Date(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -22,17 +36,23 @@ export function formatRelativeTime(isoString: string): string {
   const diffHours = Math.floor(diffMinutes / 60);
 
   if (diffSeconds < 60) {
-    return "just now";
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  } else {
-    // For anything 24h+, show the date
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return t(locale, "common.time.justNow");
   }
+
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+
+  if (diffMinutes < 60) {
+    return formatter.format(-diffMinutes, "minute");
+  }
+
+  if (diffHours < 24) {
+    return formatter.format(-diffHours, "hour");
+  }
+
+  // For anything 24h+, show the date
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
