@@ -5,6 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/i18n/react";
 
 interface BookActionsMenuProps {
   onEdit: () => void;
@@ -20,17 +21,19 @@ interface BookActionsMenuProps {
  * - Keyboard accessible
  */
 export const BookActionsMenu = ({ onEdit, onDelete }: BookActionsMenuProps) => {
+  const { t } = useT();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
-          Actions
+          {t("book.actions.menu")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onEdit}>Edit book</DropdownMenuItem>
+        <DropdownMenuItem onClick={onEdit}>{t("book.actions.edit")}</DropdownMenuItem>
         <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-          Delete book
+          {t("book.actions.delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

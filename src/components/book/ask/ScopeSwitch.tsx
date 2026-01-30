@@ -1,5 +1,6 @@
 import type { BookAskScopeViewModel } from "@/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/i18n/react";
 
 interface ScopeSwitchProps {
   value: BookAskScopeViewModel;
@@ -17,6 +18,7 @@ interface ScopeSwitchProps {
  * - Guard clause prevents selection of disabled series option
  */
 export const ScopeSwitch = ({ value, seriesEnabled, onChange }: ScopeSwitchProps) => {
+  const { t } = useT();
   const handleValueChange = (newValue: string) => {
     // Guard clause: prevent selection of series if disabled
     if (newValue === "series" && !seriesEnabled) {
@@ -29,9 +31,9 @@ export const ScopeSwitch = ({ value, seriesEnabled, onChange }: ScopeSwitchProps
   return (
     <Tabs value={value} onValueChange={handleValueChange}>
       <TabsList>
-        <TabsTrigger value="book">This book</TabsTrigger>
+        <TabsTrigger value="book">{t("ai.chat.scopeBook")}</TabsTrigger>
         <TabsTrigger value="series" disabled={!seriesEnabled}>
-          This series
+          {t("ai.chat.scopeSeries")}
         </TabsTrigger>
       </TabsList>
     </Tabs>

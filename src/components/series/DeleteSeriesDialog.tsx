@@ -4,6 +4,7 @@ import { useSeriesMutations } from "@/hooks/useSeriesMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n/react";
 
 interface DeleteSeriesDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export const DeleteSeriesDialog = ({
   seriesTitle,
   onDeleted,
 }: DeleteSeriesDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { deleteSeries, isDeleting } = useSeriesMutations();
 
@@ -79,10 +81,8 @@ export const DeleteSeriesDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Delete Series</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete <strong>{seriesTitle}</strong>?
-          </DialogDescription>
+          <DialogTitle>{t("dialogs.series.deleteTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.series.deleteDescription", { title: seriesTitle })}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -102,24 +102,27 @@ export const DeleteSeriesDialog = ({
               className="h-4 w-4 rounded border-destructive text-destructive focus:ring-destructive"
             />
             <Label htmlFor="cascade" className="cursor-pointer text-sm font-semibold text-destructive">
-              Also delete all books, chapters, and notes in this series
+              {t("dialogs.series.cascadeLabel")}
             </Label>
           </div>
 
           {cascadeValue && (
             <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-              <strong>Warning:</strong> This will permanently delete all content in this series. This action cannot be
-              undone.
+              <strong>{t("dialogs.series.cascadeWarningTitle")}</strong> {t("dialogs.series.cascadeWarningBody")}
             </div>
           )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
-              Cancel
+              {t("dialogs.series.cancel")}
             </Button>
             <Button type="submit" variant="destructive" disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : cascadeValue ? "Delete Everything" : "Delete Series"}
+              {isDeleting
+                ? t("dialogs.series.deleting")
+                : cascadeValue
+                  ? t("dialogs.series.deleteEverything")
+                  : t("dialogs.series.deleteConfirm")}
             </Button>
           </div>
         </form>

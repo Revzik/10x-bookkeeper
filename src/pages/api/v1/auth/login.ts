@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
-import { loginSchema } from "../../../../lib/auth/schemas";
+import { createLoginSchema } from "../../../../lib/auth/schemas";
 import type { LoginResponseDto } from "../../../../types";
 
 export const prerender = false;
@@ -18,17 +18,18 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
+  const loginSchema = createLoginSchema((key) => key);
   let validatedBody;
   try {
     validatedBody = loginSchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Create Supabase server instance for this request
@@ -47,16 +48,16 @@ export async function POST(context: APIContext): Promise<Response> {
     if (error) {
       // Map Supabase auth errors to API error codes
       if (error.message.includes("Invalid login credentials") || error.message.includes("Email not confirmed")) {
-        return apiError(401, "NOT_ALLOWED", "Incorrect email or password.");
+        return apiError(401, "NOT_ALLOWED", "apiErrors.invalidCredentials");
       }
 
       // Log minimal error info (without full stack trace)
       console.error("Login failed:", error.message || "Unknown error");
-      return apiError(500, "INTERNAL_ERROR", "An error occurred during login. Please try again.");
+      return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
     }
 
     if (!data.user) {
-      return apiError(500, "INTERNAL_ERROR", "Authentication succeeded but no user data returned");
+      return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
     }
 
     // Return user data
@@ -72,6 +73,6 @@ export async function POST(context: APIContext): Promise<Response> {
     // Log minimal error info (without full stack trace)
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Unexpected login error:", errorMessage);
-    return apiError(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again.");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.unexpected");
   }
 }

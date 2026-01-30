@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useBookMutations } from "@/hooks/useBookMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useT } from "@/i18n/react";
 
 interface DeleteBookDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface DeleteBookDialogProps {
  * - Uses custom hook for consistent state management and error handling
  */
 export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDeleted }: DeleteBookDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { deleteBook, isDeleting } = useBookMutations();
 
@@ -41,7 +43,7 @@ export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDele
         return;
       }
 
-      setGeneralError(result.error?.generalError || "Failed to delete book");
+      setGeneralError(result.error?.generalError || t("dialogs.book.deleteError"));
     }
   };
 
@@ -54,10 +56,8 @@ export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDele
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Delete Book</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete <strong>{bookTitle}</strong>?
-          </DialogDescription>
+          <DialogTitle>{t("dialogs.book.deleteTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.book.deleteDescription", { title: bookTitle })}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -69,17 +69,16 @@ export const DeleteBookDialog = ({ open, onOpenChange, bookId, bookTitle, onDele
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cascade Warning (always shown, not a toggle) */}
           <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-            <strong>Warning:</strong> This will permanently delete all chapters and notes associated with this book.
-            This action cannot be undone.
+            <strong>{t("dialogs.book.deleteWarningTitle")}</strong> {t("dialogs.book.deleteWarningBody")}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
-              Cancel
+              {t("dialogs.book.cancel")}
             </Button>
             <Button type="submit" variant="destructive" disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete Book"}
+              {isDeleting ? t("dialogs.book.deleting") : t("dialogs.book.deleteConfirm")}
             </Button>
           </div>
         </form>

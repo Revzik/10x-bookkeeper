@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { BookNotesQueryViewModel, ChapterSelectOptionViewModel } from "@/types";
+import { useT } from "@/i18n/react";
 
 interface BookNotesHeaderRowProps {
   query: BookNotesQueryViewModel;
@@ -32,6 +33,8 @@ export const BookNotesHeaderRow = ({
   onQueryChange,
   onAdd,
 }: BookNotesHeaderRowProps) => {
+  const { t } = useT();
+
   const handleChapterChange = (value: string) => {
     // "all" means "All chapters"
     const chapter_id = value === "all" ? undefined : value;
@@ -48,10 +51,10 @@ export const BookNotesHeaderRow = ({
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
       {/* Left side: Chapter filter */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Chapter:</span>
+        <span className="text-sm text-muted-foreground">{t("book.notes.filterChapter")}</span>
         <Select value={query.chapter_id || "all"} onValueChange={handleChapterChange}>
           <SelectTrigger size="sm" className="w-[200px]">
-            <SelectValue placeholder="All chapters" />
+            <SelectValue placeholder={t("book.notes.allChapters")} />
           </SelectTrigger>
           <SelectContent>
             {chapterOptions.map((option) => (
@@ -65,7 +68,7 @@ export const BookNotesHeaderRow = ({
 
       {/* Right side: Add note button */}
       <Button onClick={onAdd} disabled={isAddDisabled} title={addDisabledReason} size="sm">
-        Add note
+        {t("book.notes.addNote")}
       </Button>
     </div>
   );

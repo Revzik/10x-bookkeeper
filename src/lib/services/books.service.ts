@@ -42,7 +42,7 @@ export async function verifyBookExists({
   }
 
   if (!data) {
-    throw new NotFoundError("Book not found");
+    throw new NotFoundError("apiErrors.notFoundBook");
   }
 }
 
@@ -79,7 +79,7 @@ export async function createBook({
     }
 
     if (!seriesData) {
-      throw new NotFoundError("Series not found");
+      throw new NotFoundError("apiErrors.notFoundSeries");
     }
   }
 
@@ -216,7 +216,7 @@ export async function getBookById({
   }
 
   if (!data) {
-    throw new NotFoundError("Book not found");
+    throw new NotFoundError("apiErrors.notFoundBook");
   }
 
   return data;
@@ -257,7 +257,7 @@ export async function updateBookById({
   }
 
   if (!existingBook) {
-    throw new NotFoundError("Book not found");
+    throw new NotFoundError("apiErrors.notFoundBook");
   }
 
   // If series_id is provided and non-null, verify it exists for the user
@@ -274,7 +274,7 @@ export async function updateBookById({
     }
 
     if (!seriesData) {
-      throw new NotFoundError("Series not found");
+      throw new NotFoundError("apiErrors.notFoundSeries");
     }
   }
 
@@ -283,7 +283,7 @@ export async function updateBookById({
   const finalCurrentPage = command.current_page ?? existingBook.current_page;
 
   if (finalCurrentPage > finalTotalPages) {
-    throw new ValidationError("Current page cannot exceed total pages");
+    throw new ValidationError("apiErrors.validationFailed");
   }
 
   // Perform the update
@@ -300,7 +300,7 @@ export async function updateBookById({
   if (error) {
     // Check if it's a constraint violation from the database
     if (error.code === "23514" && error.message.includes("check_progress")) {
-      throw new ValidationError("Current page cannot exceed total pages");
+      throw new ValidationError("apiErrors.validationFailed");
     }
     throw error;
   }
@@ -346,6 +346,6 @@ export async function deleteBookById({
   }
 
   if (!data) {
-    throw new NotFoundError("Book not found");
+    throw new NotFoundError("apiErrors.notFoundBook");
   }
 }

@@ -2,6 +2,7 @@ import type { PaginationMetaDto } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/i18n/react";
 
 interface PaginationControlsProps {
   meta: PaginationMetaDto;
@@ -13,6 +14,7 @@ interface PaginationControlsProps {
  * PaginationControls - Server pagination controls
  */
 export const PaginationControls = ({ meta, onPageChange, onSizeChange }: PaginationControlsProps) => {
+  const { t } = useT();
   const { current_page, total_pages, page_size, total_items } = meta;
 
   const handlePrevious = () => {
@@ -35,14 +37,17 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
     <div className="flex items-center justify-between">
       {/* Page info */}
       <div className="text-sm text-muted-foreground" data-testid="pagination-info">
-        Showing {(current_page - 1) * page_size + 1} to {Math.min(current_page * page_size, total_items)} of{" "}
-        {total_items} results
+        {t("library.pagination.showing", {
+          from: (current_page - 1) * page_size + 1,
+          to: Math.min(current_page * page_size, total_items),
+          total: total_items,
+        })}
       </div>
 
       <div className="flex items-center gap-4">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
-          <Label className="text-sm text-muted-foreground">Per page:</Label>
+          <Label className="text-sm text-muted-foreground">{t("library.pagination.perPage")}</Label>
           <Select value={String(page_size)} onValueChange={(value) => handleSizeChange(Number(value))}>
             <SelectTrigger className="w-[80px]" data-testid="select-page-size">
               <SelectValue />
@@ -73,11 +78,11 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
             disabled={current_page === 1}
             data-testid="btn-pagination-previous"
           >
-            Previous
+            {t("library.pagination.previous")}
           </Button>
 
           <span className="text-sm text-muted-foreground">
-            Page {current_page} of {total_pages}
+            {t("library.pagination.pageOf", { current: current_page, total: total_pages })}
           </span>
 
           <Button
@@ -87,7 +92,7 @@ export const PaginationControls = ({ meta, onPageChange, onSizeChange }: Paginat
             disabled={current_page === total_pages}
             data-testid="btn-pagination-next"
           >
-            Next
+            {t("library.pagination.next")}
           </Button>
         </div>
       </div>

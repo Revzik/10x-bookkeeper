@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n/react";
 
 interface EditChapterDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ interface EditChapterDialogProps {
  * - Server error mapping to form fields
  */
 export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: EditChapterDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { updateChapter, isUpdating } = useChapterMutations();
 
@@ -75,7 +77,7 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
 
     // If nothing changed, show message and don't submit
     if (Object.keys(command).length === 0) {
-      setGeneralError("No changes to save");
+      setGeneralError(t("dialogs.common.noChanges"));
       return;
     }
 
@@ -108,8 +110,8 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit Chapter</DialogTitle>
-          <DialogDescription>Update the chapter title or change its position in the book.</DialogDescription>
+          <DialogTitle>{t("dialogs.chapter.editTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.chapter.editDescription")}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -126,7 +128,7 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="edit-title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.chapter.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="edit-title"
@@ -145,7 +147,7 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
 
           {/* Order */}
           <div className="space-y-2">
-            <Label htmlFor="edit-order">Order</Label>
+            <Label htmlFor="edit-order">{t("dialogs.chapter.orderLabel")}</Label>
             <Input
               id="edit-order"
               type="number"
@@ -166,10 +168,10 @@ export const EditChapterDialog = ({ open, onOpenChange, chapter, onUpdated }: Ed
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isUpdating}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? "Saving..." : "Save Changes"}
+              {isUpdating ? t("dialogs.common.saving") : t("dialogs.common.saveChanges")}
             </Button>
           </div>
         </form>

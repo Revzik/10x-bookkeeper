@@ -2,6 +2,7 @@ import type { ChapterListItemViewModel } from "@/types";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
+import { useT } from "@/i18n/react";
 
 interface BookChapterRowProps {
   item: ChapterListItemViewModel;
@@ -33,6 +34,7 @@ export const BookChapterRow = ({
   onMoveUp,
   onMoveDown,
 }: BookChapterRowProps) => {
+  const { t } = useT();
   // TODO: during refactor. Extract the cards to a separate components (BookChapterRowEditMode, BookChapterRowViewMode)
   return (
     <Card className="border-2 border-dashed">
@@ -40,7 +42,9 @@ export const BookChapterRow = ({
         {/* Left section: Chapter info */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-card-foreground">{item.title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">Updated {item.updatedAtLabel}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("book.chapters.updatedAt", { date: item.updatedAtLabel })}
+          </p>
         </div>
 
         {/* Right section: Action buttons */}
@@ -51,7 +55,7 @@ export const BookChapterRow = ({
               size="sm"
               onClick={onMoveUp}
               disabled={isMoveUpDisabled}
-              aria-label="Move chapter up"
+              aria-label={t("book.chapters.moveUpAria", { title: item.title })}
               className="h-7 px-2 text-xs"
             >
               <ChevronUp className="h-4 w-4" />
@@ -61,7 +65,7 @@ export const BookChapterRow = ({
               size="sm"
               onClick={onMoveDown}
               disabled={isMoveDownDisabled}
-              aria-label="Move chapter down"
+              aria-label={t("book.chapters.moveDownAria", { title: item.title })}
               className="h-7 px-2 text-xs"
             >
               <ChevronDown className="h-4 w-4" />
@@ -69,17 +73,22 @@ export const BookChapterRow = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edit chapter">
-              Edit
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              aria-label={t("book.chapters.editAria", { title: item.title })}
+            >
+              {t("common.actions.edit")}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={onDelete}
               className="text-destructive"
-              aria-label="Delete chapter"
+              aria-label={t("book.chapters.deleteAria", { title: item.title })}
             >
-              Delete
+              {t("common.actions.delete")}
             </Button>
           </div>
         )}

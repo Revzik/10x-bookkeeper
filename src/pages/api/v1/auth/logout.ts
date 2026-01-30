@@ -29,6 +29,6 @@ export async function POST(context: APIContext): Promise<Response> {
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error("Unexpected logout error:", error);
-    return apiError(500, "INTERNAL_ERROR", "An unexpected error occurred during logout.");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.unexpected");
   }
 }

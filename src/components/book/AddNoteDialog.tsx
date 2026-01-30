@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/i18n/react";
 
 interface AddNoteDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export const AddNoteDialog = ({
   initialChapterId,
   onCreated,
 }: AddNoteDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { createNote, isCreating } = useNoteMutations();
 
@@ -105,8 +107,8 @@ export const AddNoteDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Add note</DialogTitle>
-          <DialogDescription>Create a new note for this book chapter.</DialogDescription>
+          <DialogTitle>{t("dialogs.note.addTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.note.addDescription")}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -123,7 +125,7 @@ export const AddNoteDialog = ({
           {/* Chapter select */}
           <div className="space-y-2">
             <Label htmlFor="note-chapter">
-              Chapter <span className="text-destructive">*</span>
+              {t("dialogs.note.chapterLabel")} <span className="text-destructive">*</span>
             </Label>
             <Controller
               control={control}
@@ -136,7 +138,7 @@ export const AddNoteDialog = ({
                     aria-invalid={!!errors.chapter_id}
                     aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
                   >
-                    <SelectValue placeholder="Select a chapter" />
+                    <SelectValue placeholder={t("dialogs.note.chapterPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {chapterOptions.map((option) => (
@@ -159,7 +161,7 @@ export const AddNoteDialog = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="note-content">
-                Content <span className="text-destructive">*</span>
+                {t("dialogs.note.contentLabel")} <span className="text-destructive">*</span>
               </Label>
               <span className={`text-xs ${isContentTooLong ? "text-destructive" : "text-muted-foreground"}`}>
                 {contentLength} / {MAX_CONTENT_LENGTH}
@@ -169,7 +171,7 @@ export const AddNoteDialog = ({
               id="note-content"
               {...register("content")}
               disabled={isCreating}
-              placeholder="Enter your note content..."
+              placeholder={t("dialogs.note.contentPlaceholder")}
               rows={10}
               aria-invalid={!!errors.content}
               aria-describedby={errors.content ? "note-content-error" : undefined}
@@ -185,10 +187,10 @@ export const AddNoteDialog = ({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" disabled={isCreating || isContentEmpty || isContentTooLong}>
-              {isCreating ? "Creating..." : "Create Note"}
+              {isCreating ? t("dialogs.note.creating") : t("dialogs.note.create")}
             </Button>
           </div>
         </form>

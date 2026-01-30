@@ -40,7 +40,7 @@ export const useBookById = (bookId: string): UseBookByIdResult => {
       }
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch book" };
+      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" };
 
       setError(errorDto);
       setBook(null);

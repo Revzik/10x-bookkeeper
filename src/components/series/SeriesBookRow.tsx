@@ -3,6 +3,7 @@ import { BookRow } from "@/components/library/BookRow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { useT } from "@/i18n/react";
 
 interface SeriesBookRowProps {
   book: SeriesBookRowViewModel;
@@ -22,6 +23,7 @@ interface SeriesBookRowProps {
  * - Provides keyboard-accessible controls for reordering
  */
 export const SeriesBookRow = ({ book, isEditing, onOpen, onMoveUp, onMoveDown }: SeriesBookRowProps) => {
+  const { t } = useT();
   // View mode: use the standard BookRow component
   // TODO: during refactor. Extract the cards to a separate components (SeriesBookRowEditMode, SeriesBookRowViewMode)
   if (!isEditing) {
@@ -44,7 +46,7 @@ export const SeriesBookRow = ({ book, isEditing, onOpen, onMoveUp, onMoveDown }:
             size="sm"
             onClick={() => onMoveUp(book.id)}
             disabled={book.isMoveUpDisabled}
-            aria-label={`Move ${book.title} up`}
+            aria-label={t("series.books.moveUpAria", { title: book.title })}
             className="h-7 px-2 text-xs"
           >
             <ChevronUp className="h-4 w-4" />
@@ -54,7 +56,7 @@ export const SeriesBookRow = ({ book, isEditing, onOpen, onMoveUp, onMoveDown }:
             size="sm"
             onClick={() => onMoveDown(book.id)}
             disabled={book.isMoveDownDisabled}
-            aria-label={`Move ${book.title} down`}
+            aria-label={t("series.books.moveDownAria", { title: book.title })}
             className="h-7 px-2 text-xs"
           >
             <ChevronDown className="h-4 w-4" />

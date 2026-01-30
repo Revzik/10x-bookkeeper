@@ -42,7 +42,7 @@ export const useChaptersList = (bookId: string): UseChaptersListResult => {
       setItems(viewModels);
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch chapters" };
+      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" };
 
       setError(errorDto);
       setItems([]);

@@ -45,7 +45,7 @@ export const useBooksList = (query: LibraryBooksQueryViewModel): UseBooksListRes
       setMeta(response.meta);
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      setError(apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch books" });
+      setError(apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" });
       setItems([]);
       setMeta(null);
     } finally {

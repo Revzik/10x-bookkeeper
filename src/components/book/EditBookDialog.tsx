@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/i18n/react";
 
 interface EditBookDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface EditBookDialogProps {
  * - Field-level and general error handling
  */
 export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpdated }: EditBookDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { updateBook, isUpdating } = useBookMutations();
 
@@ -111,7 +113,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
 
     // Check if anything changed
     if (Object.keys(command).length === 0) {
-      setGeneralError("No changes to save");
+      setGeneralError(t("dialogs.common.noChanges"));
       return;
     }
 
@@ -145,7 +147,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Book</DialogTitle>
+          <DialogTitle>{t("dialogs.book.editTitle")}</DialogTitle>
         </DialogHeader>
 
         {generalError && (
@@ -158,7 +160,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="edit-title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.book.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input id="edit-title" type="text" {...register("title")} disabled={isUpdating} />
             {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
@@ -167,7 +169,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Author */}
           <div className="space-y-2">
             <Label htmlFor="edit-author">
-              Author <span className="text-destructive">*</span>
+              {t("dialogs.book.authorLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input id="edit-author" type="text" {...register("author")} disabled={isUpdating} />
             {errors.author && <p className="text-sm text-destructive">{errors.author.message}</p>}
@@ -176,7 +178,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Total Pages */}
           <div className="space-y-2">
             <Label htmlFor="edit-total_pages">
-              Total Pages <span className="text-destructive">*</span>
+              {t("dialogs.book.totalPagesLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="edit-total_pages"
@@ -190,7 +192,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
 
           {/* Current Page */}
           <div className="space-y-2">
-            <Label htmlFor="edit-current_page">Current Page</Label>
+            <Label htmlFor="edit-current_page">{t("dialogs.book.currentPageLabel")}</Label>
             <Input
               id="edit-current_page"
               type="number"
@@ -203,7 +205,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
 
           {/* Status */}
           <div className="space-y-2">
-            <Label htmlFor="edit-status">Status</Label>
+            <Label htmlFor="edit-status">{t("dialogs.book.statusLabel")}</Label>
             <Controller
               control={control}
               name="status"
@@ -213,9 +215,9 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="want_to_read">Want to Read</SelectItem>
-                    <SelectItem value="reading">Reading</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="want_to_read">{t("book.status.wantToRead")}</SelectItem>
+                    <SelectItem value="reading">{t("book.status.reading")}</SelectItem>
+                    <SelectItem value="completed">{t("book.status.completed")}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -225,8 +227,10 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Series */}
           <div className="space-y-2">
             <Label htmlFor="edit-series_id">
-              Series{" "}
-              <span className="text-xs text-muted-foreground">(optional, select &quot;None&quot; to unlink)</span>
+              {t("dialogs.book.seriesLabel")}{" "}
+              <span className="text-xs text-muted-foreground">
+                {t("dialogs.book.seriesOptionalNote", { noneLabel: t("dialogs.book.seriesNone") })}
+              </span>
             </Label>
             <Controller
               control={control}
@@ -238,10 +242,10 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
                   disabled={isUpdating}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="None" />
+                    <SelectValue placeholder={t("dialogs.book.seriesNone")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="none">{t("dialogs.book.seriesNone")}</SelectItem>
                     {seriesOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -257,7 +261,7 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Series Order */}
           {seriesIdValue && (
             <div className="space-y-2">
-              <Label htmlFor="edit-series_order">Order in Series</Label>
+              <Label htmlFor="edit-series_order">{t("dialogs.book.seriesOrderLabel")}</Label>
               <Input
                 id="edit-series_order"
                 type="number"
@@ -272,7 +276,8 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Cover Image URL */}
           <div className="space-y-2">
             <Label htmlFor="edit-cover_image_url">
-              Cover Image URL <span className="text-xs text-muted-foreground">(optional, clear to remove)</span>
+              {t("dialogs.book.coverImageLabel")}{" "}
+              <span className="text-xs text-muted-foreground">{t("dialogs.book.coverImageOptionalNote")}</span>
             </Label>
             <Input id="edit-cover_image_url" type="url" {...register("cover_image_url")} disabled={isUpdating} />
             {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
@@ -281,10 +286,10 @@ export const EditBookDialog = ({ open, onOpenChange, book, seriesOptions, onUpda
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isUpdating}>
-              Cancel
+              {t("dialogs.book.cancel")}
             </Button>
             <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? "Saving..." : "Save Changes"}
+              {isUpdating ? t("dialogs.common.saving") : t("dialogs.common.saveChanges")}
             </Button>
           </div>
         </form>

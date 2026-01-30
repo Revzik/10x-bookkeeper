@@ -9,6 +9,8 @@ import { BooksToolbar } from "@/components/library/BooksToolbar";
 import { BooksList } from "@/components/library/BooksList";
 import { PaginationControls } from "@/components/library/PaginationControls";
 import { InlineBanner } from "@/components/library/InlineBanner";
+import { useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface BooksTabPanelProps {
   query: LibraryBooksQueryViewModel;
@@ -34,8 +36,9 @@ export const BooksTabPanel = ({
   seriesOptions,
   onRetry,
 }: BooksTabPanelProps) => {
+  const { locale } = useT();
   const handleOpenBook = (id: string) => {
-    window.location.href = `/books/${id}`;
+    window.location.href = `${withLocalePath(locale, "/books")}/${id}`;
   };
 
   return (

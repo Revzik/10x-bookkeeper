@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DeleteNoteDialog } from "./DeleteNoteDialog";
+import { useT } from "@/i18n/react";
 
 interface ViewEditNoteDialogProps {
   open: boolean;
@@ -46,6 +47,7 @@ export const ViewEditNoteDialog = ({
   chapterTitle,
   onUpdated,
 }: ViewEditNoteDialogProps) => {
+  const { t } = useT();
   const [mode, setMode] = useState<ExistingNoteDialogModeViewModel>("view");
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -92,7 +94,7 @@ export const ViewEditNoteDialog = ({
     setGeneralError(null);
 
     if (!hasChanges) {
-      setGeneralError("No changes to save");
+      setGeneralError(t("dialogs.common.noChanges"));
       return;
     }
 
@@ -177,7 +179,7 @@ export const ViewEditNoteDialog = ({
           {mode === "editing" && (
             <div className="space-y-2">
               <Label htmlFor="note-chapter">
-                Chapter <span className="text-destructive">*</span>
+                {t("dialogs.note.chapterLabel")} <span className="text-destructive">*</span>
               </Label>
               <Controller
                 control={control}
@@ -190,7 +192,7 @@ export const ViewEditNoteDialog = ({
                       aria-invalid={!!errors.chapter_id}
                       aria-describedby={errors.chapter_id ? "note-chapter-error" : undefined}
                     >
-                      <SelectValue placeholder="Select a chapter" />
+                      <SelectValue placeholder={t("dialogs.note.chapterPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {chapterOptions.map((option) => (
@@ -214,7 +216,7 @@ export const ViewEditNoteDialog = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="note-content">
-                Content <span className="text-destructive">*</span>
+                {t("dialogs.note.contentLabel")} <span className="text-destructive">*</span>
               </Label>
               {mode === "editing" && (
                 <span className={`text-xs ${isContentTooLong ? "text-destructive" : "text-muted-foreground"}`}>
@@ -227,7 +229,7 @@ export const ViewEditNoteDialog = ({
                 id="note-content"
                 {...register("content")}
                 disabled={isUpdating}
-                placeholder="Enter your note content..."
+                placeholder={t("dialogs.note.contentPlaceholder")}
                 rows={10}
                 aria-invalid={!!errors.content}
                 aria-describedby={errors.content ? "note-content-error" : undefined}
@@ -255,7 +257,7 @@ export const ViewEditNoteDialog = ({
               disabled={isUpdating}
               size="sm"
             >
-              Delete
+              {t("common.actions.delete")}
             </Button>
 
             {/* Right side: Mode-specific actions */}
@@ -263,10 +265,10 @@ export const ViewEditNoteDialog = ({
               {mode === "view" && (
                 <>
                   <Button type="button" variant="outline" onClick={handleClose}>
-                    Close
+                    {t("common.actions.close")}
                   </Button>
                   <Button type="button" onClick={handleEnterEditMode}>
-                    Edit
+                    {t("common.actions.edit")}
                   </Button>
                 </>
               )}
@@ -274,10 +276,10 @@ export const ViewEditNoteDialog = ({
               {mode === "editing" && (
                 <>
                   <Button type="button" variant="outline" onClick={handleDiscard} disabled={isUpdating}>
-                    Discard
+                    {t("common.actions.discard")}
                   </Button>
                   <Button type="submit" disabled={isUpdating || isContentEmpty || isContentTooLong || !hasChanges}>
-                    {isUpdating ? "Saving..." : "Save"}
+                    {isUpdating ? t("dialogs.common.saving") : t("common.actions.save")}
                   </Button>
                 </>
               )}

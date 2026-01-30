@@ -8,9 +8,11 @@ import { AddBookDialog } from "@/components/library/AddBookDialog";
 import { AddSeriesDialog } from "@/components/library/AddSeriesDialog";
 import { Button } from "@/components/ui/button";
 import { useLibraryUrlState, useBooksList, useSeriesList, useSeriesOptions } from "./hooks";
+import { I18nProvider, useT } from "@/i18n/react";
 
 interface LibraryPageProps {
   userEmail?: string;
+  locale?: string | null;
 }
 
 /**
@@ -27,7 +29,8 @@ interface LibraryPageProps {
  * - Inactive tab: query stored in component state (preserved in memory)
  * - On tab switch: current query saved to inactive state, inactive state restored to URL
  */
-const LibraryPage = ({ userEmail }: LibraryPageProps) => {
+const LibraryPageContent = ({ userEmail }: LibraryPageProps) => {
+  const { t } = useT();
   // URL state management (source of truth for active tab)
   const { activeTab, booksQuery, seriesQuery, setActiveTab, setBooksQuery, setSeriesQuery } = useLibraryUrlState();
 
@@ -99,16 +102,16 @@ const LibraryPage = ({ userEmail }: LibraryPageProps) => {
         {/* Page header */}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold" data-testid="library-heading">
-            Library
+            {t("library.title")}
           </h1>
           <div>
             {activeTab === "books" ? (
               <Button onClick={() => setIsAddBookOpen(true)} data-testid="btn-add-book">
-                Add Book
+                {t("library.addBook")}
               </Button>
             ) : (
               <Button onClick={() => setIsAddSeriesOpen(true)} data-testid="btn-add-series">
-                Add Series
+                {t("library.addSeries")}
               </Button>
             )}
           </div>
@@ -154,6 +157,14 @@ const LibraryPage = ({ userEmail }: LibraryPageProps) => {
         <AddSeriesDialog open={isAddSeriesOpen} onOpenChange={setIsAddSeriesOpen} onCreated={handleCreatedSeries} />
       </div>
     </div>
+  );
+};
+
+const LibraryPage = ({ locale, ...props }: LibraryPageProps) => {
+  return (
+    <I18nProvider locale={locale}>
+      <LibraryPageContent {...props} locale={locale} />
+    </I18nProvider>
   );
 };
 

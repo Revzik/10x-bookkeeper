@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/i18n/react";
 
 interface AddChapterDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ interface AddChapterDialogProps {
  * - Server error mapping to form fields
  */
 export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, onCreated }: AddChapterDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { createChapter, isCreating } = useChapterMutations();
 
@@ -102,8 +104,8 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add Chapter</DialogTitle>
-          <DialogDescription>Create a new chapter to organize your notes for this book.</DialogDescription>
+          <DialogTitle>{t("dialogs.chapter.addTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.chapter.addDescription")}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -120,14 +122,14 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="add-title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.chapter.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="add-title"
               type="text"
               {...register("title")}
               disabled={isCreating}
-              placeholder="Enter chapter title"
+              placeholder={t("dialogs.chapter.titlePlaceholder")}
               aria-invalid={!!errors.title}
               aria-describedby={errors.title ? "add-title-error" : undefined}
             />
@@ -141,9 +143,11 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
           {/* Order */}
           <div className="space-y-2">
             <Label htmlFor="add-order">
-              Order{" "}
+              {t("dialogs.chapter.orderLabel")}{" "}
               <span className="text-xs text-muted-foreground">
-                (optional, leave empty for auto: {suggestedOrder !== undefined ? suggestedOrder : "default"})
+                {t("dialogs.chapter.orderOptionalNote", {
+                  suggested: suggestedOrder !== undefined ? suggestedOrder : t("dialogs.chapter.orderAutoDefault"),
+                })}
               </span>
             </Label>
             <Input
@@ -153,7 +157,7 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
               step="1"
               {...register("order")}
               disabled={isCreating}
-              placeholder="Auto"
+              placeholder={t("dialogs.chapter.orderPlaceholder")}
               aria-invalid={!!errors.order}
               aria-describedby={errors.order ? "add-order-error" : undefined}
             />
@@ -167,10 +171,10 @@ export const AddChapterDialog = ({ open, onOpenChange, bookId, suggestedOrder, o
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create Chapter"}
+              {isCreating ? t("dialogs.chapter.creating") : t("dialogs.chapter.create")}
             </Button>
           </div>
         </form>

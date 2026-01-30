@@ -3,6 +3,7 @@ import type { NoteListItemViewModel, ChapterListItemViewModel, NotesByChapterVie
 import { EntrySkeleton } from "@/components/shared/EntrySkeleton";
 import { NotesChapterGroupSection } from "@/components/book/NotesChapterGroupSection";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/react";
 
 interface BookNotesListProps {
   loading: boolean;
@@ -36,6 +37,7 @@ export const BookNotesList = ({
   onOpen,
   onAdd,
 }: BookNotesListProps) => {
+  const { t } = useT();
   // Group notes by chapter and sort by chapter order
   const notesByChapter = useMemo(() => {
     const grouped: NotesByChapterViewModel = {};
@@ -64,18 +66,16 @@ export const BookNotesList = ({
 
     return (
       <div className="rounded-lg border border-border bg-card p-12 text-center">
-        <p className="mb-4 text-foreground">No notes yet</p>
+        <p className="mb-4 text-foreground">{t("book.notes.emptyTitle")}</p>
         {hasChapters ? (
           <>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Start adding notes to capture insights from your reading
-            </p>
+            <p className="mb-4 text-sm text-muted-foreground">{t("book.notes.emptySubtitle")}</p>
             <Button onClick={onAdd} size="sm">
-              Add your first note
+              {t("book.notes.emptyCta")}
             </Button>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">Add chapters first to organize your notes by book sections</p>
+          <p className="text-sm text-muted-foreground">{t("book.notes.emptyNoChapters")}</p>
         )}
       </div>
     );

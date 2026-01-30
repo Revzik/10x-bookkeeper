@@ -49,7 +49,7 @@ export const useSeriesById = (seriesId: string): UseSeriesByIdResult => {
       setSeries(transformSeriesHeader(response.series, bookCount));
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch series" };
+      const errorDto = apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" };
 
       setError(errorDto);
       setSeries(null);

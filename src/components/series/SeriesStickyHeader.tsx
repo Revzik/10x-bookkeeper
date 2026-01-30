@@ -2,6 +2,7 @@ import { useState, forwardRef } from "react";
 import type { SeriesHeaderViewModel } from "@/types";
 import { SeriesActionsMenu } from "@/components/series/SeriesActionsMenu";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/react";
 
 interface SeriesStickyHeaderProps {
   series: SeriesHeaderViewModel;
@@ -22,6 +23,8 @@ export const SeriesStickyHeader = forwardRef<HTMLDivElement, SeriesStickyHeaderP
   ({ series, onEdit, onDelete }, ref) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const hasDetails = series.description || series.bookCount > 0;
+    const { t } = useT();
+    const bookCountKey = series.bookCount === 1 ? "series.bookCountOne" : "series.bookCountMany";
 
     return (
       <div ref={ref} className="sticky top-14 z-20 border-b bg-background">
@@ -35,7 +38,7 @@ export const SeriesStickyHeader = forwardRef<HTMLDivElement, SeriesStickyHeaderP
                   <div className="flex-shrink-0 w-12 h-16 sm:w-16 sm:h-24 bg-muted rounded overflow-hidden">
                     <img
                       src={series.coverImageUrl}
-                      alt={`${series.title} cover`}
+                      alt={t("series.coverAlt", { title: series.title })}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         // Fallback to placeholder on error
@@ -62,8 +65,8 @@ export const SeriesStickyHeader = forwardRef<HTMLDivElement, SeriesStickyHeaderP
 
                       {/* Metadata */}
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                        <span>{series.bookCount} books</span>
-                        <span>Updated {series.updatedAtLabel}</span>
+                        <span>{t(bookCountKey, { count: series.bookCount })}</span>
+                        <span>{t("series.updatedAt", { date: series.updatedAtLabel })}</span>
                       </div>
                     </div>
                   )}
@@ -80,9 +83,9 @@ export const SeriesStickyHeader = forwardRef<HTMLDivElement, SeriesStickyHeaderP
                   size="sm"
                   onClick={() => setIsExpanded(!isExpanded)}
                   className="sm:hidden"
-                  aria-label={isExpanded ? "Hide details" : "Show details"}
+                  aria-label={isExpanded ? t("common.actions.hideDetails") : t("common.actions.showDetails")}
                 >
-                  {isExpanded ? "Less" : "More"}
+                  {isExpanded ? t("common.actions.less") : t("common.actions.more")}
                 </Button>
               )}
               <SeriesActionsMenu onEdit={onEdit} onDelete={onDelete} />

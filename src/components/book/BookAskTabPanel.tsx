@@ -11,6 +11,7 @@ import {
   AiChatLowConfidencePanel,
   ClearChatConfirmDialog,
 } from "@/components/ai/chat";
+import { useT } from "@/i18n/react";
 
 interface BookAskTabPanelProps {
   book: BookHeaderViewModel;
@@ -32,6 +33,7 @@ interface BookAskTabPanelProps {
  * - Copy and clear chat actions
  */
 export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanelProps) => {
+  const { t } = useT();
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   // Chat state management (per-scope transcripts)
@@ -88,13 +90,10 @@ export const BookAskTabPanel = ({ book, askScope, setAskScope }: BookAskTabPanel
   };
 
   // Compute empty state text based on scope
-  const emptyStateText =
-    askScope === "book"
-      ? "Ask a question about this book to get started"
-      : "Ask a question about this series to get started";
+  const emptyStateText = askScope === "book" ? t("ai.chat.emptyBook") : t("ai.chat.emptySeries");
 
   // Compute placeholder based on scope
-  const placeholder = askScope === "book" ? "Ask a question about this book..." : "Ask a question about this series...";
+  const placeholder = askScope === "book" ? t("ai.chat.placeholderBook") : t("ai.chat.placeholderSeries");
 
   return (
     <div className="space-y-4">

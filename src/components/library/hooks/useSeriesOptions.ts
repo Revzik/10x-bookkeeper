@@ -35,7 +35,7 @@ export const useSeriesOptions = (): UseSeriesOptionsResult => {
       setOptions(response.series.map(transformSeriesOption));
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      setError(apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch series options" });
+      setError(apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" });
       setOptions([]);
     } finally {
       setLoading(false);

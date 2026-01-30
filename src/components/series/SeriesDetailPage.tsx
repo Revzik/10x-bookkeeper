@@ -10,10 +10,13 @@ import { SeriesNotFoundState } from "@/components/series/SeriesNotFoundState";
 import { EditSeriesDialog } from "@/components/series/EditSeriesDialog";
 import { DeleteSeriesDialog } from "@/components/series/DeleteSeriesDialog";
 import { InlineBanner } from "@/components/library/InlineBanner";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface SeriesDetailPageProps {
   seriesId: string;
   userEmail?: string;
+  locale?: string | null;
 }
 
 /**
@@ -26,7 +29,8 @@ interface SeriesDetailPageProps {
  * - Tab switching and content rendering
  * - Dynamic header height tracking for sticky tabs positioning
  */
-const SeriesDetailPage = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
+const SeriesDetailPageContent = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
+  const { t, locale } = useT();
   // URL state management (source of truth for active tab)
   const { activeTab, setActiveTab } = useSeriesUrlState();
 
@@ -85,7 +89,7 @@ const SeriesDetailPage = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
 
   const handleDeletedSeries = () => {
     // Navigate to /library?tab=series
-    window.location.href = "/library?tab=series";
+    window.location.href = `${withLocalePath(locale, "/library")}?tab=series`;
   };
 
   // Handle not found state
@@ -99,7 +103,7 @@ const SeriesDetailPage = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
       <div className="min-h-screen">
         <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-muted-foreground">Loading series...</p>
+          <p className="text-muted-foreground">{t("series.loading")}</p>
         </div>
       </div>
     );
@@ -150,6 +154,14 @@ const SeriesDetailPage = ({ seriesId, userEmail }: SeriesDetailPageProps) => {
         onDeleted={handleDeletedSeries}
       />
     </div>
+  );
+};
+
+const SeriesDetailPage = ({ locale, ...props }: SeriesDetailPageProps) => {
+  return (
+    <I18nProvider locale={locale}>
+      <SeriesDetailPageContent {...props} locale={locale} />
+    </I18nProvider>
   );
 };
 

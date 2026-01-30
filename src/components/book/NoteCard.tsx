@@ -1,6 +1,7 @@
 import type { NoteListItemViewModel } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useT } from "@/i18n/react";
 
 interface NoteCardProps {
   note: NoteListItemViewModel;
@@ -26,6 +27,7 @@ interface NoteCardProps {
  * - lg+: ~33% width (3 columns)
  */
 export const NoteCard = ({ note, onOpen }: NoteCardProps) => {
+  const { t } = useT();
   // Get first 60 characters of content for display
   const displayContent = note.content.trim().substring(0, 60);
   const truncated = note.content.trim().length > 60;
@@ -58,7 +60,7 @@ export const NoteCard = ({ note, onOpen }: NoteCardProps) => {
         </p>
 
         {/* Timestamp */}
-        <p className="text-xs text-muted-foreground">Updated {note.updatedAtLabel}</p>
+        <p className="text-xs text-muted-foreground">{t("book.notes.updatedAt", { date: note.updatedAtLabel })}</p>
       </CardContent>
     </Card>
   );

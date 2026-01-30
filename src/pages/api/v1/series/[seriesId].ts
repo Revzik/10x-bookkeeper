@@ -23,7 +23,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate seriesId path parameter
@@ -33,9 +33,9 @@ export async function GET(context: APIContext): Promise<Response> {
     validatedSeriesId = seriesIdParamSchema.parse(seriesId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid series ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid series ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Get series
@@ -51,7 +51,7 @@ export async function GET(context: APIContext): Promise<Response> {
   } catch (error) {
     // Check if it's a not found error
     if (error instanceof NotFoundError) {
-      return apiError(404, "NOT_FOUND", "Series not found");
+      return apiError(404, "NOT_FOUND", "apiErrors.notFoundSeries");
     }
 
     console.error("Error getting series:", {
@@ -60,7 +60,7 @@ export async function GET(context: APIContext): Promise<Response> {
       seriesId: validatedSeriesId,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to retrieve series");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -74,7 +74,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate seriesId path parameter
@@ -84,9 +84,9 @@ export async function PATCH(context: APIContext): Promise<Response> {
     validatedSeriesId = seriesIdParamSchema.parse(seriesId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid series ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid series ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Parse and validate request body
@@ -94,7 +94,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
   let validatedBody;
@@ -102,9 +102,9 @@ export async function PATCH(context: APIContext): Promise<Response> {
     validatedBody = updateSeriesBodySchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Update series
@@ -121,7 +121,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   } catch (error) {
     // Check if it's a not found error
     if (error instanceof NotFoundError) {
-      return apiError(404, "NOT_FOUND", "Series not found");
+      return apiError(404, "NOT_FOUND", "apiErrors.notFoundSeries");
     }
 
     console.error("Error updating series:", {
@@ -131,7 +131,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
       fieldsUpdated: Object.keys(validatedBody),
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to update series");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -145,7 +145,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate seriesId path parameter
@@ -155,9 +155,9 @@ export async function DELETE(context: APIContext): Promise<Response> {
     validatedSeriesId = seriesIdParamSchema.parse(seriesId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid series ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid series ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Parse and validate query parameters
@@ -171,9 +171,9 @@ export async function DELETE(context: APIContext): Promise<Response> {
     validatedQuery = deleteSeriesQuerySchema.parse(queryParams);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid query parameters", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid query parameters");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Log cascade delete operations for audit purposes
@@ -201,7 +201,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
   } catch (error) {
     // Check if it's a not found error
     if (error instanceof NotFoundError) {
-      return apiError(404, "NOT_FOUND", "Series not found");
+      return apiError(404, "NOT_FOUND", "apiErrors.notFoundSeries");
     }
 
     console.error("Error deleting series:", {
@@ -211,6 +211,6 @@ export async function DELETE(context: APIContext): Promise<Response> {
       cascade: validatedQuery.cascade,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to delete series");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

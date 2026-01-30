@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/i18n/react";
 
 interface AddBookDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ interface AddBookDialogProps {
  * - Field-level and general error handling
  */
 export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: AddBookDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { createBook, isCreating } = useBookMutations();
 
@@ -105,12 +107,12 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" data-testid="dialog-add-book">
         <DialogHeader>
-          <DialogTitle>Add Book</DialogTitle>
+          <DialogTitle>{t("dialogs.book.addTitle")}</DialogTitle>
         </DialogHeader>
 
         {generalError && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            {generalError}
+            {t(generalError)}
           </div>
         )}
 
@@ -118,16 +120,16 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.book.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input id="title" type="text" {...register("title")} disabled={isCreating} data-testid="input-book-title" />
-            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
+            {errors.title?.message && <p className="text-sm text-destructive">{t(errors.title.message)}</p>}
           </div>
 
           {/* Author */}
           <div className="space-y-2">
             <Label htmlFor="author">
-              Author <span className="text-destructive">*</span>
+              {t("dialogs.book.authorLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="author"
@@ -136,13 +138,13 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               disabled={isCreating}
               data-testid="input-book-author"
             />
-            {errors.author && <p className="text-sm text-destructive">{errors.author.message}</p>}
+            {errors.author?.message && <p className="text-sm text-destructive">{t(errors.author.message)}</p>}
           </div>
 
           {/* Total Pages */}
           <div className="space-y-2">
             <Label htmlFor="total_pages">
-              Total Pages <span className="text-destructive">*</span>
+              {t("dialogs.book.totalPagesLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="total_pages"
@@ -152,12 +154,12 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               disabled={isCreating}
               data-testid="input-book-total-pages"
             />
-            {errors.total_pages && <p className="text-sm text-destructive">{errors.total_pages.message}</p>}
+            {errors.total_pages?.message && <p className="text-sm text-destructive">{t(errors.total_pages.message)}</p>}
           </div>
 
           {/* Status */}
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t("dialogs.book.statusLabel")}</Label>
             <Controller
               control={control}
               name="status"
@@ -168,13 +170,13 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="want_to_read" data-testid="option-book-status-want-to-read">
-                      Want to Read
+                      {t("book.status.wantToRead")}
                     </SelectItem>
                     <SelectItem value="reading" data-testid="option-book-status-reading">
-                      Reading
+                      {t("book.status.reading")}
                     </SelectItem>
                     <SelectItem value="completed" data-testid="option-book-status-completed">
-                      Completed
+                      {t("book.status.completed")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -184,7 +186,7 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
 
           {/* Series */}
           <div className="space-y-2">
-            <Label htmlFor="series_id">Series</Label>
+            <Label htmlFor="series_id">{t("dialogs.book.seriesLabel")}</Label>
             <Controller
               control={control}
               name="series_id"
@@ -195,11 +197,11 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
                   disabled={isCreating}
                 >
                   <SelectTrigger data-testid="select-book-series">
-                    <SelectValue placeholder="None" />
+                    <SelectValue placeholder={t("dialogs.book.seriesNone")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none" data-testid="option-book-series-none">
-                      None
+                      {t("dialogs.book.seriesNone")}
                     </SelectItem>
                     {seriesOptions.map((option) => (
                       <SelectItem
@@ -214,13 +216,13 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
                 </Select>
               )}
             />
-            {errors.series_id && <p className="text-sm text-destructive">{errors.series_id.message}</p>}
+            {errors.series_id?.message && <p className="text-sm text-destructive">{t(errors.series_id.message)}</p>}
           </div>
 
           {/* Series Order */}
           {seriesIdValue && (
             <div className="space-y-2">
-              <Label htmlFor="series_order">Order in Series</Label>
+              <Label htmlFor="series_order">{t("dialogs.book.seriesOrderLabel")}</Label>
               <Input
                 id="series_order"
                 type="number"
@@ -229,13 +231,15 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
                 disabled={isCreating}
                 data-testid="input-book-series-order"
               />
-              {errors.series_order && <p className="text-sm text-destructive">{errors.series_order.message}</p>}
+              {errors.series_order?.message && (
+                <p className="text-sm text-destructive">{t(errors.series_order.message)}</p>
+              )}
             </div>
           )}
 
           {/* Cover Image URL */}
           <div className="space-y-2">
-            <Label htmlFor="cover_image_url">Cover Image URL</Label>
+            <Label htmlFor="cover_image_url">{t("dialogs.book.coverImageLabel")}</Label>
             <Input
               id="cover_image_url"
               type="url"
@@ -243,7 +247,9 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               disabled={isCreating}
               data-testid="input-book-cover-image-url"
             />
-            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
+            {errors.cover_image_url?.message && (
+              <p className="text-sm text-destructive">{t(errors.cover_image_url.message)}</p>
+            )}
           </div>
 
           {/* Actions */}
@@ -255,10 +261,10 @@ export const AddBookDialog = ({ open, onOpenChange, seriesOptions, onCreated }: 
               disabled={isCreating}
               data-testid="btn-cancel-add-book"
             >
-              Cancel
+              {t("dialogs.book.cancel")}
             </Button>
             <Button type="submit" disabled={isCreating} data-testid="btn-create-book">
-              {isCreating ? "Creating..." : "Create Book"}
+              {isCreating ? t("dialogs.book.creating") : t("dialogs.book.create")}
             </Button>
           </div>
         </form>

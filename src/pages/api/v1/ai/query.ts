@@ -6,6 +6,7 @@ import { NotFoundError } from "../../../../lib/errors";
 import { queryAiSimpleChat } from "../../../../lib/services/ai.service";
 import { aiQueryBodySchema } from "../../../../lib/validation/ai.schemas";
 import type { AiQueryResponseDtoSimple } from "../../../../types";
+import { normalizeLocale } from "../../../../i18n";
 
 export const prerender = false;
 
@@ -20,7 +21,7 @@ export async function POST(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Parse and validate request body
@@ -28,7 +29,7 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
   let validatedBody;
@@ -36,13 +37,15 @@ export async function POST(context: APIContext): Promise<Response> {
     validatedBody = aiQueryBodySchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Execute AI query
   try {
+    const acceptLanguage = context.request.headers.get("accept-language");
+    const locale = normalizeLocale(acceptLanguage?.split(",")[0] ?? null);
     const result = await queryAiSimpleChat({
       supabase,
       userId,
@@ -53,6 +56,7 @@ export async function POST(context: APIContext): Promise<Response> {
           series_id: validatedBody.scope?.series_id ?? null,
         },
       },
+      locale,
     });
 
     const response: AiQueryResponseDtoSimple = result;
@@ -76,6 +80,6 @@ export async function POST(context: APIContext): Promise<Response> {
       scope: validatedBody.scope,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to execute AI query");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

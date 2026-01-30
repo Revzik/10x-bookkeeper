@@ -13,6 +13,8 @@ import {
   OpenRouterUpstreamError,
 } from "../openrouter/openrouter.errors";
 import { PAGINATION } from "../constants";
+import { normalizeLocale, t, type Locale } from "../../i18n";
+import { buildAiPrompts } from "../../i18n/prompts";
 
 export type SupabaseClientType = typeof supabaseClient;
 
@@ -101,9 +103,9 @@ export async function logSearchError({
  * @param notes - Array of note items to format
  * @returns Formatted string with note content suitable for LLM context
  */
-function buildNotesContext(notes: NoteListItemDto[]): string {
+const buildNotesContext = (notes: NoteListItemDto[], locale: Locale): string => {
   if (notes.length === 0) {
-    return "No notes available for this query scope.";
+    return t(locale, "ai.prompts.noNotes");
   }
 
   // Group notes by chapter_id
@@ -128,7 +130,7 @@ function buildNotesContext(notes: NoteListItemDto[]): string {
   }
 
   return contextParts.join("\n");
-}
+};
 
 /**
  * Initializes OpenRouter service for AI queries.
@@ -171,11 +173,14 @@ export async function queryAiSimpleChat({
   supabase,
   userId,
   command,
+  locale,
 }: {
   supabase: SupabaseClientType;
   userId: string;
   command: AiQuerySimpleCommand;
+  locale?: string | null;
 }): Promise<AiQueryResponseDtoSimple> {
+  const normalizedLocale = normalizeLocale(locale);
   let searchLogId: string | null = null;
   const startTime = Date.now();
 
@@ -217,33 +222,16 @@ export async function queryAiSimpleChat({
     });
 
     // Step 4: Build context from notes
-    const notesContext = buildNotesContext(notes);
+    const notesContext = buildNotesContext(notes, normalizedLocale);
 
     // Step 5: Initialize OpenRouter service
     const openRouterService = initializeOpenRouterService();
 
     // Step 6: Build prompts for LLM
-    const systemPrompt = `You are a helpful reading assistant for the 10x Bookkeeper application. Your role is to answer questions based ONLY on the user's reading notes provided in the context.
-
-Guidelines:
-- Base your answer exclusively on the notes context provided
-- If you cannot find relevant information in the notes, clearly state that you don't have enough information
-- Set low_confidence to true if:
-  * The notes don't contain sufficient information to answer confidently
-  * The answer requires speculation or assumptions
-  * The relevant information is ambiguous or contradictory
-- Set low_confidence to false if:
-  * You can answer directly from the notes with high certainty
-  * The information is clear and unambiguous
-- Be concise but thorough
-- Use natural, conversational language`;
-
-    const userPrompt = `Context from reading notes:
-${notesContext}
-
-User's question: ${command.query_text}
-
-Please answer the question based on the notes context above. Remember to set low_confidence appropriately based on the quality and relevance of the available information.`;
+    const { system: systemPrompt, user: userPrompt } = buildAiPrompts(normalizedLocale, {
+      notesContext,
+      question: command.query_text,
+    });
 
     // Step 7: Call OpenRouter LLM
     const result = await openRouterService.chatJson<AiAnswer>({

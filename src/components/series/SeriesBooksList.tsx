@@ -1,6 +1,7 @@
 import type { BookListItemViewModel, SeriesBookRowViewModel } from "@/types";
 import { SeriesBookRow } from "./SeriesBookRow";
 import { EntrySkeleton } from "../shared/EntrySkeleton";
+import { useT } from "@/i18n/react";
 
 interface SeriesBooksListProps {
   items: BookListItemViewModel[];
@@ -31,6 +32,7 @@ export const SeriesBooksList = ({
   onMoveUp,
   onMoveDown,
 }: SeriesBooksListProps) => {
+  const { t } = useT();
   // Loading state
   if (loading) {
     return <EntrySkeleton />;
@@ -40,10 +42,8 @@ export const SeriesBooksList = ({
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-12 text-center">
-        <p className="mb-4 text-foreground">No books found in this series</p>
-        <p className="text-sm text-muted-foreground">
-          Add books to this series from the Library page using the series filter
-        </p>
+        <p className="mb-4 text-foreground">{t("series.books.emptyTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("series.books.emptySubtitle")}</p>
       </div>
     );
   }

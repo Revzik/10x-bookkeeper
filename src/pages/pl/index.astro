@@ -1,0 +1,20 @@
+---
+/**
+ * Root page (Polish) - redirects based on authentication status
+ * - Authenticated users → /pl/library
+ * - Unauthenticated users → /pl/login
+ */
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+const localePrefix = "/pl";
+
+// Redirect authenticated users to library
+if (user) {
+  return Astro.redirect(`${localePrefix}/library`);
+}
+
+// Redirect unauthenticated users to login
+return Astro.redirect(`${localePrefix}/login`);
+---

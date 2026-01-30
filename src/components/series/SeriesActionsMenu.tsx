@@ -5,6 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/i18n/react";
 
 interface SeriesActionsMenuProps {
   onEdit: () => void;
@@ -20,17 +21,19 @@ interface SeriesActionsMenuProps {
  * - Keyboard accessible
  */
 export const SeriesActionsMenu = ({ onEdit, onDelete }: SeriesActionsMenuProps) => {
+  const { t } = useT();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
-          Actions
+          {t("series.actions.menu")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onEdit}>Edit series</DropdownMenuItem>
+        <DropdownMenuItem onClick={onEdit}>{t("series.actions.edit")}</DropdownMenuItem>
         <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-          Delete series
+          {t("series.actions.delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

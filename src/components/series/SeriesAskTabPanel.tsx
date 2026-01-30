@@ -10,6 +10,7 @@ import {
   AiChatLowConfidencePanel,
   ClearChatConfirmDialog,
 } from "@/components/ai/chat";
+import { useT } from "@/i18n/react";
 
 interface SeriesAskTabPanelProps {
   seriesId: string;
@@ -28,6 +29,7 @@ interface SeriesAskTabPanelProps {
  * - Copy and clear chat actions
  */
 export const SeriesAskTabPanel = ({ seriesId }: SeriesAskTabPanelProps) => {
+  const { t } = useT();
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   // Build scope for series
@@ -79,8 +81,8 @@ export const SeriesAskTabPanel = ({ seriesId }: SeriesAskTabPanelProps) => {
   };
 
   // Compute scope-specific text
-  const emptyStateText = "Ask a question about this series to get started";
-  const placeholder = "Ask a question about this series...";
+  const emptyStateText = t("ai.chat.emptySeries");
+  const placeholder = t("ai.chat.placeholderSeries");
 
   return (
     <div className="space-y-4">

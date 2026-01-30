@@ -1,0 +1,20 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import BookDetailPage from "../../../components/book/BookDetailPage";
+
+export const prerender = false;
+
+const { bookId } = Astro.params;
+
+// Ensure bookId exists (should always be present via route)
+if (!bookId) {
+  return new Response("Book ID is required", { status: 400 });
+}
+
+// Get user email from middleware
+const userEmail = Astro.locals.user?.email;
+---
+
+<Layout title="Książka — 10x Bookkeeper">
+  <BookDetailPage client:only="react" bookId={bookId} userEmail={userEmail} locale={Astro.currentLocale} />
+</Layout>

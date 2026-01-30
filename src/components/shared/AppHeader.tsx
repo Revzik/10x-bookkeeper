@@ -11,6 +11,8 @@ import {
 import { ChevronLeft, User, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { apiClient } from "@/lib/api/client";
+import { useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 /**
  * AppHeader height constant - Must match h-14 Tailwind class (3.5rem = 56px)
@@ -34,10 +36,13 @@ interface AppHeaderProps {
  * - Responsive layout
  */
 export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderProps) => {
+  const { t, locale } = useT();
   const [loggingOut, setLoggingOut] = useState(false);
+  const libraryPath = withLocalePath(locale, "/library");
+  const loginPath = withLocalePath(locale, "/login");
 
   const handleBackToLibrary = () => {
-    window.location.href = "/library";
+    window.location.href = libraryPath;
   };
 
   const handleLogout = async () => {
@@ -47,11 +52,11 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
     try {
       await apiClient.postJson("/auth/logout", {});
       // Redirect to login page after successful logout
-      window.location.href = "/login";
+      window.location.href = loginPath;
     } catch (error) {
       console.error("Logout failed:", error);
       // Still redirect to login even on error to clear client state
-      window.location.href = "/login";
+      window.location.href = loginPath;
     }
   };
 
@@ -66,14 +71,14 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
               size="sm"
               onClick={handleBackToLibrary}
               className="gap-2"
-              aria-label="Back to library"
+              aria-label={t("header.backToLibrary")}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back to Library</span>
-              <span className="sm:hidden">Library</span>
+              <span className="hidden sm:inline">{t("header.backToLibrary")}</span>
+              <span className="sm:hidden">{t("header.libraryShort")}</span>
             </Button>
           ) : (
-            <h1 className="text-lg font-semibold">10x Bookkeeper</h1>
+            <h1 className="text-lg font-semibold">{t("app.name")}</h1>
           )}
         </div>
 
@@ -85,7 +90,7 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
           {/* User dropdown menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" aria-label="User menu">
+              <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" aria-label={t("header.userMenu")}>
                 <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
                   <User className="h-4 w-4 text-muted-foreground" />
                 </div>
@@ -96,7 +101,7 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
                 <>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Account</p>
+                      <p className="text-sm font-medium leading-none">{t("header.account")}</p>
                       <p className="text-xs leading-none text-muted-foreground truncate">{userEmail}</p>
                     </div>
                   </DropdownMenuLabel>
@@ -105,7 +110,7 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
               )}
               <DropdownMenuItem onClick={handleLogout} disabled={loggingOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>{loggingOut ? "Logging out..." : "Log out"}</span>
+                <span>{loggingOut ? t("header.loggingOut") : t("header.logOut")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

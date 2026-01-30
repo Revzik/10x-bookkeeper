@@ -16,5 +16,5 @@ const userEmail = Astro.locals.user?.email;
 ---
 
 <Layout title="Book — Bookkeeper">
-  <BookDetailPage client:only="react" bookId={bookId} userEmail={userEmail} />
+  <BookDetailPage client:only="react" bookId={bookId} userEmail={userEmail} locale={Astro.currentLocale} />
 </Layout>

@@ -19,7 +19,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate bookId path parameter
@@ -29,9 +29,9 @@ export async function GET(context: APIContext): Promise<Response> {
     validatedBookId = bookIdParamSchema.parse(bookId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid book ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid book ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Get book
@@ -47,7 +47,7 @@ export async function GET(context: APIContext): Promise<Response> {
   } catch (error) {
     // Check if it's a not found error
     if (error instanceof NotFoundError) {
-      return apiError(404, "NOT_FOUND", "Book not found");
+      return apiError(404, "NOT_FOUND", "apiErrors.notFoundBook");
     }
 
     console.error("Error getting book:", {
@@ -56,7 +56,7 @@ export async function GET(context: APIContext): Promise<Response> {
       bookId: validatedBookId,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to retrieve book");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -70,7 +70,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate bookId path parameter
@@ -80,9 +80,9 @@ export async function PATCH(context: APIContext): Promise<Response> {
     validatedBookId = bookIdParamSchema.parse(bookId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid book ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid book ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Parse and validate request body
@@ -90,7 +90,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
   let validatedBody;
@@ -98,9 +98,9 @@ export async function PATCH(context: APIContext): Promise<Response> {
     validatedBody = updateBookBodySchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Update book
@@ -132,7 +132,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
       fieldsUpdated: Object.keys(validatedBody),
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to update book");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -146,7 +146,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate bookId path parameter
@@ -156,9 +156,9 @@ export async function DELETE(context: APIContext): Promise<Response> {
     validatedBookId = bookIdParamSchema.parse(bookId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid book ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid book ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Delete book
@@ -174,7 +174,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
   } catch (error) {
     // Check if it's a not found error
     if (error instanceof NotFoundError) {
-      return apiError(404, "NOT_FOUND", "Book not found");
+      return apiError(404, "NOT_FOUND", "apiErrors.notFoundBook");
     }
 
     console.error("Error deleting book:", {
@@ -183,6 +183,6 @@ export async function DELETE(context: APIContext): Promise<Response> {
       bookId: validatedBookId,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to delete book");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

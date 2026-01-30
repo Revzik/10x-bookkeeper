@@ -17,5 +17,5 @@ const emailPrefill = Astro.url.searchParams.get("email") || undefined;
 ---
 
 <AuthLayout title="Sign In — 10x Bookkeeper" showSignUpLink={true}>
-  <AuthLoginPage client:only="react" redirectTo={redirectTo} emailPrefill={emailPrefill} />
+  <AuthLoginPage client:only="react" redirectTo={redirectTo} emailPrefill={emailPrefill} locale={Astro.currentLocale} />
 </AuthLayout>
