@@ -6,6 +6,8 @@
 import { type Page, type Locator } from "@playwright/test";
 import { AddBookDialog } from "./AddBookDialog";
 import { BooksTabPanel } from "./BooksTabPanel";
+import { LoginPage } from "./LoginPage";
+import { testUsers } from "../fixtures/test-users";
 
 export class LibraryPage {
   readonly page: Page;
@@ -39,10 +41,26 @@ export class LibraryPage {
   }
 
   async goto() {
-    await this.page.goto("/library");
+    await this.page.goto("/library", { waitUntil: "domcontentloaded" });
   }
 
   async waitForLoad() {
+    await this.page.waitForLoadState("domcontentloaded");
+
+    const loginEmailInput = this.page.getByTestId("login-email");
+
+    await Promise.race([
+      this.pageHeading.waitFor({ state: "visible" }),
+      loginEmailInput.waitFor({ state: "visible" }),
+    ]);
+
+    if (await this.pageHeading.isVisible()) {
+      return;
+    }
+
+    const loginPage = new LoginPage(this.page);
+    await loginPage.login(testUsers.validUser.email, testUsers.validUser.password);
+    await loginPage.waitForNavigation();
     await this.pageHeading.waitFor({ state: "visible" });
   }
 
