@@ -42,6 +42,7 @@ jobs:
     environment: production
     permissions:
       contents: read
+      deployments: write
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
