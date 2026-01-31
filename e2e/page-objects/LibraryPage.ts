@@ -49,10 +49,7 @@ export class LibraryPage {
 
     const loginEmailInput = this.page.getByTestId("login-email");
 
-    await Promise.race([
-      this.pageHeading.waitFor({ state: "visible" }),
-      loginEmailInput.waitFor({ state: "visible" }),
-    ]);
+    await Promise.race([this.pageHeading.waitFor({ state: "visible" }), loginEmailInput.waitFor({ state: "visible" })]);
 
     if (await this.pageHeading.isVisible()) {
       return;

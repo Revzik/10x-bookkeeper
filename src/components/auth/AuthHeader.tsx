@@ -31,33 +31,6 @@ const AuthHeaderContent = ({ showSignInLink, showSignUpLink }: AuthHeaderProps) 
   const loginPath = withLocalePath(locale, "/login");
   const signupPath = withLocalePath(locale, "/signup");
 
-  const FlagIcon = ({ locale: targetLocale, className }: { locale: Locale; className?: string }) => {
-    const wrapperClass = `inline-flex h-4 w-4 items-center justify-center overflow-hidden rounded-sm border border-border ${
-      className ?? ""
-    }`;
-
-    if (targetLocale === "pl") {
-      return (
-        <span className={wrapperClass} aria-hidden="true">
-          <svg viewBox="0 0 24 24" className="h-full w-full">
-            <rect width="24" height="12" y="0" fill="#ffffff" />
-            <rect width="24" height="12" y="12" fill="#dc2626" />
-          </svg>
-        </span>
-      );
-    }
-
-    return (
-      <span className={wrapperClass} aria-hidden="true">
-        <svg viewBox="0 0 24 24" className="h-full w-full">
-          <rect width="24" height="24" fill="#ffffff" />
-          <rect x="10" width="4" height="24" fill="#dc2626" />
-          <rect y="10" width="24" height="4" fill="#dc2626" />
-        </svg>
-      </span>
-    );
-  };
-
   const getLocaleSwitchHref = (targetLocale: Locale) => {
     if (typeof window === "undefined") {
       return withLocalePath(targetLocale, "/");
