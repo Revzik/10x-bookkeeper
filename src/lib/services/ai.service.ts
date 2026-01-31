@@ -1,4 +1,5 @@
-import type { supabaseClient } from "../../db/supabase.client";
+import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
+import { OPENROUTER_API_KEY } from "astro:env/server";
 import type { AiQuerySimpleCommand, AiQueryResponseDtoSimple, NoteListItemDto, ErrorSource } from "../../types";
 import { NotFoundError } from "../errors";
 import { verifyBookExists } from "./books.service";
@@ -16,7 +17,7 @@ import { PAGINATION } from "../constants";
 import { normalizeLocale, t, type Locale } from "../../i18n";
 import { buildAiPrompts } from "../../i18n/prompts";
 
-export type SupabaseClientType = typeof supabaseClient;
+export type SupabaseClientType = SupabaseClientTypeBase;
 
 /**
  * Creates a search log entry in the database.
@@ -86,6 +87,7 @@ export async function logSearchError({
     });
   } catch (error) {
     // Log to console if we can't write to the database
+    // eslint-disable-next-line no-console
     console.error("Failed to log search error to database:", {
       userId,
       searchLogId,
@@ -139,7 +141,7 @@ const buildNotesContext = (notes: NoteListItemDto[], locale: Locale): string => 
  * @throws Error if OPENROUTER_API_KEY is not configured
  */
 function initializeOpenRouterService(): OpenRouterService {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+  const apiKey = OPENROUTER_API_KEY;
 
   if (!apiKey || apiKey.trim().length === 0) {
     throw new Error("OPENROUTER_API_KEY environment variable is not configured");

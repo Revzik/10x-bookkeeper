@@ -1,4 +1,4 @@
-import type { supabaseClient } from "../../db/supabase.client";
+import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
 import type {
   CreateChapterCommand,
   UpdateChapterCommand,
@@ -11,7 +11,7 @@ import { NotFoundError } from "../errors";
 import { verifyBookExists } from "./books.service";
 import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
-export type SupabaseClientType = typeof supabaseClient;
+export type SupabaseClientType = SupabaseClientTypeBase;
 
 /**
  * Creates a new chapter for a specific book.

@@ -1,4 +1,4 @@
-import type { supabaseClient } from "../../db/supabase.client";
+import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
 import type {
   CreateBookCommand,
   BookDto,
@@ -10,7 +10,7 @@ import type {
 import { NotFoundError, ValidationError } from "../errors";
 import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
-export type SupabaseClientType = typeof supabaseClient;
+export type SupabaseClientType = SupabaseClientTypeBase;
 
 /**
  * Verifies that a book exists and belongs to the specified user.

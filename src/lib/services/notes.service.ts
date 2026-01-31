@@ -1,4 +1,4 @@
-import type { supabaseClient } from "../../db/supabase.client";
+import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
 import type {
   CreateNoteCommand,
   NoteDto,
@@ -12,7 +12,7 @@ import { NotFoundError } from "../errors";
 import { verifyChapterExists } from "./chapters.service";
 import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
-export type SupabaseClientType = typeof supabaseClient;
+export type SupabaseClientType = SupabaseClientTypeBase;
 
 /**
  * Creates a new note under a specific chapter.

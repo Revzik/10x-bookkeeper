@@ -1,4 +1,4 @@
-import type { supabaseClient } from "../../db/supabase.client";
+import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
 import type {
   CreateSeriesCommand,
   UpdateSeriesCommand,
@@ -10,7 +10,7 @@ import type {
 import { NotFoundError } from "../errors";
 import { applyPaginationConstraints, buildPaginationMeta } from "./shared.service";
 
-export type SupabaseClientType = typeof supabaseClient;
+export type SupabaseClientType = SupabaseClientTypeBase;
 
 /**
  * Verifies that a series exists and belongs to the specified user.
