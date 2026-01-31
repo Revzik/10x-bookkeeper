@@ -22,7 +22,7 @@ interface AuthResetPasswordPageProps {
  *
  * Features:
  * - Password and confirm password fields
- * - Password strength validation (min 8 chars, at least one number)
+ * - Password strength validation (min 8 chars, upper/lower/number/symbol)
  * - Password match validation
  * - Client-side validation
  * - Error state for expired/invalid recovery links
