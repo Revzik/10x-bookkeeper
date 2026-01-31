@@ -47,7 +47,11 @@ export async function POST(context: APIContext): Promise<Response> {
 
     if (error) {
       // Map Supabase auth errors to API error codes
-      if (error.message.includes("Invalid login credentials") || error.message.includes("Email not confirmed")) {
+      if (error.message.includes("Email not confirmed")) {
+        return apiError(401, "NOT_ALLOWED", "apiErrors.emailNotConfirmed");
+      }
+
+      if (error.message.includes("Invalid login credentials")) {
         return apiError(401, "NOT_ALLOWED", "apiErrors.invalidCredentials");
       }
 

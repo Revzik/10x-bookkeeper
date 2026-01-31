@@ -82,7 +82,10 @@
       "submitting": "Tworzenie konta...",
       "haveAccount": "Masz już konto?",
       "signIn": "Zaloguj się",
-      "signInInstead": "Zaloguj się zamiast tego"
+      "signInInstead": "Zaloguj się zamiast tego",
+      "successTitle": "Sprawdź skrzynkę e-mail",
+      "successSubtitle": "Potwierdź adres e-mail, aby dokończyć rejestrację, a następnie zaloguj się.",
+      "successSignIn": "Przejdź do logowania"
     },
     "forgot": {
       "title": "Zresetuj hasło",
@@ -355,6 +358,7 @@
     "notFoundChapter": "Nie znaleziono rozdziału.",
     "notFoundNote": "Nie znaleziono notatki.",
     "invalidCredentials": "Nieprawidłowy e-mail lub hasło.",
+    "emailNotConfirmed": "Potwierdź adres e-mail przed zalogowaniem.",
     "passwordSame": "Nowe hasło musi się różnić od obecnego.",
     "passwordInvalid": "Hasło nie spełnia wymagań.",
     "passwordExpired": "Sesja odzyskiwania wygasła. Poproś o nowy link resetu."

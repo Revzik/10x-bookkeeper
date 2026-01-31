@@ -28,6 +28,8 @@ const AuthSignupPageContent = () => {
   const { signup } = useAuthMutations();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [conflictEmail, setConflictEmail] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const signupSchema = createSignupSchema(t);
   const loginPath = withLocalePath(locale, "/login");
 
@@ -56,7 +58,13 @@ const AuthSignupPageContent = () => {
     const result = await signup(data);
 
     if (result.success) {
-      // On success, redirect to library
+      if (result.data?.requires_email_confirmation) {
+        setSubmittedEmail(data.email);
+        setShowConfirmation(true);
+        return;
+      }
+
+      // On success with active session, redirect to library
       // Use full page navigation to allow middleware to set up auth state
       window.location.assign(withLocalePath(locale, "/library"));
       return;
@@ -79,6 +87,25 @@ const AuthSignupPageContent = () => {
       setConflictEmail(data.email);
     }
   };
+
+  if (showConfirmation) {
+    return (
+      <AuthCard>
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight">{t("auth.signup.successTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("auth.signup.successSubtitle")}</p>
+        </div>
+        <div className="text-center text-sm text-muted-foreground">
+          <a
+            href={`${loginPath}?email=${encodeURIComponent(submittedEmail ?? "")}`}
+            className="text-foreground hover:underline font-medium"
+          >
+            {t("auth.signup.successSignIn")}
+          </a>
+        </div>
+      </AuthCard>
+    );
+  }
 
   return (
     <AuthCard>

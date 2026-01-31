@@ -55,6 +55,7 @@ export interface LoginResponseDto {
 
 export interface SignupResponseDto {
   user: AuthUserDto;
+  requires_email_confirmation: boolean;
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import { ZodError } from "zod";
 
+import { APP_BASE_URL } from "astro:env/server";
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createForgotPasswordSchema } from "../../../../lib/auth/schemas";
@@ -43,8 +44,8 @@ export async function POST(context: APIContext): Promise<Response> {
   });
 
   try {
-    // Get the site URL from environment or construct from request
-    const siteUrl = context.url.origin;
+    // Prefer configured app base URL, fallback to request origin
+    const siteUrl = APP_BASE_URL ?? context.url.origin;
 
     // Request password reset email
     // Supabase will send email with a link like:

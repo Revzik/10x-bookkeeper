@@ -82,7 +82,10 @@
       "submitting": "Creating account...",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
-      "signInInstead": "Sign in instead"
+      "signInInstead": "Sign in instead",
+      "successTitle": "Check your email",
+      "successSubtitle": "Confirm your email to finish creating your account, then sign in.",
+      "successSignIn": "Go to sign in"
     },
     "forgot": {
       "title": "Reset your password",
@@ -355,6 +358,7 @@
     "notFoundChapter": "Chapter not found.",
     "notFoundNote": "Note not found.",
     "invalidCredentials": "Incorrect email or password.",
+    "emailNotConfirmed": "Please confirm your email before signing in.",
     "passwordSame": "New password must be different from your current password.",
     "passwordInvalid": "Password does not meet requirements.",
     "passwordExpired": "Recovery session expired. Please request a new reset link."
