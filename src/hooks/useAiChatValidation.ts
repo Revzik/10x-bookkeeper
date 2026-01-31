@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AiChatComposerViewModel } from "@/types";
+import { useT } from "@/i18n/react";
 
 /**
  * Custom hook for computing AI chat composer validation state.
@@ -18,6 +19,7 @@ import type { AiChatComposerViewModel } from "@/types";
  * @returns AiChatComposerViewModel with validation state
  */
 export const useAiChatValidation = (draftText: string): AiChatComposerViewModel => {
+  const { t } = useT();
   return useMemo((): AiChatComposerViewModel => {
     const trimmedLength = draftText.trim().length;
     const isEmpty = trimmedLength === 0;
@@ -27,8 +29,8 @@ export const useAiChatValidation = (draftText: string): AiChatComposerViewModel 
       trimmedLength,
       isEmpty,
       isTooLong,
-      validationError: isEmpty ? "Type a question to send" : isTooLong ? "Max 500 characters" : null,
-      charCountLabel: `${trimmedLength} / 500`,
+      validationError: isEmpty ? t("ai.validation.empty") : isTooLong ? t("ai.validation.tooLong") : null,
+      charCountLabel: t("ai.validation.charCount", { count: trimmedLength }),
     };
-  }, [draftText]);
+  }, [draftText, t]);
 };

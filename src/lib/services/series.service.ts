@@ -42,7 +42,7 @@ export async function verifySeriesExists({
   }
 
   if (!data) {
-    throw new NotFoundError("Series not found");
+    throw new NotFoundError("apiErrors.notFoundSeries");
   }
 }
 
@@ -174,7 +174,7 @@ export async function getSeriesById({
   }
 
   if (!data) {
-    throw new NotFoundError("Series not found");
+    throw new NotFoundError("apiErrors.notFoundSeries");
   }
 
   return data;
@@ -215,7 +215,7 @@ export async function updateSeriesById({
   }
 
   if (!existingData) {
-    throw new NotFoundError("Series not found");
+    throw new NotFoundError("apiErrors.notFoundSeries");
   }
 
   // Perform update
@@ -272,7 +272,7 @@ export async function deleteSeriesById({
   }
 
   if (!existingData) {
-    throw new NotFoundError("Series not found");
+    throw new NotFoundError("apiErrors.notFoundSeries");
   }
 
   // If cascade mode, delete all books in the series first

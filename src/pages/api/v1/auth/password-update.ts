@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
-import { resetPasswordSchema } from "../../../../lib/auth/schemas";
+import { createResetPasswordSchema } from "../../../../lib/auth/schemas";
 
 export const prerender = false;
 
@@ -27,17 +27,18 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
+  const resetPasswordSchema = createResetPasswordSchema((key) => key);
   let validatedBody;
   try {
     validatedBody = resetPasswordSchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Create Supabase server instance
@@ -53,7 +54,7 @@ export async function POST(context: APIContext): Promise<Response> {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return apiError(401, "NOT_ALLOWED", "Recovery session expired. Please request a new reset link.");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.passwordExpired");
   }
 
   try {
@@ -69,7 +70,7 @@ export async function POST(context: APIContext): Promise<Response> {
 
       // Map Supabase errors to API error codes
       if (error.message.includes("session") || error.message.includes("expired")) {
-        return apiError(401, "NOT_ALLOWED", "Recovery session expired. Please request a new reset link.");
+        return apiError(401, "NOT_ALLOWED", "apiErrors.passwordExpired");
       }
 
       // Check for "same password" error
@@ -77,15 +78,15 @@ export async function POST(context: APIContext): Promise<Response> {
         error.message.includes("should be different from the old password") ||
         error.message.includes("same password")
       ) {
-        return apiError(400, "VALIDATION_ERROR", "New password must be different from your current password.");
+        return apiError(400, "VALIDATION_ERROR", "apiErrors.passwordSame");
       }
 
       // Check for other password validation errors
       if (error.message.includes("password")) {
-        return apiError(400, "VALIDATION_ERROR", "Password does not meet requirements.");
+        return apiError(400, "VALIDATION_ERROR", "apiErrors.passwordInvalid");
       }
 
-      return apiError(500, "INTERNAL_ERROR", "An error occurred while updating your password. Please try again.");
+      return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
     }
 
     // Password updated successfully
@@ -96,6 +97,6 @@ export async function POST(context: APIContext): Promise<Response> {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     // eslint-disable-next-line no-console
     console.error("Unexpected password update error:", errorMessage);
-    return apiError(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again.");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.unexpected");
   }
 }

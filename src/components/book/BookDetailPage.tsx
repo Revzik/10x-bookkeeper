@@ -12,10 +12,13 @@ import { EditBookDialog } from "@/components/book/EditBookDialog";
 import { DeleteBookDialog } from "@/components/book/DeleteBookDialog";
 import { InlineBanner } from "@/components/library/InlineBanner";
 import { Button } from "@/components/ui/button";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface BookDetailPageProps {
   bookId: string;
   userEmail?: string;
+  locale?: string | null;
 }
 
 /**
@@ -28,7 +31,8 @@ interface BookDetailPageProps {
  * - Tab switching and content rendering
  * - Dynamic header height tracking for sticky tabs positioning
  */
-const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
+const BookDetailPageContent = ({ bookId, userEmail }: BookDetailPageProps) => {
+  const { t, locale } = useT();
   // URL state management (source of truth for active tab and ask scope)
   const { activeTab, askScope, setActiveTab, setAskScope } = useBookUrlState();
 
@@ -41,6 +45,7 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
   // Dialog state
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [chaptersVersion, setChaptersVersion] = useState(0);
 
   // Header height tracking for sticky tabs positioning
   // Note: Total height = AppHeader + BookStickyHeader (dynamic)
@@ -90,7 +95,11 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
 
   const handleDeletedBook = () => {
     // Navigate to /library?tab=books
-    window.location.href = "/library?tab=books";
+    window.location.href = `${withLocalePath(locale, "/library")}?tab=books`;
+  };
+
+  const handleChaptersChanged = () => {
+    setChaptersVersion((version) => version + 1);
   };
 
   // Handle not found state
@@ -100,9 +109,11 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
         <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">Book not found</h1>
-            <p className="text-muted-foreground">It may have been deleted or the link is incorrect.</p>
-            <Button onClick={() => (window.location.href = "/library?tab=books")}>Back to Library</Button>
+            <h1 className="text-2xl font-bold">{t("book.notFoundTitle")}</h1>
+            <p className="text-muted-foreground">{t("book.notFoundSubtitle")}</p>
+            <Button onClick={() => (window.location.href = `${withLocalePath(locale, "/library")}?tab=books`)}>
+              {t("book.backToLibrary")}
+            </Button>
           </div>
         </div>
       </div>
@@ -115,7 +126,7 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
       <div className="min-h-screen">
         <AppHeader showBackToLibrary userEmail={userEmail} />
         <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-muted-foreground">Loading book...</p>
+          <p className="text-muted-foreground">{t("book.loading")}</p>
         </div>
       </div>
     );
@@ -147,10 +158,10 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-6">
         <div className={activeTab === "chapters" ? "" : "hidden"}>
-          <BookChaptersTabPanel bookId={bookId} />
+          <BookChaptersTabPanel bookId={bookId} onChaptersChanged={handleChaptersChanged} />
         </div>
         <div className={activeTab === "notes" ? "" : "hidden"}>
-          <BookNotesTabPanel bookId={bookId} />
+          <BookNotesTabPanel bookId={bookId} chaptersVersion={chaptersVersion} />
         </div>
         <div className={activeTab === "ask" ? "" : "hidden"}>
           <BookAskTabPanel book={book} askScope={askScope} setAskScope={setAskScope} />
@@ -179,6 +190,14 @@ const BookDetailPage = ({ bookId, userEmail }: BookDetailPageProps) => {
         />
       )}
     </div>
+  );
+};
+
+const BookDetailPage = ({ locale, ...props }: BookDetailPageProps) => {
+  return (
+    <I18nProvider locale={locale}>
+      <BookDetailPageContent {...props} locale={locale} />
+    </I18nProvider>
   );
 };
 

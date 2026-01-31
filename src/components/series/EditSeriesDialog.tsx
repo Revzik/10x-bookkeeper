@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/i18n/react";
 
 interface EditSeriesDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface EditSeriesDialogProps {
  * - Field-level and general error handling
  */
 export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: EditSeriesDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { updateSeries, isUpdating } = useSeriesMutations();
 
@@ -111,7 +113,7 @@ export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: Edit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Edit Series</DialogTitle>
+          <DialogTitle>{t("dialogs.series.editTitle")}</DialogTitle>
         </DialogHeader>
 
         {generalError && (
@@ -124,7 +126,7 @@ export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: Edit
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="edit-title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.series.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input id="edit-title" type="text" {...register("title")} disabled={isUpdating} />
             {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
@@ -133,7 +135,8 @@ export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: Edit
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="edit-description">
-              Description <span className="text-xs text-muted-foreground">(optional, clear to remove)</span>
+              {t("dialogs.series.descriptionLabel")}{" "}
+              <span className="text-xs text-muted-foreground">{t("dialogs.series.descriptionOptionalNote")}</span>
             </Label>
             <Textarea id="edit-description" rows={4} {...register("description")} disabled={isUpdating} />
             {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
@@ -142,7 +145,8 @@ export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: Edit
           {/* Cover Image URL */}
           <div className="space-y-2">
             <Label htmlFor="edit-cover_image_url">
-              Cover Image URL <span className="text-xs text-muted-foreground">(optional, clear to remove)</span>
+              {t("dialogs.series.coverImageLabel")}{" "}
+              <span className="text-xs text-muted-foreground">{t("dialogs.series.coverImageOptionalNote")}</span>
             </Label>
             <Input id="edit-cover_image_url" type="url" {...register("cover_image_url")} disabled={isUpdating} />
             {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
@@ -151,10 +155,10 @@ export const EditSeriesDialog = ({ open, onOpenChange, series, onUpdated }: Edit
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isUpdating}>
-              Cancel
+              {t("dialogs.series.cancel")}
             </Button>
             <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? "Saving..." : "Save Changes"}
+              {isUpdating ? t("dialogs.common.saving") : t("dialogs.common.saveChanges")}
             </Button>
           </div>
         </form>

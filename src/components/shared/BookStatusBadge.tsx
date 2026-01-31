@@ -1,4 +1,5 @@
 import type { BookStatus } from "@/types";
+import { useT } from "@/i18n/react";
 
 interface BookStatusBadgeProps {
   status: BookStatus;
@@ -13,10 +14,11 @@ interface BookStatusBadgeProps {
  * - Completed: Gray
  */
 export const BookStatusBadge = ({ status }: BookStatusBadgeProps) => {
+  const { t } = useT();
   const statusLabels: Record<BookStatus, string> = {
-    want_to_read: "Want to Read",
-    reading: "Reading",
-    completed: "Completed",
+    want_to_read: t("book.status.wantToRead"),
+    reading: t("book.status.reading"),
+    completed: t("book.status.completed"),
   };
 
   const statusStyles: Record<BookStatus, string> = {

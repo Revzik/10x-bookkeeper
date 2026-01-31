@@ -19,7 +19,7 @@ export async function POST(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   try {
@@ -31,7 +31,7 @@ export async function POST(context: APIContext): Promise<Response> {
     try {
       body = await context.request.json();
     } catch {
-      return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
     }
 
     const validatedBody = createNoteBodySchema.parse(body);
@@ -48,7 +48,7 @@ export async function POST(context: APIContext): Promise<Response> {
     return json(201, response);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Validation failed", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
 
     if (error instanceof NotFoundError) {
@@ -61,6 +61,6 @@ export async function POST(context: APIContext): Promise<Response> {
       chapterId: context.params.chapterId,
       error,
     });
-    return apiError(500, "INTERNAL_ERROR", "Failed to create note");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

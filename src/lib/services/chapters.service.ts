@@ -151,7 +151,7 @@ export async function getChapter({
   }
 
   if (!data) {
-    throw new NotFoundError("Chapter not found");
+    throw new NotFoundError("apiErrors.notFoundChapter");
   }
 
   return data;
@@ -201,7 +201,7 @@ export async function updateChapter({
   }
 
   if (!data) {
-    throw new NotFoundError("Chapter not found");
+    throw new NotFoundError("apiErrors.notFoundChapter");
   }
 
   return data;
@@ -239,7 +239,7 @@ export async function deleteChapter({
   }
 
   if (!data) {
-    throw new NotFoundError("Chapter not found");
+    throw new NotFoundError("apiErrors.notFoundChapter");
   }
 }
 
@@ -274,6 +274,6 @@ export async function verifyChapterExists({
   }
 
   if (!data) {
-    throw new NotFoundError("Chapter not found");
+    throw new NotFoundError("apiErrors.notFoundChapter");
   }
 }

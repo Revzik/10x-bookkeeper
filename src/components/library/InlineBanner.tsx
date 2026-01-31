@@ -1,5 +1,6 @@
 import type { ApiErrorDto } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/react";
 
 interface InlineBannerProps {
   error: ApiErrorDto;
@@ -10,18 +11,19 @@ interface InlineBannerProps {
  * InlineBanner - Display retryable errors and rate limits
  */
 export const InlineBanner = ({ error, onRetry }: InlineBannerProps) => {
+  const { t } = useT();
   const isRateLimited = error.code === "RATE_LIMITED";
   const isInternalError = error.code === "INTERNAL_ERROR";
 
-  let title = "Error";
-  let description = error.message;
+  let title = t("errors.title");
+  let description = t(error.message);
 
   if (isRateLimited) {
-    title = "Rate Limited";
-    description = "You're doing that too often. Please wait and try again.";
+    title = t("errors.rateLimitedTitle");
+    description = t("errors.rateLimitedDescription");
   } else if (isInternalError) {
-    title = "Something went wrong";
-    description = "We encountered an error. Please try again.";
+    title = t("errors.internalTitle");
+    description = t("errors.internalDescription");
   }
 
   return (
@@ -37,7 +39,7 @@ export const InlineBanner = ({ error, onRetry }: InlineBannerProps) => {
 
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry} className="ml-4" data-testid="btn-error-retry">
-            Retry
+            {t("common.actions.retry")}
           </Button>
         )}
       </div>

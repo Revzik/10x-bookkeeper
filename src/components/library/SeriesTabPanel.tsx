@@ -3,6 +3,8 @@ import { SeriesToolbar } from "@/components/library/SeriesToolbar";
 import { SeriesList } from "@/components/library/SeriesList";
 import { PaginationControls } from "@/components/library/PaginationControls";
 import { InlineBanner } from "@/components/library/InlineBanner";
+import { useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface SeriesTabPanelProps {
   query: LibrarySeriesQueryViewModel;
@@ -18,8 +20,9 @@ interface SeriesTabPanelProps {
  * SeriesTabPanel - Series list UI with search and pagination
  */
 export const SeriesTabPanel = ({ query, onQueryChange, items, meta, loading, error, onRetry }: SeriesTabPanelProps) => {
+  const { locale } = useT();
   const handleOpenSeries = (id: string) => {
-    window.location.href = `/series/${id}`;
+    window.location.href = `${withLocalePath(locale, "/series")}/${id}`;
   };
 
   return (

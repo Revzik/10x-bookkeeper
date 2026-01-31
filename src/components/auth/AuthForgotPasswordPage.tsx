@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
-import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/auth/schemas";
+import { createForgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/auth/schemas";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 /**
  * AuthForgotPasswordPage - Request password reset email
@@ -21,10 +23,13 @@ import { useAuthMutations } from "@/hooks/useAuthMutations";
  * - Link back to login
  * - Loading state during submission
  */
-export const AuthForgotPasswordPage = () => {
+const AuthForgotPasswordPageContent = () => {
+  const { t, locale } = useT();
   const { requestPasswordReset } = useAuthMutations();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const forgotPasswordSchema = createForgotPasswordSchema(t);
+  const loginPath = withLocalePath(locale, "/login");
 
   const {
     register,
@@ -68,26 +73,24 @@ export const AuthForgotPasswordPage = () => {
 
         {/* Title */}
         <div className="space-y-2 text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">Check your email</h2>
-          <p className="text-sm text-muted-foreground">
-            If an account exists for that email, we&apos;ve sent a password reset link.
-          </p>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("auth.forgot.successTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("auth.forgot.successSubtitle")}</p>
         </div>
 
         {/* Instructions */}
         <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2">
-          <p className="font-medium">Next steps:</p>
+          <p className="font-medium">{t("auth.forgot.nextStepsTitle")}</p>
           <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-            <li>Check your inbox for an email from 10x Bookkeeper</li>
-            <li>Click the password reset link in the email</li>
-            <li>Enter your new password</li>
+            <li>{t("auth.forgot.nextStep1")}</li>
+            <li>{t("auth.forgot.nextStep2")}</li>
+            <li>{t("auth.forgot.nextStep3")}</li>
           </ol>
         </div>
 
         {/* Back to login */}
         <div className="text-center">
-          <a href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Back to sign in
+          <a href={loginPath} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            {t("auth.forgot.backToSignIn")}
           </a>
         </div>
       </AuthCard>
@@ -99,45 +102,51 @@ export const AuthForgotPasswordPage = () => {
     <AuthCard>
       {/* Title */}
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Reset your password</h2>
-        <p className="text-sm text-muted-foreground">
-          Enter your email address and we&apos;ll send you a link to reset your password
-        </p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("auth.forgot.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("auth.forgot.subtitle")}</p>
       </div>
 
       {/* Error banner */}
-      {error && <AuthErrorBanner message={error} />}
+      {error && <AuthErrorBanner message={t(error)} />}
 
       {/* Request form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="forgot-email">
-            Email <span className="text-destructive">*</span>
+            {t("auth.forgot.emailLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="forgot-email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.forgot.emailPlaceholder")}
             disabled={isSubmitting}
             {...register("email")}
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          {errors.email?.message && <p className="text-sm text-destructive">{t(errors.email.message)}</p>}
         </div>
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Sending..." : "Send reset link"}
+          {isSubmitting ? t("auth.forgot.submitting") : t("auth.forgot.submit")}
         </Button>
       </form>
 
       {/* Back to login */}
       <div className="text-center">
-        <a href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          Back to sign in
+        <a href={loginPath} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          {t("auth.forgot.backToSignIn")}
         </a>
       </div>
     </AuthCard>
+  );
+};
+
+export const AuthForgotPasswordPage = ({ locale }: { locale?: string | null }) => {
+  return (
+    <I18nProvider locale={locale}>
+      <AuthForgotPasswordPageContent />
+    </I18nProvider>
   );
 };

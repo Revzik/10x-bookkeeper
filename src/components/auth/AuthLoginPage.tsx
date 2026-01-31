@@ -6,12 +6,15 @@ import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginSchema, type LoginFormData } from "@/lib/auth/schemas";
+import { createLoginSchema, type LoginFormData } from "@/lib/auth/schemas";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface AuthLoginPageProps {
   redirectTo?: string;
   emailPrefill?: string;
+  locale?: string | null;
 }
 
 /**
@@ -24,9 +27,14 @@ interface AuthLoginPageProps {
  * - Links to forgot password and signup
  * - Loading state during submission
  */
-export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) => {
+const AuthLoginPageContent = ({ redirectTo, emailPrefill }: AuthLoginPageProps) => {
+  const { t, locale } = useT();
   const { login } = useAuthMutations();
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const loginSchema = createLoginSchema(t);
+  const fallbackRedirect = withLocalePath(locale, "/library");
+  const forgotPasswordPath = withLocalePath(locale, "/forgot-password");
+  const signupPath = withLocalePath(locale, "/signup");
 
   const {
     register,
@@ -49,7 +57,7 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
     if (result.success) {
       // On success, redirect to the intended destination
       // Use full page navigation to allow middleware to set up auth state
-      window.location.assign(redirectTo ?? "/library");
+      window.location.assign(redirectTo ?? fallbackRedirect);
       return;
     }
 
@@ -63,11 +71,7 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
 
     if (result.error?.generalError) {
       // Map NOT_ALLOWED to more user-friendly message
-      if (result.error.generalError.includes("Authentication failed")) {
-        setGeneralError("Incorrect email or password.");
-      } else {
-        setGeneralError(result.error.generalError);
-      }
+      setGeneralError(result.error.generalError);
     }
   };
 
@@ -75,73 +79,81 @@ export const AuthLoginPage = ({ redirectTo, emailPrefill }: AuthLoginPageProps) 
     <AuthCard>
       {/* Title */}
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Sign in to your account</h2>
-        <p className="text-sm text-muted-foreground">Enter your email and password to access your library</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("auth.login.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("auth.login.subtitle")}</p>
       </div>
 
       {/* General error banner */}
-      {generalError && <AuthErrorBanner message={generalError} />}
+      {generalError && <AuthErrorBanner message={t(generalError)} />}
 
       {/* Login form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="login-email">
-            Email <span className="text-destructive">*</span>
+            {t("auth.login.emailLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="login-email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.login.emailPlaceholder")}
             data-testid="login-email"
             disabled={isSubmitting}
             {...register("email")}
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          {errors.email?.message && <p className="text-sm text-destructive">{t(errors.email.message)}</p>}
         </div>
 
         {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="login-password">
-            Password <span className="text-destructive">*</span>
+            {t("auth.login.passwordLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="login-password"
             type="password"
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={t("auth.login.passwordPlaceholder")}
             data-testid="login-password"
             disabled={isSubmitting}
             {...register("password")}
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+          {errors.password?.message && <p className="text-sm text-destructive">{t(errors.password.message)}</p>}
         </div>
 
         {/* Forgot password link */}
         <div className="text-right">
           <a
-            href="/forgot-password"
+            href={forgotPasswordPath}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             data-testid="link-forgot-password"
           >
-            Forgot password?
+            {t("auth.login.forgotPassword")}
           </a>
         </div>
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="login-submit">
-          {isSubmitting ? "Signing in..." : "Sign in"}
+          {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
         </Button>
       </form>
 
       {/* Sign up link */}
       <div className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <a href="/signup" className="text-foreground hover:underline font-medium" data-testid="link-signup">
-          Create account
+        {t("auth.login.noAccount")}{" "}
+        <a href={signupPath} className="text-foreground hover:underline font-medium" data-testid="link-signup">
+          {t("auth.login.createAccount")}
         </a>
       </div>
     </AuthCard>
+  );
+};
+
+export const AuthLoginPage = ({ locale, ...props }: AuthLoginPageProps) => {
+  return (
+    <I18nProvider locale={locale}>
+      <AuthLoginPageContent {...props} locale={locale} />
+    </I18nProvider>
   );
 };

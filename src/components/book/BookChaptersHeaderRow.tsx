@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/react";
 
 interface BookChaptersHeaderRowProps {
   onAdd: () => void;
@@ -28,12 +29,14 @@ export const BookChaptersHeaderRow = ({
   onSaveReorder,
   onDiscardReorder,
 }: BookChaptersHeaderRowProps) => {
+  const { t } = useT();
+
   return (
     <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
       {/* Left section: Reorder controls (always present, content conditionally rendered) */}
       <div className="flex items-center gap-3">
         {reorder?.isEditing && reorder.isDirty && (
-          <span className="text-sm font-medium text-muted-foreground">Unsaved changes</span>
+          <span className="text-sm font-medium text-muted-foreground">{t("book.chapters.unsavedChanges")}</span>
         )}
       </div>
 
@@ -42,10 +45,10 @@ export const BookChaptersHeaderRow = ({
         {reorder?.isEditing ? (
           <>
             <Button variant="outline" size="sm" onClick={onDiscardReorder} disabled={reorder.isSaving}>
-              Discard
+              {t("common.actions.discard")}
             </Button>
             <Button variant="default" size="sm" onClick={onSaveReorder} disabled={!reorder.isDirty || reorder.isSaving}>
-              {reorder.isSaving ? "Saving..." : "Save"}
+              {reorder.isSaving ? t("dialogs.common.saving") : t("common.actions.save")}
             </Button>
           </>
         ) : (
@@ -57,10 +60,10 @@ export const BookChaptersHeaderRow = ({
               disabled={reorder?.isDisabled}
               title={reorder?.disabledReason}
             >
-              Reorder
+              {t("book.chapters.reorder")}
             </Button>
             <Button variant="default" size="sm" onClick={onAdd}>
-              Add Chapter
+              {t("book.chapters.add")}
             </Button>
           </>
         )}

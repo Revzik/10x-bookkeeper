@@ -59,7 +59,7 @@ export const useSeriesList = (query: LibrarySeriesQueryViewModel): UseSeriesList
       setMeta(response.meta);
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      setError(apiError.error || { code: "INTERNAL_ERROR", message: "Failed to fetch series" });
+      setError(apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" });
       setItems([]);
       setMeta(null);
     } finally {

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LibraryTabViewModel } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/i18n/react";
 
 interface LibraryTabsProps {
   activeTab: LibraryTabViewModel;
@@ -13,14 +14,15 @@ interface LibraryTabsProps {
  * LibraryTabs - Accessible tab switching between Books and Series
  */
 export const LibraryTabs = ({ activeTab, onTabChange, booksPanel, seriesPanel }: LibraryTabsProps) => {
+  const { t } = useT();
   return (
     <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as LibraryTabViewModel)}>
       <TabsList>
         <TabsTrigger value="books" data-testid="tab-books">
-          Books
+          {t("library.tabs.books")}
         </TabsTrigger>
         <TabsTrigger value="series" data-testid="tab-series">
-          Series
+          {t("library.tabs.series")}
         </TabsTrigger>
       </TabsList>
 

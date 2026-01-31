@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useChapterMutations } from "@/hooks/useChapterMutations";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useT } from "@/i18n/react";
 
 interface DeleteChapterDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const DeleteChapterDialog = ({
   chapterTitle,
   onDeleted,
 }: DeleteChapterDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { deleteChapter, isDeleting } = useChapterMutations();
 
@@ -55,10 +57,8 @@ export const DeleteChapterDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Delete Chapter</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete <strong>{chapterTitle}</strong>?
-          </DialogDescription>
+          <DialogTitle>{t("dialogs.chapter.deleteTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogs.chapter.deleteDescription", { title: chapterTitle })}</DialogDescription>
         </DialogHeader>
 
         {generalError && (
@@ -74,17 +74,16 @@ export const DeleteChapterDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Cascade Warning */}
           <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-            <strong>Warning:</strong> This will permanently delete all notes and embeddings associated with this
-            chapter. This action cannot be undone.
+            <strong>{t("dialogs.chapter.deleteWarningTitle")}</strong> {t("dialogs.chapter.deleteWarningBody")}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isDeleting}>
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="destructive" disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete Chapter"}
+              {isDeleting ? t("dialogs.chapter.deleting") : t("dialogs.chapter.deleteConfirm")}
             </Button>
           </div>
         </form>

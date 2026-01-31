@@ -7,9 +7,11 @@ import { InlineBanner } from "@/components/library/InlineBanner";
 import { AddChapterDialog } from "./AddChapterDialog";
 import { EditChapterDialog } from "./EditChapterDialog";
 import { DeleteChapterDialog } from "./DeleteChapterDialog";
+import { useT } from "@/i18n/react";
 
 interface BookChaptersTabPanelProps {
   bookId: string;
+  onChaptersChanged?: () => void;
 }
 
 /**
@@ -20,7 +22,8 @@ interface BookChaptersTabPanelProps {
  * - Create/edit/delete chapters (dialogs to be implemented)
  * - (Future) Reorder chapters
  */
-export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
+export const BookChaptersTabPanel = ({ bookId, onChaptersChanged }: BookChaptersTabPanelProps) => {
+  const { t } = useT();
   const { items, loading, error, refetch } = useChaptersList(bookId);
 
   // Dialog state
@@ -72,18 +75,21 @@ export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
   const handleCreated = () => {
     setIsAddOpen(false);
     refetch();
+    onChaptersChanged?.();
   };
 
   const handleUpdated = () => {
     setIsEditOpen(false);
     setSelectedChapter(null);
     refetch();
+    onChaptersChanged?.();
   };
 
   const handleDeleted = () => {
     setIsDeleteOpen(false);
     setSelectedChapter(null);
     refetch();
+    onChaptersChanged?.();
   };
 
   // Reorder handlers
@@ -97,6 +103,7 @@ export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
 
   const handleSaveReorder = async () => {
     await save();
+    onChaptersChanged?.();
   };
 
   const handleDiscardReorder = () => {
@@ -113,7 +120,7 @@ export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
           isDirty: reorderState.isDirty,
           isSaving: reorderState.isSaving,
           isDisabled: loading || items.length === 0,
-          disabledReason: items.length === 0 ? "No chapters to reorder" : undefined,
+          disabledReason: items.length === 0 ? t("book.chapters.reorderDisabled") : undefined,
         }}
         onToggleReorder={handleToggleReorder}
         onSaveReorder={handleSaveReorder}

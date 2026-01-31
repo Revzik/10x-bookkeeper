@@ -1,6 +1,7 @@
 import type { BookListItemViewModel } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookStatusBadge } from "@/components/shared/BookStatusBadge";
+import { useT } from "@/i18n/react";
 
 interface BookRowProps {
   book: BookListItemViewModel;
@@ -11,6 +12,7 @@ interface BookRowProps {
  * BookRow - Single book item in the list
  */
 export const BookRow = ({ book, onClick }: BookRowProps) => {
+  const { t } = useT();
   return (
     <Card
       className="cursor-pointer transition-shadow hover:shadow-md"
@@ -53,7 +55,7 @@ export const BookRow = ({ book, onClick }: BookRowProps) => {
 
         {/* Updated timestamp */}
         <div className="text-right" data-testid="book-card-updated">
-          <div className="text-xs text-muted-foreground">Updated</div>
+          <div className="text-xs text-muted-foreground">{t("book.updated")}</div>
           <div className="text-xs text-foreground" data-testid="book-card-updated-label">
             {book.updatedAtLabel}
           </div>

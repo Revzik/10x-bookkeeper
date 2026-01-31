@@ -1,0 +1,16 @@
+---
+import AuthLayout from "../../layouts/AuthLayout.astro";
+import { AuthSignupPage } from "../../components/auth/AuthSignupPage";
+
+export const prerender = false;
+
+// Check if user is already authenticated (set by middleware)
+// If so, redirect to library
+if (Astro.locals.user) {
+  return Astro.redirect("/pl/library");
+}
+---
+
+<AuthLayout title="Utwórz konto — 10x Bookkeeper" showSignInLink={true}>
+  <AuthSignupPage client:only="react" locale={Astro.currentLocale} />
+</AuthLayout>

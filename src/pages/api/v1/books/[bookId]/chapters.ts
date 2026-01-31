@@ -20,7 +20,7 @@ export async function POST(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate bookId path parameter
@@ -29,9 +29,9 @@ export async function POST(context: APIContext): Promise<Response> {
     bookIdParamSchema.parse(bookId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid book ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid book ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Parse and validate request body
@@ -39,7 +39,7 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
   let validatedBody;
@@ -47,9 +47,9 @@ export async function POST(context: APIContext): Promise<Response> {
     validatedBody = createChapterBodySchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Create chapter
@@ -81,7 +81,7 @@ export async function POST(context: APIContext): Promise<Response> {
       order: validatedBody.order,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to create chapter");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -95,7 +95,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Validate bookId path parameter
@@ -104,9 +104,9 @@ export async function GET(context: APIContext): Promise<Response> {
     bookIdParamSchema.parse(bookId);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid book ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid book ID");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // Parse and validate query parameters
@@ -123,9 +123,9 @@ export async function GET(context: APIContext): Promise<Response> {
     validatedQuery = listChaptersQuerySchema.parse(queryParams);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid query parameters", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid query parameters");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // List chapters
@@ -159,6 +159,6 @@ export async function GET(context: APIContext): Promise<Response> {
       query: validatedQuery,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to list chapters");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

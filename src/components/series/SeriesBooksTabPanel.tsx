@@ -3,6 +3,8 @@ import { useSeriesBooksList, useSeriesBooksReorder } from "./hooks";
 import { SeriesBooksHeaderRow } from "./SeriesBooksHeaderRow";
 import { SeriesBooksList } from "./SeriesBooksList";
 import { InlineBanner } from "@/components/library/InlineBanner";
+import { useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface SeriesBooksTabPanelProps {
   seriesId: string;
@@ -18,6 +20,7 @@ interface SeriesBooksTabPanelProps {
  * - Manage reorder mode with draft state and save/discard actions
  */
 export const SeriesBooksTabPanel = ({ seriesId }: SeriesBooksTabPanelProps) => {
+  const { locale } = useT();
   const { items, loading, error, refetch } = useSeriesBooksList(seriesId);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -27,7 +30,7 @@ export const SeriesBooksTabPanel = ({ seriesId }: SeriesBooksTabPanelProps) => {
   // TODO: Fix navigation to use proper routing instead of window.location
   // Current implementation triggers linter warning about writing to external variable
   const handleOpenBook = (bookId: string) => {
-    window.location.href = `/books/${bookId}`;
+    window.location.href = withLocalePath(locale, `/books/${bookId}`);
   };
 
   const handleToggleEdit = () => {

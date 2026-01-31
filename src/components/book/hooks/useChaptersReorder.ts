@@ -126,7 +126,7 @@ export const useChaptersReorder = (
       const apiError = error as { error: ApiErrorDto };
       const errorDto = apiError.error || {
         code: "INTERNAL_ERROR" as const,
-        message: "Failed to save chapter order",
+        message: "apiErrors.internal",
       };
 
       setSaveError(errorDto);

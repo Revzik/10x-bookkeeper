@@ -23,11 +23,36 @@ const PUBLIC_PATHS = [
   "/api/v1/auth/password-update",
 ];
 
+const getLocalePrefix = (pathname: string): string => {
+  if (pathname === "/pl" || pathname.startsWith("/pl/")) {
+    return "/pl";
+  }
+  return "";
+};
+
+const stripLocalePrefix = (pathname: string, localePrefix: string): string => {
+  if (!localePrefix) {
+    return pathname;
+  }
+  if (pathname === localePrefix) {
+    return "/";
+  }
+  return pathname.slice(localePrefix.length);
+};
+
+const buildLocalizedPath = (localePrefix: string, path: string): string => {
+  if (!localePrefix) {
+    return path;
+  }
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${localePrefix}${normalizedPath === "/" ? "" : normalizedPath}`;
+};
+
 /**
  * Check if a path is public (doesn't require authentication)
  * Note: We check exact matches first, then prefix matches only for API routes
  */
-function isPublicPath(pathname: string): boolean {
+const isPublicPath = (pathname: string): boolean => {
   // Exact match check
   if (PUBLIC_PATHS.includes(pathname)) {
     return true;
@@ -41,22 +66,18 @@ function isPublicPath(pathname: string): boolean {
     }
     return false;
   });
-}
+};
 
 /**
  * Check if a path is an API route
  */
-function isApiRoute(pathname: string): boolean {
-  return pathname.startsWith("/api/");
-}
+const isApiRoute = (pathname: string): boolean => pathname.startsWith("/api/");
 
 /**
  * Check if a path is an auth page (login, signup, etc.)
  * Note: /reset-password is NOT included because users need to be authenticated to reset their password
  */
-function isAuthPage(pathname: string): boolean {
-  return ["/login", "/signup", "/forgot-password"].includes(pathname);
-}
+const isAuthPage = (pathname: string): boolean => ["/login", "/signup", "/forgot-password"].includes(pathname);
 
 /**
  * Authentication middleware
@@ -89,14 +110,18 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
     };
   }
 
-  const isPublic = isPublicPath(url.pathname);
-  const isApi = isApiRoute(url.pathname);
-  const isAuth = isAuthPage(url.pathname);
+  const localePrefix = getLocalePrefix(url.pathname);
+  const basePath = stripLocalePrefix(url.pathname, localePrefix);
+
+  const isPublic = isPublicPath(basePath);
+  const isApi = isApiRoute(basePath);
+  const isAuth = isAuthPage(basePath);
 
   // If user is authenticated and trying to access login/signup/forgot-password, redirect to library
   // Note: /reset-password is allowed for authenticated users (they need it to complete password reset)
   if (user && isAuth) {
-    const redirectTo = url.searchParams.get("redirectTo") || "/library";
+    const fallback = buildLocalizedPath(localePrefix, "/library");
+    const redirectTo = url.searchParams.get("redirectTo") || fallback;
     return redirect(redirectTo);
   }
 
@@ -108,7 +133,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
         JSON.stringify({
           error: {
             code: "NOT_ALLOWED",
-            message: "Authentication required",
+            message: "apiErrors.authRequired",
           },
         }),
         {
@@ -118,10 +143,12 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
           },
         }
       );
-    } else {
-      // For page routes, redirect to login with return URL
-      return redirect(`/login?redirectTo=${encodeURIComponent(url.pathname)}`);
     }
+
+    // For page routes, redirect to login with return URL
+    const loginPath = buildLocalizedPath(localePrefix, "/login");
+    const redirectTarget = buildLocalizedPath(localePrefix, basePath);
+    return redirect(`${loginPath}?redirectTo=${encodeURIComponent(redirectTarget)}`);
   }
 
   return next();

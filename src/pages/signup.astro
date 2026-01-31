@@ -12,5 +12,5 @@ if (Astro.locals.user) {
 ---
 
 <AuthLayout title="Create Account — 10x Bookkeeper" showSignInLink={true}>
-  <AuthSignupPage client:only="react" />
+  <AuthSignupPage client:only="react" locale={Astro.currentLocale} />
 </AuthLayout>

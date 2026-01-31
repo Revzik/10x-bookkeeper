@@ -218,24 +218,62 @@ test.describe("Library - Books Tab", () => {
     const libraryPage = new LibraryPage(page);
     const booksPanel = libraryPage.booksPanel;
 
-    await libraryPage.gotoBooks();
+    const { supabase, userId } = await createAuthenticatedTestClient();
+    const timestamp = Date.now();
+    const prefix = `Sort Test ${timestamp}`;
+    const bookTitles = [`${prefix} A`, `${prefix} B`, `${prefix} C`];
 
-    // Sort by title
-    await booksPanel.sortBy("Title");
-    await booksPanel.waitForLoaded();
+    const createdBooks = await Promise.all(
+      bookTitles.map((title) =>
+        createBook({
+          supabase,
+          userId,
+          command: {
+            title,
+            author: "Sort Author",
+            total_pages: 123,
+            status: "want_to_read",
+          },
+        })
+      )
+    );
 
-    const titlesAsc = await booksPanel.getBookTitles();
+    try {
+      await libraryPage.gotoBooks();
 
-    // Toggle to descending
-    await booksPanel.toggleSortOrder();
-    await booksPanel.waitForLoaded();
+      await booksPanel.search(prefix);
+      await booksPanel.waitForLoaded();
+      await booksPanel.waitForBookByTitle(bookTitles[0]);
 
-    const titlesDesc = await booksPanel.getBookTitles();
+      // Sort by title
+      await booksPanel.sortBy("Title");
+      await booksPanel.waitForLoaded();
 
-    // Verify order changed (if there are multiple books)
-    if (titlesAsc.length > 1) {
-      expect(titlesAsc).not.toEqual(titlesDesc);
-      expect(titlesDesc).toEqual([...titlesAsc].reverse());
+      const titlesAsc = await booksPanel.getBookTitles();
+
+      // Toggle to descending
+      await booksPanel.toggleSortOrder();
+      await booksPanel.waitForLoaded();
+
+      const titlesDesc = await booksPanel.getBookTitles();
+
+      // Verify order changed (if there are multiple books)
+      if (titlesAsc.length > 1) {
+        expect(titlesAsc).not.toEqual(titlesDesc);
+        expect(titlesDesc).toEqual([...titlesAsc].reverse());
+      }
+    } finally {
+      await Promise.all(
+        createdBooks.map((book) =>
+          deleteBookById({
+            supabase,
+            userId,
+            bookId: book.id,
+          })
+        )
+      );
+
+      await signOutTestClient(supabase);
     }
   });
 

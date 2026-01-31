@@ -60,7 +60,7 @@ export const useNotesList = (params: UseNotesListParams): UseNotesListResult => 
       const apiError = err as { error: ApiErrorDto };
       const errorDto = apiError.error || {
         code: "INTERNAL_ERROR" as const,
-        message: "Failed to fetch notes",
+        message: "apiErrors.internal",
       };
 
       setError(errorDto);

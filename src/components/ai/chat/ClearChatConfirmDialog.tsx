@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useT } from "@/i18n/react";
 
 interface ClearChatConfirmDialogProps {
   open: boolean;
@@ -24,19 +25,20 @@ interface ClearChatConfirmDialogProps {
  * - Clear messaging about irreversibility
  */
 export const ClearChatConfirmDialog = ({ open, onOpenChange, onConfirm }: ClearChatConfirmDialogProps) => {
+  const { t } = useT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Clear chat?</DialogTitle>
-          <DialogDescription>This will clear the current chat transcript. This cannot be undone.</DialogDescription>
+          <DialogTitle>{t("ai.dialog.clearTitle")}</DialogTitle>
+          <DialogDescription>{t("ai.dialog.clearDescription")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("ai.dialog.cancel")}
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            Clear chat
+            {t("ai.chat.clearChat")}
           </Button>
         </DialogFooter>
       </DialogContent>

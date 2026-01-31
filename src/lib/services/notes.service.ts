@@ -174,7 +174,7 @@ export async function verifyNoteExists({
   }
 
   if (!data) {
-    throw new NotFoundError("Note not found");
+    throw new NotFoundError("apiErrors.notFoundNote");
   }
 }
 
@@ -209,7 +209,7 @@ async function fetchNoteWithoutContext({
   }
 
   if (!data) {
-    throw new NotFoundError("Note not found");
+    throw new NotFoundError("apiErrors.notFoundNote");
   }
 
   return data;
@@ -263,7 +263,7 @@ async function fetchNoteWithContext({
   }
 
   if (!data) {
-    throw new NotFoundError("Note not found");
+    throw new NotFoundError("apiErrors.notFoundNote");
   }
 
   // Extract note fields
@@ -378,7 +378,7 @@ export async function updateNoteById({
   }
 
   if (!data) {
-    throw new NotFoundError("Note not found");
+    throw new NotFoundError("apiErrors.notFoundNote");
   }
 
   return data;
@@ -415,6 +415,6 @@ export async function deleteNoteById({
   }
 
   if (!data) {
-    throw new NotFoundError("Note not found");
+    throw new NotFoundError("apiErrors.notFoundNote");
   }
 }

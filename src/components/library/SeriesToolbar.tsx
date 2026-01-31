@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useDebouncedValue } from "./hooks";
+import { useT } from "@/i18n/react";
 
 interface SeriesToolbarProps {
   query: LibrarySeriesQueryViewModel;
@@ -14,6 +15,7 @@ interface SeriesToolbarProps {
  * SeriesToolbar - All Series tab list controls (search, sort)
  */
 export const SeriesToolbar = ({ query, onQueryChange }: SeriesToolbarProps) => {
+  const { t } = useT();
   const [searchValue, setSearchValue] = useState(query.q || "");
   const debouncedSearchValue = useDebouncedValue(searchValue, 300);
 
@@ -60,7 +62,7 @@ export const SeriesToolbar = ({ query, onQueryChange }: SeriesToolbarProps) => {
       <div className="flex-1 min-w-[200px]">
         <Input
           type="search"
-          placeholder="Search series..."
+          placeholder={t("library.searchSeries")}
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
           maxLength={50}
@@ -73,9 +75,9 @@ export const SeriesToolbar = ({ query, onQueryChange }: SeriesToolbarProps) => {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="updated_at">Updated</SelectItem>
-          <SelectItem value="created_at">Created</SelectItem>
-          <SelectItem value="title">Title</SelectItem>
+          <SelectItem value="updated_at">{t("library.filters.sortUpdated")}</SelectItem>
+          <SelectItem value="created_at">{t("library.filters.sortCreated")}</SelectItem>
+          <SelectItem value="title">{t("library.filters.sortTitle")}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -84,7 +86,9 @@ export const SeriesToolbar = ({ query, onQueryChange }: SeriesToolbarProps) => {
         variant="outline"
         size="icon"
         onClick={handleOrderToggle}
-        aria-label={`Sort ${query.order === "asc" ? "ascending" : "descending"}`}
+        aria-label={t("library.filters.sortOrderAria", {
+          direction: query.order === "asc" ? t("library.filters.sortAsc") : t("library.filters.sortDesc"),
+        })}
       >
         {query.order === "asc" ? "↑" : "↓"}
       </Button>

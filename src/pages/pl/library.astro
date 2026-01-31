@@ -1,0 +1,13 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import LibraryPage from "../../components/library/LibraryPage";
+
+export const prerender = false;
+
+// Get user email from middleware
+const userEmail = Astro.locals.user?.email;
+---
+
+<Layout title="Biblioteka — 10x Bookkeeper">
+  <LibraryPage client:only="react" userEmail={userEmail} locale={Astro.currentLocale} />
+</Layout>

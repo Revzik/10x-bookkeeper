@@ -18,7 +18,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   try {
@@ -32,7 +32,7 @@ export async function GET(context: APIContext): Promise<Response> {
     return json(200, response);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid chapter ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
 
     if (error instanceof NotFoundError) {
@@ -45,7 +45,7 @@ export async function GET(context: APIContext): Promise<Response> {
       chapterId: context.params.chapterId,
       error,
     });
-    return apiError(500, "INTERNAL_ERROR", "Failed to fetch chapter");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -59,7 +59,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   try {
@@ -71,7 +71,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
     try {
       body = await context.request.json();
     } catch {
-      return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
     }
 
     const validatedBody = updateChapterBodySchema.parse(body);
@@ -88,7 +88,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
     return json(200, response);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Validation failed", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
 
     if (error instanceof NotFoundError) {
@@ -101,7 +101,7 @@ export async function PATCH(context: APIContext): Promise<Response> {
       chapterId: context.params.chapterId,
       error,
     });
-    return apiError(500, "INTERNAL_ERROR", "Failed to update chapter");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -115,7 +115,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   try {
@@ -129,7 +129,7 @@ export async function DELETE(context: APIContext): Promise<Response> {
     return new Response(null, { status: 204 });
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid chapter ID", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
 
     if (error instanceof NotFoundError) {
@@ -142,6 +142,6 @@ export async function DELETE(context: APIContext): Promise<Response> {
       chapterId: context.params.chapterId,
       error,
     });
-    return apiError(500, "INTERNAL_ERROR", "Failed to delete chapter");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

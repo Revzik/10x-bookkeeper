@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
-import { forgotPasswordSchema } from "../../../../lib/auth/schemas";
+import { createForgotPasswordSchema } from "../../../../lib/auth/schemas";
 
 export const prerender = false;
 
@@ -22,17 +22,18 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
+  const forgotPasswordSchema = createForgotPasswordSchema((key) => key);
   let validatedBody;
   try {
     validatedBody = forgotPasswordSchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Create Supabase server instance
@@ -59,7 +60,7 @@ export async function POST(context: APIContext): Promise<Response> {
 
       // Check for rate limiting
       if (error.message?.includes("rate limit") || error.status === 429) {
-        return apiError(429, "RATE_LIMITED", "Too many requests. Please try again later.");
+        return apiError(429, "RATE_LIMITED", "apiErrors.rateLimited");
       }
     }
 

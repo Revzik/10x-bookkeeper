@@ -26,7 +26,7 @@ interface MutationResult<T> {
  * - Type-safe API responses
  * - Special handling for signup conflicts and rate limiting
  */
-export function useAuthMutations() {
+export const useAuthMutations = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isRequestingReset, setIsRequestingReset] = useState(false);
@@ -40,7 +40,7 @@ export function useAuthMutations() {
     const apiError = error as ApiErrorResponseDto;
 
     if (!apiError.error) {
-      return { generalError: "An unexpected error occurred" };
+      return { generalError: "apiErrors.unexpected" };
     }
 
     // Handle validation errors (map to field-level errors)
@@ -53,34 +53,34 @@ export function useAuthMutations() {
         });
         return { fieldErrors };
       }
-      return { generalError: apiError.error.message };
+      return { generalError: apiError.error.message || "apiErrors.generic" };
     }
 
     // Handle signup conflicts (email already exists)
     if (apiError.error.code === "CONFLICT" && context === "signup") {
       return {
-        generalError: "An account with this email already exists.",
+        generalError: "apiErrors.conflictEmail",
         conflictEmail: "conflict", // Signal to component to show sign-in link
       };
     }
 
     // Handle rate limiting
     if (apiError.error.code === "RATE_LIMITED") {
-      return { generalError: "Too many requests. Please try again later." };
+      return { generalError: "apiErrors.rateLimited" };
     }
 
     // Handle authentication failures
     if (apiError.error.code === "NOT_ALLOWED") {
-      return { generalError: apiError.error.message || "Authentication failed" };
+      return { generalError: apiError.error.message || "apiErrors.authFailed" };
     }
 
     // Handle not found errors
     if (apiError.error.code === "NOT_FOUND") {
-      return { generalError: apiError.error.message || "Resource not found" };
+      return { generalError: apiError.error.message || "apiErrors.notFound" };
     }
 
     // Default error handling
-    return { generalError: apiError.error.message || "An error occurred. Please try again." };
+    return { generalError: apiError.error.message || "apiErrors.generic" };
   };
 
   /**
@@ -193,4 +193,4 @@ export function useAuthMutations() {
     isResettingPassword,
     isLoggingOut,
   };
-}
+};

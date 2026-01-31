@@ -2,6 +2,7 @@ import type { ChapterListItemViewModel } from "@/types";
 import { BookChapterRow } from "./BookChapterRow";
 import { EntrySkeleton } from "@/components/shared/EntrySkeleton";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/react";
 
 interface BookChaptersListProps {
   items: ChapterListItemViewModel[];
@@ -35,6 +36,7 @@ export const BookChaptersList = ({
   onMoveDown,
   onAddChapter,
 }: BookChaptersListProps) => {
+  const { t } = useT();
   if (loading) {
     return <EntrySkeleton />;
   }
@@ -42,9 +44,9 @@ export const BookChaptersList = ({
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-12 text-center">
-        <p className="mb-4 text-foreground">No chapters yet</p>
-        <p className="text-sm text-muted-foreground mb-6">Start organizing your book by adding chapters</p>
-        <Button onClick={onAddChapter}>Add Chapter</Button>
+        <p className="mb-4 text-foreground">{t("book.chapters.emptyTitle")}</p>
+        <p className="text-sm text-muted-foreground mb-6">{t("book.chapters.emptySubtitle")}</p>
+        <Button onClick={onAddChapter}>{t("book.chapters.add")}</Button>
       </div>
     );
   }

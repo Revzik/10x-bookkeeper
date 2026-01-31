@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
-import { resetPasswordSchema, type ResetPasswordFormData } from "@/lib/auth/schemas";
+import { createResetPasswordSchema, type ResetPasswordFormData } from "@/lib/auth/schemas";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface AuthResetPasswordPageProps {
   hasValidRecoverySession: boolean;
+  locale?: string | null;
 }
 
 /**
@@ -26,9 +29,13 @@ interface AuthResetPasswordPageProps {
  * - Loading state during submission
  * - Success redirect to library
  */
-export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPasswordPageProps) => {
+const AuthResetPasswordPageContent = ({ hasValidRecoverySession }: AuthResetPasswordPageProps) => {
+  const { t, locale } = useT();
   const { resetPassword, logout, isLoggingOut } = useAuthMutations();
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const resetPasswordSchema = createResetPasswordSchema(t);
+  const loginPath = withLocalePath(locale, "/login");
+  const forgotPasswordPath = withLocalePath(locale, "/forgot-password");
 
   const {
     register,
@@ -58,7 +65,7 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
     await logout();
 
     // Redirect to login page
-    window.location.assign("/login");
+    window.location.assign(loginPath);
   };
 
   // Expired/invalid recovery session state
@@ -74,15 +81,13 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
 
         {/* Title */}
         <div className="space-y-2 text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">Reset link expired</h2>
-          <p className="text-sm text-muted-foreground">
-            Your reset link is invalid or has expired. Please request a new one.
-          </p>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("auth.reset.expiredTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("auth.reset.expiredSubtitle")}</p>
         </div>
 
         {/* Action button */}
         <Button asChild className="w-full">
-          <a href="/forgot-password">Request new reset link</a>
+          <a href={forgotPasswordPath}>{t("auth.reset.requestNewLink")}</a>
         </Button>
 
         {/* Back to login */}
@@ -92,7 +97,7 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
             disabled={isLoggingOut}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
           >
-            {isLoggingOut ? "Redirecting..." : "Back to sign in"}
+            {isLoggingOut ? t("auth.reset.redirecting") : t("auth.reset.backToSignIn")}
           </button>
         </div>
       </AuthCard>
@@ -107,7 +112,7 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
     if (result.success) {
       // On success, redirect to library
       // Use full page navigation to allow middleware to set up auth state
-      window.location.assign("/library");
+      window.location.assign(withLocalePath(locale, "/library"));
       return;
     }
 
@@ -121,11 +126,7 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
 
     if (result.error?.generalError) {
       // Map NOT_ALLOWED to more specific message about expired link
-      if (result.error.generalError.includes("Authentication failed")) {
-        setGeneralError("Your reset link has expired. Please request a new one.");
-      } else {
-        setGeneralError(result.error.generalError);
-      }
+      setGeneralError(result.error.generalError);
     }
   };
 
@@ -134,55 +135,55 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
     <AuthCard>
       {/* Title */}
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Set new password</h2>
-        <p className="text-sm text-muted-foreground">Enter a new password for your account</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("auth.reset.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("auth.reset.subtitle")}</p>
       </div>
 
       {/* General error banner */}
-      {generalError && <AuthErrorBanner message={generalError} />}
+      {generalError && <AuthErrorBanner message={t(generalError)} />}
 
       {/* Reset password form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="reset-password">
-            New Password <span className="text-destructive">*</span>
+            {t("auth.reset.newPasswordLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="reset-password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters with a number"
+            placeholder={t("auth.reset.newPasswordPlaceholder")}
             disabled={isSubmitting}
             {...register("password")}
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+          {errors.password?.message && <p className="text-sm text-destructive">{t(errors.password.message)}</p>}
           {!errors.password && password && (
-            <p className="text-xs text-muted-foreground">
-              Password must be at least 8 characters and include at least one number
-            </p>
+            <p className="text-xs text-muted-foreground">{t("auth.reset.passwordHint")}</p>
           )}
         </div>
 
         {/* Confirm Password */}
         <div className="space-y-2">
           <Label htmlFor="reset-confirm-password">
-            Confirm New Password <span className="text-destructive">*</span>
+            {t("auth.reset.confirmPasswordLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="reset-confirm-password"
             type="password"
             autoComplete="new-password"
-            placeholder="Re-enter your new password"
+            placeholder={t("auth.reset.confirmPasswordPlaceholder")}
             disabled={isSubmitting}
             {...register("confirmPassword")}
           />
-          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword?.message && (
+            <p className="text-sm text-destructive">{t(errors.confirmPassword.message)}</p>
+          )}
         </div>
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Resetting password..." : "Reset password"}
+          {isSubmitting ? t("auth.reset.submitting") : t("auth.reset.submit")}
         </Button>
       </form>
 
@@ -193,9 +194,17 @@ export const AuthResetPasswordPage = ({ hasValidRecoverySession }: AuthResetPass
           disabled={isSubmitting || isLoggingOut}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         >
-          {isLoggingOut ? "Redirecting..." : "Back to sign in"}
+          {isLoggingOut ? t("auth.reset.redirecting") : t("auth.reset.backToSignIn")}
         </button>
       </div>
     </AuthCard>
+  );
+};
+
+export const AuthResetPasswordPage = ({ locale, ...props }: AuthResetPasswordPageProps) => {
+  return (
+    <I18nProvider locale={locale}>
+      <AuthResetPasswordPageContent {...props} locale={locale} />
+    </I18nProvider>
   );
 };

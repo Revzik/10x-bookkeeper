@@ -1,0 +1,405 @@
+{
+  "app": {
+    "name": "10x Bookkeeper",
+    "title": "10x Bookkeeper"
+  },
+  "header": {
+    "backToLibrary": "Powrót do biblioteki",
+    "libraryShort": "Biblioteka",
+    "account": "Konto",
+    "loggingOut": "Wylogowywanie...",
+    "logOut": "Wyloguj się",
+    "userMenu": "Menu użytkownika",
+    "language": {
+      "label": "Język",
+      "menuLabel": "Menu języka"
+    }
+  },
+  "library": {
+    "title": "Biblioteka",
+    "addBook": "Dodaj książkę",
+    "addSeries": "Dodaj serię",
+    "tabs": {
+      "books": "Książki",
+      "series": "Serie"
+    },
+    "searchBooks": "Szukaj książek...",
+    "searchSeries": "Szukaj serii...",
+    "filters": {
+      "allStatus": "Wszystkie statusy",
+      "allSeries": "Wszystkie serie",
+      "status": "Status",
+      "series": "Seria",
+      "sortUpdated": "Zaktualizowano",
+      "sortCreated": "Utworzono",
+      "sortTitle": "Tytuł",
+      "sortAuthor": "Autor",
+      "sortStatus": "Status",
+      "sortAsc": "rosnąco",
+      "sortDesc": "malejąco",
+      "sortOrderAria": "Sortuj {direction}"
+    },
+    "pagination": {
+      "showing": "Wyświetlanie {from}–{to} z {total} wyników",
+      "perPage": "Na stronę:",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "pageOf": "Strona {current} z {total}"
+    },
+    "empty": {
+      "booksTitle": "Nie znaleziono książek",
+      "booksSubtitle": "Zmień filtry lub dodaj pierwszą książkę",
+      "seriesTitle": "Nie znaleziono serii",
+      "seriesSubtitle": "Zmień filtry lub dodaj pierwszą serię"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Zaloguj się do konta",
+      "subtitle": "Wpisz e-mail i hasło, aby uzyskać dostęp do biblioteki",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Hasło",
+      "emailPlaceholder": "ty@example.com",
+      "passwordPlaceholder": "Wpisz hasło",
+      "forgotPassword": "Nie pamiętasz hasła?",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie...",
+      "noAccount": "Nie masz konta?",
+      "createAccount": "Utwórz konto",
+      "incorrectCredentials": "Nieprawidłowy e-mail lub hasło."
+    },
+    "signup": {
+      "title": "Utwórz konto",
+      "subtitle": "Wpisz dane, aby rozpocząć korzystanie z 10x Bookkeeper",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Hasło",
+      "confirmPasswordLabel": "Potwierdź hasło",
+      "emailPlaceholder": "ty@example.com",
+      "passwordPlaceholder": "Co najmniej 8 znaków i cyfra",
+      "confirmPasswordPlaceholder": "Wpisz hasło ponownie",
+      "passwordHint": "Hasło musi mieć co najmniej 8 znaków i zawierać przynajmniej jedną cyfrę",
+      "submit": "Utwórz konto",
+      "submitting": "Tworzenie konta...",
+      "haveAccount": "Masz już konto?",
+      "signIn": "Zaloguj się",
+      "signInInstead": "Zaloguj się zamiast tego"
+    },
+    "forgot": {
+      "title": "Zresetuj hasło",
+      "subtitle": "Podaj adres e-mail, a wyślemy link do zresetowania hasła",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "ty@example.com",
+      "submit": "Wyślij link resetu",
+      "submitting": "Wysyłanie...",
+      "successTitle": "Sprawdź skrzynkę e-mail",
+      "successSubtitle": "Jeśli konto istnieje, wysłaliśmy link do resetu hasła.",
+      "nextStepsTitle": "Następne kroki:",
+      "nextStep1": "Sprawdź skrzynkę pod kątem wiadomości od 10x Bookkeeper",
+      "nextStep2": "Kliknij link resetu hasła w wiadomości",
+      "nextStep3": "Ustaw nowe hasło",
+      "backToSignIn": "Powrót do logowania"
+    },
+    "reset": {
+      "expiredTitle": "Link resetu wygasł",
+      "expiredSubtitle": "Link do resetu jest nieprawidłowy lub wygasł. Poproś o nowy.",
+      "requestNewLink": "Poproś o nowy link",
+      "redirecting": "Przekierowywanie...",
+      "backToSignIn": "Powrót do logowania",
+      "title": "Ustaw nowe hasło",
+      "subtitle": "Wpisz nowe hasło dla konta",
+      "newPasswordLabel": "Nowe hasło",
+      "confirmPasswordLabel": "Potwierdź nowe hasło",
+      "newPasswordPlaceholder": "Co najmniej 8 znaków i cyfra",
+      "confirmPasswordPlaceholder": "Wpisz nowe hasło ponownie",
+      "passwordHint": "Hasło musi mieć co najmniej 8 znaków i zawierać przynajmniej jedną cyfrę",
+      "submit": "Zresetuj hasło",
+      "submitting": "Resetowanie hasła...",
+      "linkExpired": "Link do resetu wygasł. Poproś o nowy."
+    },
+    "validation": {
+      "emailRequired": "E-mail jest wymagany",
+      "emailInvalid": "Wpisz poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane",
+      "passwordMin": "Hasło musi mieć co najmniej 8 znaków",
+      "passwordNumber": "Hasło musi zawierać przynajmniej jedną cyfrę",
+      "confirmPasswordRequired": "Potwierdź hasło",
+      "passwordsMismatch": "Hasła nie są takie same"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "delete": "Usuń",
+      "close": "Zamknij",
+      "retry": "Spróbuj ponownie",
+      "edit": "Edytuj",
+      "discard": "Odrzuć",
+      "more": "Więcej",
+      "less": "Mniej",
+      "showDetails": "Pokaż szczegóły",
+      "hideDetails": "Ukryj szczegóły"
+    },
+    "loading": "Ładowanie...",
+    "time": {
+      "justNow": "przed chwilą"
+    },
+    "theme": {
+      "loading": "Ładowanie przełącznika motywu",
+      "switchToDark": "Przełącz na tryb ciemny",
+      "switchToLight": "Przełącz na tryb jasny"
+    }
+  },
+  "errors": {
+    "generic": "Coś poszło nie tak.",
+    "authRequired": "Wymagane uwierzytelnienie.",
+    "rateLimitedTitle": "Zbyt wiele żądań",
+    "rateLimitedDescription": "Robisz to zbyt często. Poczekaj i spróbuj ponownie.",
+    "internalTitle": "Coś poszło nie tak",
+    "internalDescription": "Wystąpił błąd. Spróbuj ponownie.",
+    "pageNotFoundTitle": "Nie znaleziono strony",
+    "pageNotFoundDescription": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "pageNotFoundPageTitle": "Nie znaleziono strony — {appName}",
+    "title": "Błąd"
+  },
+  "book": {
+    "notFoundTitle": "Nie znaleziono książki",
+    "notFoundSubtitle": "Książka mogła zostać usunięta lub link jest nieprawidłowy.",
+    "backToLibrary": "Powrót do biblioteki",
+    "loading": "Ładowanie książki...",
+    "notes": {
+      "filterChapter": "Rozdział:",
+      "allChapters": "Wszystkie rozdziały",
+      "addNote": "Dodaj notatkę",
+      "addDisabledReason": "Najpierw dodaj rozdziały, aby uporządkować notatki",
+      "unknownChapter": "Notatka",
+      "emptyTitle": "Brak notatek",
+      "emptySubtitle": "Zacznij dodawać notatki, aby utrwalać wnioski z lektury",
+      "emptyCta": "Dodaj pierwszą notatkę",
+      "emptyNoChapters": "Najpierw dodaj rozdziały, aby uporządkować notatki według części książki",
+      "updatedAt": "Zaktualizowano {date}",
+      "noteCountOne": "{count} notatka",
+      "noteCountMany": "{count} notatek"
+    },
+    "chapters": {
+      "updatedAt": "Zaktualizowano {date}",
+      "moveUpAria": "Przenieś {title} w górę",
+      "moveDownAria": "Przenieś {title} w dół",
+      "editAria": "Edytuj {title}",
+      "deleteAria": "Usuń {title}",
+      "unsavedChanges": "Niezapisane zmiany",
+      "reorder": "Zmień kolejność",
+      "reorderDisabled": "Brak rozdziałów do zmiany kolejności",
+      "add": "Dodaj rozdział",
+      "emptyTitle": "Brak rozdziałów",
+      "emptySubtitle": "Zacznij porządkować książkę, dodając rozdziały"
+    },
+    "tabs": {
+      "notes": "Notatki",
+      "chapters": "Rozdziały",
+      "ask": "Zapytaj"
+    },
+    "actions": {
+      "menu": "Akcje",
+      "edit": "Edytuj książkę",
+      "delete": "Usuń książkę"
+    },
+    "coverAlt": "Okładka: {title}",
+    "authorBy": "autor: {author}",
+    "seriesLinkLabel": "Seria: {title}",
+    "seriesLinkAria": "Zobacz serię: {title}",
+    "updatedAt": "Zaktualizowano {date}",
+    "createdAt": "Utworzono {date}",
+    "status": {
+      "wantToRead": "Do przeczytania",
+      "reading": "W trakcie",
+      "completed": "Ukończona"
+    },
+    "updated": "Zaktualizowano"
+  },
+  "series": {
+    "notFoundTitle": "Nie znaleziono serii",
+    "notFoundSubtitle": "Ta seria mogła zostać usunięta lub link jest nieprawidłowy. Sprawdź adres URL i spróbuj ponownie.",
+    "backToLibrary": "Powrót do biblioteki",
+    "loading": "Ładowanie serii...",
+    "books": {
+      "emptyTitle": "Nie znaleziono książek w tej serii",
+      "emptySubtitle": "Dodaj książki do tej serii z Biblioteki, używając filtra serii",
+      "unsavedChanges": "Niezapisane zmiany",
+      "reorder": "Zmień kolejność",
+      "moveUpAria": "Przenieś {title} w górę",
+      "moveDownAria": "Przenieś {title} w dół"
+    },
+    "tabs": {
+      "books": "Książki",
+      "ask": "Zapytaj"
+    },
+    "actions": {
+      "menu": "Akcje",
+      "edit": "Edytuj serię",
+      "delete": "Usuń serię"
+    },
+    "coverAlt": "Okładka: {title}",
+    "updatedAt": "Zaktualizowano {date}",
+    "created": "Utworzono",
+    "updated": "Zaktualizowano",
+    "bookCountOne": "{count} książka",
+    "bookCountMany": "{count} książek"
+  },
+  "dialogs": {
+    "common": {
+      "saveChanges": "Zapisz zmiany",
+      "saving": "Zapisywanie...",
+      "noChanges": "Brak zmian do zapisania"
+    },
+    "chapter": {
+      "addTitle": "Dodaj rozdział",
+      "addDescription": "Utwórz nowy rozdział, aby uporządkować notatki do tej książki.",
+      "editTitle": "Edytuj rozdział",
+      "editDescription": "Zmień tytuł rozdziału lub jego pozycję w książce.",
+      "titleLabel": "Tytuł",
+      "titlePlaceholder": "Wpisz tytuł rozdziału",
+      "orderLabel": "Kolejność",
+      "orderOptionalNote": "(opcjonalnie, zostaw puste dla auto: {suggested})",
+      "orderAutoDefault": "domyślnie",
+      "orderPlaceholder": "Auto",
+      "create": "Utwórz rozdział",
+      "creating": "Tworzenie...",
+      "deleteTitle": "Usuń rozdział",
+      "deleteDescription": "Czy na pewno chcesz usunąć {title}?",
+      "deleteWarningTitle": "Ostrzeżenie:",
+      "deleteWarningBody": "To trwale usunie wszystkie notatki i osadzenia powiązane z tym rozdziałem. Nie można tego cofnąć.",
+      "deleting": "Usuwanie...",
+      "deleteConfirm": "Usuń rozdział"
+    },
+    "book": {
+      "addTitle": "Dodaj książkę",
+      "editTitle": "Edytuj książkę",
+      "titleLabel": "Tytuł",
+      "authorLabel": "Autor",
+      "totalPagesLabel": "Liczba stron",
+      "currentPageLabel": "Bieżąca strona",
+      "statusLabel": "Status",
+      "seriesLabel": "Seria",
+      "seriesNone": "Brak",
+      "seriesOptionalNote": "(opcjonalnie, wybierz „{noneLabel}”, aby odłączyć)",
+      "seriesOrderLabel": "Pozycja w serii",
+      "coverImageLabel": "URL okładki",
+      "coverImageOptionalNote": "(opcjonalnie, wyczyść, aby usunąć)",
+      "cancel": "Anuluj",
+      "create": "Utwórz książkę",
+      "creating": "Tworzenie...",
+      "deleteTitle": "Usuń książkę",
+      "deleteDescription": "Czy na pewno chcesz usunąć {title}?",
+      "deleteWarningTitle": "Ostrzeżenie:",
+      "deleteWarningBody": "To trwale usunie wszystkie rozdziały i notatki powiązane z tą książką. Nie można tego cofnąć.",
+      "deleteError": "Nie udało się usunąć książki",
+      "deleting": "Usuwanie...",
+      "deleteConfirm": "Usuń książkę"
+    },
+    "note": {
+      "addTitle": "Dodaj notatkę",
+      "addDescription": "Utwórz nową notatkę dla rozdziału tej książki.",
+      "chapterLabel": "Rozdział",
+      "chapterPlaceholder": "Wybierz rozdział",
+      "contentLabel": "Treść",
+      "contentPlaceholder": "Wpisz treść notatki...",
+      "create": "Utwórz notatkę",
+      "creating": "Tworzenie...",
+      "deleteTitle": "Usuń notatkę",
+      "deleteDescription": "Czy na pewno chcesz usunąć tę notatkę z {title}?",
+      "deleteWarningTitle": "Ostrzeżenie:",
+      "deleteWarningBody": "To trwale usunie tę notatkę. Nie można tego cofnąć.",
+      "deleteError": "Nie udało się usunąć notatki",
+      "deleting": "Usuwanie...",
+      "deleteConfirm": "Usuń notatkę"
+    },
+    "series": {
+      "addTitle": "Dodaj serię",
+      "editTitle": "Edytuj serię",
+      "titleLabel": "Tytuł",
+      "descriptionLabel": "Opis",
+      "descriptionOptionalNote": "(opcjonalnie, wyczyść, aby usunąć)",
+      "coverImageLabel": "URL okładki",
+      "coverImageOptionalNote": "(opcjonalnie, wyczyść, aby usunąć)",
+      "cancel": "Anuluj",
+      "create": "Utwórz serię",
+      "creating": "Tworzenie...",
+      "deleteTitle": "Usuń serię",
+      "deleteDescription": "Czy na pewno chcesz usunąć {title}?",
+      "cascadeLabel": "Usuń także wszystkie książki, rozdziały i notatki w tej serii",
+      "cascadeWarningTitle": "Ostrzeżenie:",
+      "cascadeWarningBody": "To trwale usunie całą zawartość tej serii. Nie można tego cofnąć.",
+      "deleting": "Usuwanie...",
+      "deleteEverything": "Usuń wszystko",
+      "deleteConfirm": "Usuń serię"
+    }
+  },
+  "apiErrors": {
+    "unexpected": "Wystąpił nieoczekiwany błąd.",
+    "conflictEmail": "Konto z tym adresem e-mail już istnieje.",
+    "rateLimited": "Zbyt wiele żądań. Spróbuj ponownie później.",
+    "authFailed": "Uwierzytelnienie nie powiodło się",
+    "notFound": "Nie znaleziono zasobu",
+    "generic": "Wystąpił błąd. Spróbuj ponownie.",
+    "authRequired": "Wymagane uwierzytelnienie.",
+    "invalidJson": "Nieprawidłowy JSON w treści żądania.",
+    "invalidRequest": "Nieprawidłowe dane żądania.",
+    "validationFailed": "Błąd walidacji.",
+    "internal": "Wystąpił błąd wewnętrzny. Spróbuj ponownie.",
+    "notFoundBook": "Nie znaleziono książki.",
+    "notFoundSeries": "Nie znaleziono serii.",
+    "notFoundChapter": "Nie znaleziono rozdziału.",
+    "notFoundNote": "Nie znaleziono notatki.",
+    "invalidCredentials": "Nieprawidłowy e-mail lub hasło.",
+    "passwordSame": "Nowe hasło musi się różnić od obecnego.",
+    "passwordInvalid": "Hasło nie spełnia wymagań.",
+    "passwordExpired": "Sesja odzyskiwania wygasła. Poproś o nowy link resetu."
+  },
+  "ai": {
+    "chat": {
+      "scopeLabel": "Zakres:",
+      "scopeBook": "Ta książka",
+      "scopeSeries": "Ta seria",
+      "seriesHint": "Ta książka nie jest jeszcze częścią serii. Połącz ją z serią, aby włączyć pytania o całą serię.",
+      "emptyBook": "Zadaj pytanie o tę książkę, aby rozpocząć",
+      "emptySeries": "Zadaj pytanie o tę serię, aby rozpocząć",
+      "placeholderBook": "Zadaj pytanie o tę książkę...",
+      "placeholderSeries": "Zadaj pytanie o tę serię...",
+      "ariaInput": "Pole pytania",
+      "hintEnterToSend": "Enter, aby wysłać",
+      "hintShiftEnter": "Shift+Enter, aby dodać nową linię",
+      "options": "Opcje",
+      "copyLast": "Skopiuj ostatnią odpowiedź",
+      "clearChat": "Wyczyść czat",
+      "send": "Wyślij",
+      "sending": "Wysyłanie...",
+      "you": "Ty",
+      "assistant": "Asystent",
+      "thinking": "Myślenie",
+      "failedResponse": "Nie udało się uzyskać odpowiedzi",
+      "copy": "Kopiuj",
+      "copied": "Skopiowano!",
+      "messageGroupLabel": "Wiadomość czatu",
+      "lowConfidenceTitle": "Za mało informacji w notatkach (na razie)",
+      "lowConfidenceBase1": "Dodaj notatki do odpowiednich rozdziałów",
+      "lowConfidenceBase2": "Spróbuj bardziej szczegółowego sformułowania (nazwy, miejsca, numer rozdziału)",
+      "lowConfidenceBookSeries": "Spróbuj przełączyć na „Ta seria” dla szerszego kontekstu",
+      "lowConfidenceSeries": "Spróbuj zawęzić do konkretnej książki lub dodaj więcej notatek",
+      "lowConfidenceBook": "Upewnij się, że pytasz o właściwą książkę"
+    },
+    "validation": {
+      "empty": "Wpisz pytanie, aby wysłać",
+      "tooLong": "Maksymalnie 500 znaków",
+      "charCount": "{count} / 500"
+    },
+    "dialog": {
+      "clearTitle": "Wyczyścić czat?",
+      "clearDescription": "To usunie bieżącą historię czatu. Nie można tego cofnąć.",
+      "cancel": "Anuluj"
+    },
+    "prompts": {
+      "noNotes": "Brak notatek dla tego zakresu."
+    }
+  }
+}

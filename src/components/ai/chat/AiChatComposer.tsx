@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/i18n/react";
 
 interface AiChatComposerProps {
   value: string;
@@ -44,6 +45,7 @@ export const AiChatComposer = ({
   onCopyLastAnswer,
   onClearChatClick,
 }: AiChatComposerProps) => {
+  const { t } = useT();
   // Handle submit (form submission)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,13 +74,15 @@ export const AiChatComposer = ({
         disabled={disabled}
         placeholder={placeholder}
         className="min-h-[100px] resize-y"
-        aria-label="Question input"
+        aria-label={t("ai.chat.ariaInput")}
       />
 
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1 text-xs text-muted-foreground">
           <span>{composer.charCountLabel}</span>
-          <span>Enter to send • Shift+Enter for newline</span>
+          <span>
+            {t("ai.chat.hintEnterToSend")} • {t("ai.chat.hintShiftEnter")}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -91,21 +95,21 @@ export const AiChatComposer = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" disabled={disabled}>
-                Options
+                {t("ai.chat.options")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled={!canCopyLastAnswer || disabled} onClick={onCopyLastAnswer}>
-                Copy last answer
+                {t("ai.chat.copyLast")}
               </DropdownMenuItem>
               <DropdownMenuItem disabled={!canClear || disabled} onClick={onClearChatClick}>
-                Clear chat
+                {t("ai.chat.clearChat")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <Button type="submit" disabled={composer.isEmpty || composer.isTooLong || disabled}>
-            {disabled ? "Sending..." : "Send"}
+            {disabled ? t("ai.chat.sending") : t("ai.chat.send")}
           </Button>
         </div>
       </div>

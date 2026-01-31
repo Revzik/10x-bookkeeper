@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { useDebouncedValue } from "./hooks";
+import { useT } from "@/i18n/react";
 
 interface BooksToolbarProps {
   query: LibraryBooksQueryViewModel;
@@ -16,6 +17,7 @@ interface BooksToolbarProps {
  * BooksToolbar - All Books tab list controls (search, filters, sort)
  */
 export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolbarProps) => {
+  const { t } = useT();
   const [searchValue, setSearchValue] = useState(query.q || "");
   const debouncedSearchValue = useDebouncedValue(searchValue, 300);
 
@@ -78,7 +80,7 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
       <div className="flex-1 min-w-[200px]">
         <Input
           type="search"
-          placeholder="Search books..."
+          placeholder={t("library.searchBooks")}
           value={searchValue}
           onChange={(e) => handleSearchChange(e.target.value)}
           maxLength={50}
@@ -89,20 +91,20 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
       {/* Status filter */}
       <Select value={query.status || "all"} onValueChange={handleStatusChange}>
         <SelectTrigger className="w-[180px]" data-testid="select-books-status-filter">
-          <SelectValue placeholder="All Status" />
+          <SelectValue placeholder={t("library.filters.allStatus")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all" data-testid="option-status-all">
-            All Status
+            {t("library.filters.allStatus")}
           </SelectItem>
           <SelectItem value="want_to_read" data-testid="option-status-want-to-read">
-            Want to Read
+            {t("book.status.wantToRead")}
           </SelectItem>
           <SelectItem value="reading" data-testid="option-status-reading">
-            Reading
+            {t("book.status.reading")}
           </SelectItem>
           <SelectItem value="completed" data-testid="option-status-completed">
-            Completed
+            {t("book.status.completed")}
           </SelectItem>
         </SelectContent>
       </Select>
@@ -110,11 +112,11 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
       {/* Series filter */}
       <Select value={query.series_id || "all"} onValueChange={handleSeriesChange}>
         <SelectTrigger className="w-[180px]" data-testid="select-books-series-filter">
-          <SelectValue placeholder="All Series" />
+          <SelectValue placeholder={t("library.filters.allSeries")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all" data-testid="option-series-all">
-            All Series
+            {t("library.filters.allSeries")}
           </SelectItem>
           {seriesOptions.map((option) => (
             <SelectItem key={option.value} value={option.value} data-testid={`option-series-${option.value}`}>
@@ -131,19 +133,19 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="updated_at" data-testid="option-sort-updated">
-            Updated
+            {t("library.filters.sortUpdated")}
           </SelectItem>
           <SelectItem value="created_at" data-testid="option-sort-created">
-            Created
+            {t("library.filters.sortCreated")}
           </SelectItem>
           <SelectItem value="title" data-testid="option-sort-title">
-            Title
+            {t("library.filters.sortTitle")}
           </SelectItem>
           <SelectItem value="author" data-testid="option-sort-author">
-            Author
+            {t("library.filters.sortAuthor")}
           </SelectItem>
           <SelectItem value="status" data-testid="option-sort-status">
-            Status
+            {t("library.filters.sortStatus")}
           </SelectItem>
         </SelectContent>
       </Select>
@@ -153,7 +155,9 @@ export const BooksToolbar = ({ query, seriesOptions, onQueryChange }: BooksToolb
         variant="outline"
         size="icon"
         onClick={handleOrderToggle}
-        aria-label={`Sort ${query.order === "asc" ? "ascending" : "descending"}`}
+        aria-label={t("library.filters.sortOrderAria", {
+          direction: query.order === "asc" ? t("library.filters.sortAsc") : t("library.filters.sortDesc"),
+        })}
         data-testid="btn-books-sort-order"
       >
         {query.order === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

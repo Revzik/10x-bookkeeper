@@ -1,6 +1,7 @@
 import type { BookListItemViewModel } from "@/types";
 import { BookRow } from "@/components/library/BookRow";
 import { EntrySkeleton } from "@/components/shared/EntrySkeleton";
+import { useT } from "@/i18n/react";
 
 interface BooksListProps {
   items: BookListItemViewModel[];
@@ -12,6 +13,7 @@ interface BooksListProps {
  * BooksList - Display books results with loading and empty states
  */
 export const BooksList = ({ items, loading, onOpenBook }: BooksListProps) => {
+  const { t } = useT();
   if (loading) {
     return <EntrySkeleton data-testid="books-list-loading" />;
   }
@@ -19,8 +21,8 @@ export const BooksList = ({ items, loading, onOpenBook }: BooksListProps) => {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-12 text-center" data-testid="books-list-empty">
-        <p className="mb-4 text-foreground">No books found</p>
-        <p className="text-sm text-muted-foreground">Try adjusting your filters or add your first book</p>
+        <p className="mb-4 text-foreground">{t("library.empty.booksTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("library.empty.booksSubtitle")}</p>
       </div>
     );
   }

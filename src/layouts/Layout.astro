@@ -1,15 +1,17 @@
 ---
 import "../styles/global.css";
+import { normalizeLocale, t } from "../i18n";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const locale = normalizeLocale(Astro.currentLocale);
+const { title = t(locale, "app.title") } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />

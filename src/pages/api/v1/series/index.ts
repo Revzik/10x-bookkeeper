@@ -18,7 +18,7 @@ export async function POST(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Parse and validate request body
@@ -26,7 +26,7 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     body = await context.request.json();
   } catch {
-    return apiError(400, "VALIDATION_ERROR", "Invalid JSON in request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidJson");
   }
 
   let validatedBody;
@@ -34,9 +34,9 @@ export async function POST(context: APIContext): Promise<Response> {
     validatedBody = createSeriesBodySchema.parse(body);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid request body", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid request body");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.invalidRequest");
   }
 
   // Create series
@@ -56,7 +56,7 @@ export async function POST(context: APIContext): Promise<Response> {
       title: validatedBody.title,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to create series");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
 
@@ -70,7 +70,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   // Parse and validate query parameters
@@ -88,9 +88,9 @@ export async function GET(context: APIContext): Promise<Response> {
     validatedQuery = listSeriesQuerySchema.parse(queryParams);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid query parameters", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
-    return apiError(400, "VALIDATION_ERROR", "Invalid query parameters");
+    return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed");
   }
 
   // List series
@@ -113,6 +113,6 @@ export async function GET(context: APIContext): Promise<Response> {
       query: validatedQuery,
     });
 
-    return apiError(500, "INTERNAL_ERROR", "Failed to list series");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }

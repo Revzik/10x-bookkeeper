@@ -6,8 +6,10 @@ import { AuthErrorBanner } from "./AuthErrorBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signupSchema, type SignupFormData } from "@/lib/auth/schemas";
+import { createSignupSchema, type SignupFormData } from "@/lib/auth/schemas";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { I18nProvider, useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 /**
  * AuthSignupPage - User registration form
@@ -21,10 +23,13 @@ import { useAuthMutations } from "@/hooks/useAuthMutations";
  * - Link to sign in
  * - Loading state during submission
  */
-export const AuthSignupPage = () => {
+const AuthSignupPageContent = () => {
+  const { t, locale } = useT();
   const { signup } = useAuthMutations();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [conflictEmail, setConflictEmail] = useState<string | null>(null);
+  const signupSchema = createSignupSchema(t);
+  const loginPath = withLocalePath(locale, "/login");
 
   const {
     register,
@@ -53,7 +58,7 @@ export const AuthSignupPage = () => {
     if (result.success) {
       // On success, redirect to library
       // Use full page navigation to allow middleware to set up auth state
-      window.location.assign("/library");
+      window.location.assign(withLocalePath(locale, "/library"));
       return;
     }
 
@@ -79,20 +84,20 @@ export const AuthSignupPage = () => {
     <AuthCard>
       {/* Title */}
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Create your account</h2>
-        <p className="text-sm text-muted-foreground">Enter your details to get started with 10x Bookkeeper</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("auth.signup.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("auth.signup.subtitle")}</p>
       </div>
 
       {/* General error banner */}
       {generalError && (
-        <AuthErrorBanner message={generalError}>
+        <AuthErrorBanner message={t(generalError)}>
           {conflictEmail && (
             <p className="mt-2 text-sm">
               <a
-                href={`/login?email=${encodeURIComponent(conflictEmail)}`}
+                href={`${loginPath}?email=${encodeURIComponent(conflictEmail)}`}
                 className="text-foreground hover:underline font-medium"
               >
-                Sign in instead
+                {t("auth.signup.signInInstead")}
               </a>
             </p>
           )}
@@ -104,69 +109,77 @@ export const AuthSignupPage = () => {
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="signup-email">
-            Email <span className="text-destructive">*</span>
+            {t("auth.signup.emailLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="signup-email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.signup.emailPlaceholder")}
             disabled={isSubmitting}
             {...register("email")}
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          {errors.email?.message && <p className="text-sm text-destructive">{t(errors.email.message)}</p>}
         </div>
 
         {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="signup-password">
-            Password <span className="text-destructive">*</span>
+            {t("auth.signup.passwordLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="signup-password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters with a number"
+            placeholder={t("auth.signup.passwordPlaceholder")}
             disabled={isSubmitting}
             {...register("password")}
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+          {errors.password?.message && <p className="text-sm text-destructive">{t(errors.password.message)}</p>}
           {!errors.password && password && (
-            <p className="text-xs text-muted-foreground">
-              Password must be at least 8 characters and include at least one number
-            </p>
+            <p className="text-xs text-muted-foreground">{t("auth.signup.passwordHint")}</p>
           )}
         </div>
 
         {/* Confirm Password */}
         <div className="space-y-2">
           <Label htmlFor="signup-confirm-password">
-            Confirm Password <span className="text-destructive">*</span>
+            {t("auth.signup.confirmPasswordLabel")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="signup-confirm-password"
             type="password"
             autoComplete="new-password"
-            placeholder="Re-enter your password"
+            placeholder={t("auth.signup.confirmPasswordPlaceholder")}
             disabled={isSubmitting}
             {...register("confirmPassword")}
           />
-          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword?.message && (
+            <p className="text-sm text-destructive">{t(errors.confirmPassword.message)}</p>
+          )}
         </div>
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating account..." : "Create account"}
+          {isSubmitting ? t("auth.signup.submitting") : t("auth.signup.submit")}
         </Button>
       </form>
 
       {/* Sign in link */}
       <div className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <a href="/login" className="text-foreground hover:underline font-medium">
-          Sign in
+        {t("auth.signup.haveAccount")}{" "}
+        <a href={loginPath} className="text-foreground hover:underline font-medium">
+          {t("auth.signup.signIn")}
         </a>
       </div>
     </AuthCard>
+  );
+};
+
+export const AuthSignupPage = ({ locale }: { locale?: string | null }) => {
+  return (
+    <I18nProvider locale={locale}>
+      <AuthSignupPageContent />
+    </I18nProvider>
   );
 };

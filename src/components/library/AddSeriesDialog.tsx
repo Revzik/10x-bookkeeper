@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/i18n/react";
 
 interface AddSeriesDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface AddSeriesDialogProps {
  * - Field-level and general error handling
  */
 export const AddSeriesDialog = ({ open, onOpenChange, onCreated }: AddSeriesDialogProps) => {
+  const { t } = useT();
   const [generalError, setGeneralError] = useState<string | null>(null);
   const { createSeries, isCreating } = useSeriesMutations();
 
@@ -99,12 +101,12 @@ export const AddSeriesDialog = ({ open, onOpenChange, onCreated }: AddSeriesDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add Series</DialogTitle>
+          <DialogTitle>{t("dialogs.series.addTitle")}</DialogTitle>
         </DialogHeader>
 
         {generalError && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            {generalError}
+            {t(generalError)}
           </div>
         )}
 
@@ -112,33 +114,35 @@ export const AddSeriesDialog = ({ open, onOpenChange, onCreated }: AddSeriesDial
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
-              Title <span className="text-destructive">*</span>
+              {t("dialogs.series.titleLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input id="title" type="text" {...register("title")} disabled={isCreating} />
-            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
+            {errors.title?.message && <p className="text-sm text-destructive">{t(errors.title.message)}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("dialogs.series.descriptionLabel")}</Label>
             <Textarea id="description" rows={4} {...register("description")} disabled={isCreating} />
-            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+            {errors.description?.message && <p className="text-sm text-destructive">{t(errors.description.message)}</p>}
           </div>
 
           {/* Cover Image URL */}
           <div className="space-y-2">
-            <Label htmlFor="cover_image_url">Cover Image URL</Label>
+            <Label htmlFor="cover_image_url">{t("dialogs.series.coverImageLabel")}</Label>
             <Input id="cover_image_url" type="url" {...register("cover_image_url")} disabled={isCreating} />
-            {errors.cover_image_url && <p className="text-sm text-destructive">{errors.cover_image_url.message}</p>}
+            {errors.cover_image_url?.message && (
+              <p className="text-sm text-destructive">{t(errors.cover_image_url.message)}</p>
+            )}
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isCreating}>
-              Cancel
+              {t("dialogs.series.cancel")}
             </Button>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create Series"}
+              {isCreating ? t("dialogs.series.creating") : t("dialogs.series.create")}
             </Button>
           </div>
         </form>

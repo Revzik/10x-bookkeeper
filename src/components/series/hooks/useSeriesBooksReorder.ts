@@ -131,7 +131,7 @@ export const useSeriesBooksReorder = ({
       setServerOrderIds(draftOrderIds);
     } catch (err) {
       const apiError = err as { error: ApiErrorDto };
-      setSaveError(apiError.error || { code: "INTERNAL_ERROR", message: "Failed to save reorder" });
+      setSaveError(apiError.error || { code: "INTERNAL_ERROR", message: "apiErrors.internal" });
 
       // On failure: restore original order
       setDraftOrderIds(serverOrderIds);

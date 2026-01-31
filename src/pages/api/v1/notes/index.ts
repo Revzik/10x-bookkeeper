@@ -17,7 +17,7 @@ export async function GET(context: APIContext): Promise<Response> {
   // Get authenticated user from context
   const userId = context.locals.user?.id;
   if (!userId) {
-    return apiError(401, "NOT_ALLOWED", "Authentication required");
+    return apiError(401, "NOT_ALLOWED", "apiErrors.authRequired");
   }
 
   try {
@@ -37,7 +37,7 @@ export async function GET(context: APIContext): Promise<Response> {
     return json(200, response);
   } catch (error) {
     if (error instanceof ZodError) {
-      return apiError(400, "VALIDATION_ERROR", "Invalid query parameters", error.errors);
+      return apiError(400, "VALIDATION_ERROR", "apiErrors.validationFailed", error.errors);
     }
 
     console.error("Error listing notes:", {
@@ -46,6 +46,6 @@ export async function GET(context: APIContext): Promise<Response> {
       query: context.request.url,
       error,
     });
-    return apiError(500, "INTERNAL_ERROR", "Failed to list notes");
+    return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
   }
 }
