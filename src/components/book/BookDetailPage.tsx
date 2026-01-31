@@ -45,6 +45,7 @@ const BookDetailPageContent = ({ bookId, userEmail }: BookDetailPageProps) => {
   // Dialog state
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [chaptersVersion, setChaptersVersion] = useState(0);
 
   // Header height tracking for sticky tabs positioning
   // Note: Total height = AppHeader + BookStickyHeader (dynamic)
@@ -95,6 +96,10 @@ const BookDetailPageContent = ({ bookId, userEmail }: BookDetailPageProps) => {
   const handleDeletedBook = () => {
     // Navigate to /library?tab=books
     window.location.href = `${withLocalePath(locale, "/library")}?tab=books`;
+  };
+
+  const handleChaptersChanged = () => {
+    setChaptersVersion((version) => version + 1);
   };
 
   // Handle not found state
@@ -153,10 +158,10 @@ const BookDetailPageContent = ({ bookId, userEmail }: BookDetailPageProps) => {
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-6">
         <div className={activeTab === "chapters" ? "" : "hidden"}>
-          <BookChaptersTabPanel bookId={bookId} />
+          <BookChaptersTabPanel bookId={bookId} onChaptersChanged={handleChaptersChanged} />
         </div>
         <div className={activeTab === "notes" ? "" : "hidden"}>
-          <BookNotesTabPanel bookId={bookId} />
+          <BookNotesTabPanel bookId={bookId} chaptersVersion={chaptersVersion} />
         </div>
         <div className={activeTab === "ask" ? "" : "hidden"}>
           <BookAskTabPanel book={book} askScope={askScope} setAskScope={setAskScope} />

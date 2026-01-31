@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { NoteListItemViewModel, ChapterListItemViewModel, ChapterSelectOptionViewModel } from "@/types";
 import { useBookUrlState } from "./hooks/useBookUrlState";
 import { useChaptersList } from "./hooks/useChaptersList";
@@ -13,6 +13,7 @@ import { useT } from "@/i18n/react";
 
 interface BookNotesTabPanelProps {
   bookId: string;
+  chaptersVersion?: number;
 }
 
 /**
@@ -24,7 +25,7 @@ interface BookNotesTabPanelProps {
  * - Create/view/edit/delete notes via NoteDialog
  * - URL-backed state for filters and pagination
  */
-export const BookNotesTabPanel = ({ bookId }: BookNotesTabPanelProps) => {
+export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanelProps) => {
   const { t } = useT();
   const { notesQuery, setNotesQuery } = useBookUrlState();
 
@@ -47,6 +48,13 @@ export const BookNotesTabPanel = ({ bookId }: BookNotesTabPanelProps) => {
     book_id: bookId,
     ...notesQuery,
   });
+
+  // Refresh chapters when chapter list changes elsewhere (e.g., chapters tab)
+  useEffect(() => {
+    if (chaptersVersion !== undefined && chaptersVersion > 0) {
+      refetchChapters();
+    }
+  }, [chaptersVersion, refetchChapters]);
 
   // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

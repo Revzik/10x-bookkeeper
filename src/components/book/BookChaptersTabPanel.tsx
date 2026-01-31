@@ -11,6 +11,7 @@ import { useT } from "@/i18n/react";
 
 interface BookChaptersTabPanelProps {
   bookId: string;
+  onChaptersChanged?: () => void;
 }
 
 /**
@@ -21,7 +22,7 @@ interface BookChaptersTabPanelProps {
  * - Create/edit/delete chapters (dialogs to be implemented)
  * - (Future) Reorder chapters
  */
-export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
+export const BookChaptersTabPanel = ({ bookId, onChaptersChanged }: BookChaptersTabPanelProps) => {
   const { t } = useT();
   const { items, loading, error, refetch } = useChaptersList(bookId);
 
@@ -74,18 +75,21 @@ export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
   const handleCreated = () => {
     setIsAddOpen(false);
     refetch();
+    onChaptersChanged?.();
   };
 
   const handleUpdated = () => {
     setIsEditOpen(false);
     setSelectedChapter(null);
     refetch();
+    onChaptersChanged?.();
   };
 
   const handleDeleted = () => {
     setIsDeleteOpen(false);
     setSelectedChapter(null);
     refetch();
+    onChaptersChanged?.();
   };
 
   // Reorder handlers
@@ -99,6 +103,7 @@ export const BookChaptersTabPanel = ({ bookId }: BookChaptersTabPanelProps) => {
 
   const handleSaveReorder = async () => {
     await save();
+    onChaptersChanged?.();
   };
 
   const handleDiscardReorder = () => {

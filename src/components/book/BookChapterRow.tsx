@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { useT } from "@/i18n/react";
+import { cn } from "@/lib/utils";
 
 interface BookChapterRowProps {
   item: ChapterListItemViewModel;
@@ -37,7 +38,7 @@ export const BookChapterRow = ({
   const { t } = useT();
   // TODO: during refactor. Extract the cards to a separate components (BookChapterRowEditMode, BookChapterRowViewMode)
   return (
-    <Card className="border-2 border-dashed">
+    <Card className={cn(isEditing && "border-2 border-dashed")}>
       <CardContent className="flex items-center gap-4 p-4">
         {/* Left section: Chapter info */}
         <div className="flex-1">
