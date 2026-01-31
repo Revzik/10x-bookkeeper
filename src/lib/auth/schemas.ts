@@ -13,14 +13,18 @@ const createEmailSchema = (t: Translate) =>
   z.string().trim().toLowerCase().min(1, t("auth.validation.emailRequired")).email(t("auth.validation.emailInvalid"));
 
 const createPasswordSchema = (t: Translate) =>
-  z.string().min(8, t("auth.validation.passwordMin")).regex(/\d/, t("auth.validation.passwordNumber"));
-
-const createLoginPasswordSchema = (t: Translate) => z.string().min(1, t("auth.validation.passwordRequired"));
+  z
+    .string()
+    .min(8, t("auth.validation.passwordMin"))
+    .regex(/[a-z]/, t("auth.validation.passwordLowercase"))
+    .regex(/[A-Z]/, t("auth.validation.passwordUppercase"))
+    .regex(/\d/, t("auth.validation.passwordNumber"))
+    .regex(/[^A-Za-z0-9]/, t("auth.validation.passwordSymbol"));
 
 export const createLoginSchema = (t: Translate) =>
   z.object({
     email: createEmailSchema(t),
-    password: createLoginPasswordSchema(t),
+    password: z.string().min(1, t("auth.validation.passwordRequired")),
   });
 
 export const createSignupSchema = (t: Translate) =>

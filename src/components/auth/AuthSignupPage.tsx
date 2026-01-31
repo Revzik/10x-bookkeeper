@@ -16,7 +16,7 @@ import { withLocalePath } from "@/i18n";
  *
  * Features:
  * - Email/password/confirm password fields
- * - Password strength validation (min 8 chars, at least one number)
+ * - Password strength validation (min 8 chars, upper/lower/number/symbol)
  * - Password match validation
  * - Client-side validation
  * - Error display
