@@ -12,6 +12,7 @@
 create or replace function public.handle_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   -- Set the updated_at column to the current timestamp
