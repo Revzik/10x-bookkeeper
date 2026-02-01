@@ -5,6 +5,7 @@ import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createSignupSchema } from "../../../../lib/auth/schemas";
 import type { SignupResponseDto } from "../../../../types";
+import { getEnvValue } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -36,11 +37,12 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
+    env: context.locals.runtime?.env,
   });
 
   // Attempt to sign up
   try {
-    const appBaseUrl = import.meta.env.APP_BASE_URL;
+    const appBaseUrl = getEnvValue(context.locals.runtime?.env, "APP_BASE_URL", import.meta.env.APP_BASE_URL);
     const siteUrl = appBaseUrl ?? context.url.origin;
     const { data, error } = await supabase.auth.signUp({
       email: validatedBody.email,
@@ -61,6 +63,7 @@ export async function POST(context: APIContext): Promise<Response> {
       }
 
       // Log minimal error info (without full stack trace)
+      // eslint-disable-next-line no-console
       console.error("Signup failed:", error.message || "Unknown error");
       return apiError(500, "INTERNAL_ERROR", "apiErrors.internal");
     }
@@ -82,6 +85,7 @@ export async function POST(context: APIContext): Promise<Response> {
   } catch (error) {
     // Log minimal error info (without full stack trace)
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    // eslint-disable-next-line no-console
     console.error("Unexpected signup error:", errorMessage);
     return apiError(500, "INTERNAL_ERROR", "apiErrors.unexpected");
   }

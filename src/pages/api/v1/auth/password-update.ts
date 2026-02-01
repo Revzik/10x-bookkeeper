@@ -45,6 +45,7 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
+    env: context.locals.runtime?.env,
   });
 
   // Verify user has a valid session

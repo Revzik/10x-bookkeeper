@@ -57,6 +57,7 @@ export async function POST(context: APIContext): Promise<Response> {
         },
       },
       locale,
+      env: context.locals.runtime?.env,
     });
 
     const response: AiQueryResponseDtoSimple = result;

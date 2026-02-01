@@ -15,6 +15,7 @@ import {
 import { PAGINATION } from "../constants";
 import { normalizeLocale, t, type Locale } from "../../i18n";
 import { buildAiPrompts } from "../../i18n/prompts";
+import { getEnvValue, type RuntimeEnv } from "../env";
 
 export type SupabaseClientType = SupabaseClientTypeBase;
 
@@ -139,8 +140,8 @@ const buildNotesContext = (notes: NoteListItemDto[], locale: Locale): string => 
  * @returns Configured OpenRouterService instance
  * @throws Error if OPENROUTER_API_KEY is not configured
  */
-function initializeOpenRouterService(): OpenRouterService {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+function initializeOpenRouterService(env?: RuntimeEnv): OpenRouterService {
+  const apiKey = getEnvValue(env, "OPENROUTER_API_KEY", import.meta.env.OPENROUTER_API_KEY);
 
   if (!apiKey || apiKey.trim().length === 0) {
     throw new Error("OPENROUTER_API_KEY environment variable is not configured");
@@ -175,11 +176,13 @@ export async function queryAiSimpleChat({
   userId,
   command,
   locale,
+  env,
 }: {
   supabase: SupabaseClientType;
   userId: string;
   command: AiQuerySimpleCommand;
   locale?: string | null;
+  env?: RuntimeEnv;
 }): Promise<AiQueryResponseDtoSimple> {
   const normalizedLocale = normalizeLocale(locale);
   let searchLogId: string | null = null;
@@ -226,7 +229,7 @@ export async function queryAiSimpleChat({
     const notesContext = buildNotesContext(notes, normalizedLocale);
 
     // Step 5: Initialize OpenRouter service
-    const openRouterService = initializeOpenRouterService();
+    const openRouterService = initializeOpenRouterService(env);
 
     // Step 6: Build prompts for LLM
     const { system: systemPrompt, user: userPrompt } = buildAiPrompts(normalizedLocale, {

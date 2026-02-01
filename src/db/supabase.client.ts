@@ -3,6 +3,7 @@ import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
 import type { AstroCookies } from "astro";
 
 import type { Database } from "./database.types.ts";
+import { getEnvValue, type RuntimeEnv } from "../lib/env";
 
 export type SupabaseClientType = SupabaseClient<Database>;
 
@@ -35,9 +36,13 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
  * @param context - Astro request context with headers and cookies
  * @returns Supabase server client configured for cookie-based auth
  */
-export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
-  const supabaseUrl = import.meta.env.SUPABASE_URL;
-  const supabaseKey = import.meta.env.SUPABASE_KEY;
+export const createSupabaseServerInstance = (context: {
+  headers: Headers;
+  cookies: AstroCookies;
+  env?: RuntimeEnv;
+}) => {
+  const supabaseUrl = getEnvValue(context.env, "SUPABASE_URL", import.meta.env.SUPABASE_URL);
+  const supabaseKey = getEnvValue(context.env, "SUPABASE_KEY", import.meta.env.SUPABASE_KEY);
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("SUPABASE_URL or SUPABASE_KEY environment variable is not configured");

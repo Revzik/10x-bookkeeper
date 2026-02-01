@@ -32,6 +32,7 @@ if (!code) {
 const supabase = createSupabaseServerInstance({
   cookies: Astro.cookies,
   headers: Astro.request.headers,
+  env: Astro.locals.runtime?.env,
 });
 
 // Exchange the code for a session
