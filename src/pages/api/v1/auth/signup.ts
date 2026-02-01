@@ -43,8 +43,13 @@ export async function POST(context: APIContext): Promise<Response> {
   // Attempt to sign up
   try {
     const requestEnv = getRequestEnv(context.locals);
-    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL", import.meta.env.APP_BASE_URL);
+    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL");
     const siteUrl = appBaseUrl ?? context.url.origin;
+
+    // Debug log for troubleshooting
+    // eslint-disable-next-line no-console
+    console.log("Signup - siteUrl:", siteUrl, "| appBaseUrl:", appBaseUrl, "| origin:", context.url.origin);
+
     const { data, error } = await supabase.auth.signUp({
       email: validatedBody.email,
       password: validatedBody.password,

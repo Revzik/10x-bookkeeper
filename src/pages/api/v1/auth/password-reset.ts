@@ -47,8 +47,12 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     // Prefer configured app base URL, fallback to request origin
     const requestEnv = getRequestEnv(context.locals);
-    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL", import.meta.env.APP_BASE_URL);
+    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL");
     const siteUrl = appBaseUrl ?? context.url.origin;
+
+    // Debug log for troubleshooting
+    // eslint-disable-next-line no-console
+    console.log("Password reset - siteUrl:", siteUrl, "| appBaseUrl:", appBaseUrl, "| origin:", context.url.origin);
 
     // Request password reset email
     // Supabase will send email with a link like:
@@ -60,11 +64,15 @@ export async function POST(context: APIContext): Promise<Response> {
     if (error) {
       // Log minimal error info for debugging (prevents enumeration)
       // eslint-disable-next-line no-console
-      console.error("Password reset failed:", error.message || "Unknown error");
+      console.error("Password reset failed:", {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+      });
 
       // Check for rate limiting
       if (error.message?.includes("rate limit") || error.status === 429) {
-        return apiError(429, "RATE_LIMITED", "apiErrors.rateLimited");
+        return apiError(429, "RATE_LIMITED", "apiErrors.resetLinkActive");
       }
     }
 
