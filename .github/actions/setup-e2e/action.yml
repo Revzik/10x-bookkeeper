@@ -8,6 +8,8 @@ inputs:
   supabase-key:
     description: 'Supabase Key'
     required: true
+  supabase-service-role-key:
+    required: true
   openrouter-api-key:
     description: 'OpenRouter API Key'
     required: true
@@ -34,6 +36,7 @@ runs:
         cat > .env.test << EOF
         SUPABASE_URL=${{ inputs.supabase-url }}
         SUPABASE_KEY=${{ inputs.supabase-key }}
+        SUPABASE_SERVICE_ROLE_KEY=${{ inputs.supabase-service-role-key }}
         OPENROUTER_API_KEY=${{ inputs.openrouter-api-key }}
         E2E_TEST_USER_ID=${{ inputs.e2e-test-user-id }}
         E2E_TEST_USER_EMAIL=${{ inputs.e2e-test-user-email }}

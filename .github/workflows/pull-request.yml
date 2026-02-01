@@ -63,6 +63,7 @@ jobs:
         with:
           supabase-url: ${{ secrets.SUPABASE_URL }}
           supabase-key: ${{ secrets.SUPABASE_KEY }}
+          supabase-service-role-key: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
           e2e-test-user-id: ${{ vars.E2E_TEST_USER_ID }}
           e2e-test-user-email: ${{ vars.E2E_TEST_USER_EMAIL }}
