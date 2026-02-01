@@ -1,7 +1,6 @@
 import type { APIContext } from "astro";
 import { ZodError } from "zod";
 
-import { APP_BASE_URL } from "astro:env/server";
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createSignupSchema } from "../../../../lib/auth/schemas";
@@ -41,7 +40,8 @@ export async function POST(context: APIContext): Promise<Response> {
 
   // Attempt to sign up
   try {
-    const siteUrl = APP_BASE_URL ?? context.url.origin;
+    const appBaseUrl = import.meta.env.APP_BASE_URL;
+    const siteUrl = appBaseUrl ?? context.url.origin;
     const { data, error } = await supabase.auth.signUp({
       email: validatedBody.email,
       password: validatedBody.password,
