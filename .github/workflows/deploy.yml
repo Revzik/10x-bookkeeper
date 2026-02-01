@@ -47,6 +47,7 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      APP_BASE_URL: ${{ vars.APP_BASE_URL }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

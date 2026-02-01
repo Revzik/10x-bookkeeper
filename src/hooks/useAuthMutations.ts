@@ -66,7 +66,7 @@ export const useAuthMutations = () => {
 
     // Handle rate limiting
     if (apiError.error.code === "RATE_LIMITED") {
-      return { generalError: "apiErrors.rateLimited" };
+      return { generalError: apiError.error.message || "apiErrors.rateLimited" };
     }
 
     // Handle authentication failures

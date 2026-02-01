@@ -345,6 +345,7 @@
     "unexpected": "Wystąpił nieoczekiwany błąd.",
     "conflictEmail": "Konto z tym adresem e-mail już istnieje.",
     "rateLimited": "Zbyt wiele żądań. Spróbuj ponownie później.",
+    "resetLinkActive": "Link do resetu jest już aktywny. Użyj najnowszego e-maila lub poczekaj chwilę i spróbuj ponownie.",
     "authFailed": "Uwierzytelnienie nie powiodło się",
     "notFound": "Nie znaleziono zasobu",
     "generic": "Wystąpił błąd. Spróbuj ponownie.",
