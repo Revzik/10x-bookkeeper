@@ -7,6 +7,7 @@ import { queryAiSimpleChat } from "../../../../lib/services/ai.service";
 import { aiQueryBodySchema } from "../../../../lib/validation/ai.schemas";
 import type { AiQueryResponseDtoSimple } from "../../../../types";
 import { normalizeLocale } from "../../../../i18n";
+import { getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -57,7 +58,7 @@ export async function POST(context: APIContext): Promise<Response> {
         },
       },
       locale,
-      env: context.locals.runtime?.env,
+      env: getRequestEnv(context.locals),
     });
 
     const response: AiQueryResponseDtoSimple = result;

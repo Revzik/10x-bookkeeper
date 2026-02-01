@@ -1,4 +1,5 @@
 export type RuntimeEnv = Record<string, unknown> | undefined;
+export type RuntimeLocals = { runtime?: { env?: Record<string, unknown> }; env?: Record<string, unknown> } | undefined;
 
 export const getRuntimeEnvValue = (env: RuntimeEnv, key: string): string | undefined => {
   const value = env?.[key];
@@ -7,3 +8,5 @@ export const getRuntimeEnvValue = (env: RuntimeEnv, key: string): string | undef
 
 export const getEnvValue = (env: RuntimeEnv, key: string, fallback?: string): string | undefined =>
   getRuntimeEnvValue(env, key) ?? fallback;
+
+export const getRequestEnv = (locals: RuntimeLocals): RuntimeEnv => locals?.runtime?.env ?? locals?.env;

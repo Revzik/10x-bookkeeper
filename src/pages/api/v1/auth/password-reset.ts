@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createForgotPasswordSchema } from "../../../../lib/auth/schemas";
-import { getEnvValue } from "../../../../lib/env";
+import { getEnvValue, getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -41,12 +41,13 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
-    env: context.locals.runtime?.env,
+    env: getRequestEnv(context.locals),
   });
 
   try {
     // Prefer configured app base URL, fallback to request origin
-    const appBaseUrl = getEnvValue(context.locals.runtime?.env, "APP_BASE_URL", import.meta.env.APP_BASE_URL);
+    const requestEnv = getRequestEnv(context.locals);
+    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL", import.meta.env.APP_BASE_URL);
     const siteUrl = appBaseUrl ?? context.url.origin;
 
     // Request password reset email

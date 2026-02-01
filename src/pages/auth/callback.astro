@@ -1,5 +1,6 @@
 ---
 import { createSupabaseServerInstance } from "../../db/supabase.client";
+import { getRequestEnv } from "../../lib/env";
 
 export const prerender = false;
 
@@ -32,7 +33,7 @@ if (!code) {
 const supabase = createSupabaseServerInstance({
   cookies: Astro.cookies,
   headers: Astro.request.headers,
-  env: Astro.locals.runtime?.env,
+  env: getRequestEnv(Astro.locals),
 });
 
 // Exchange the code for a session

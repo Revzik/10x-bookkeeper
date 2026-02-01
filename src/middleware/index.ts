@@ -1,6 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 
 import { createSupabaseServerInstance } from "../db/supabase.client.ts";
+import { getRequestEnv } from "../lib/env";
 
 /**
  * Public paths that don't require authentication
@@ -92,7 +93,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
   const supabase = createSupabaseServerInstance({
     cookies,
     headers: request.headers,
-    env: locals.runtime?.env,
+    env: getRequestEnv(locals),
   });
 
   // Make supabase available to endpoints (backward compatibility)

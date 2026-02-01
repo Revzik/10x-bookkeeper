@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError } from "../../../../lib/api/responses";
+import { getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -14,7 +15,7 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
-    env: context.locals.runtime?.env,
+    env: getRequestEnv(context.locals),
   });
 
   // Attempt to sign out

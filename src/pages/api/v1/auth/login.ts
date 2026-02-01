@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
+import { getRequestEnv } from "../../../../lib/env";
 import { createLoginSchema } from "../../../../lib/auth/schemas";
 import type { LoginResponseDto } from "../../../../types";
 
@@ -36,7 +37,7 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
-    env: context.locals.runtime?.env,
+    env: getRequestEnv(context.locals),
   });
 
   // Attempt to sign in

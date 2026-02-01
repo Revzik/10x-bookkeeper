@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createResetPasswordSchema } from "../../../../lib/auth/schemas";
+import { getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -45,7 +46,7 @@ export async function POST(context: APIContext): Promise<Response> {
   const supabase = createSupabaseServerInstance({
     cookies: context.cookies,
     headers: context.request.headers,
-    env: context.locals.runtime?.env,
+    env: getRequestEnv(context.locals),
   });
 
   // Verify user has a valid session
