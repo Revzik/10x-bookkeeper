@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createForgotPasswordSchema } from "../../../../lib/auth/schemas";
-import { getEnvValue, getRequestEnv } from "../../../../lib/env";
+import { getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -45,14 +45,8 @@ export async function POST(context: APIContext): Promise<Response> {
   });
 
   try {
-    // Prefer configured app base URL, fallback to request origin
-    const requestEnv = getRequestEnv(context.locals);
-    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL");
-    const siteUrl = appBaseUrl ?? context.url.origin;
-
-    // Debug log for troubleshooting
-    // eslint-disable-next-line no-console
-    console.log("Password reset - siteUrl:", siteUrl, "| appBaseUrl:", appBaseUrl, "| origin:", context.url.origin);
+    // Use request origin for redirect URL (remove trailing slash if present)
+    const siteUrl = context.url.origin.replace(/\/$/, "");
 
     // Request password reset email
     // Supabase will send email with a link like:

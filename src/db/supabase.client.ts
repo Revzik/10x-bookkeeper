@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
 import type { AstroCookies } from "astro";
 
@@ -61,4 +62,32 @@ export const createSupabaseServerInstance = (context: {
   });
 
   return supabase;
+};
+
+/**
+ * Creates a Supabase admin client with service role privileges
+ * This client can perform admin operations like deleting users
+ * Should only be used in server-side contexts with proper authorization checks
+ *
+ * @param env - Runtime environment variables (optional)
+ * @returns Supabase admin client with elevated privileges
+ */
+export const createSupabaseAdminClient = (env?: RuntimeEnv) => {
+  const supabaseUrl = getEnvValue(env, "SUPABASE_URL", import.meta.env.SUPABASE_URL);
+  const supabaseServiceRoleKey = getEnvValue(
+    env,
+    "SUPABASE_SERVICE_ROLE_KEY",
+    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable is not configured");
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 };

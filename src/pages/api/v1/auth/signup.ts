@@ -5,7 +5,7 @@ import { createSupabaseServerInstance } from "../../../../db/supabase.client";
 import { apiError, json } from "../../../../lib/api/responses";
 import { createSignupSchema } from "../../../../lib/auth/schemas";
 import type { SignupResponseDto } from "../../../../types";
-import { getEnvValue, getRequestEnv } from "../../../../lib/env";
+import { getRequestEnv } from "../../../../lib/env";
 
 export const prerender = false;
 
@@ -42,13 +42,8 @@ export async function POST(context: APIContext): Promise<Response> {
 
   // Attempt to sign up
   try {
-    const requestEnv = getRequestEnv(context.locals);
-    const appBaseUrl = getEnvValue(requestEnv, "APP_BASE_URL");
-    const siteUrl = appBaseUrl ?? context.url.origin;
-
-    // Debug log for troubleshooting
-    // eslint-disable-next-line no-console
-    console.log("Signup - siteUrl:", siteUrl, "| appBaseUrl:", appBaseUrl, "| origin:", context.url.origin);
+    // Use request origin for redirect URL (remove trailing slash if present)
+    const siteUrl = context.url.origin.replace(/\/$/, "");
 
     const { data, error } = await supabase.auth.signUp({
       email: validatedBody.email,

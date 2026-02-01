@@ -3,6 +3,17 @@
 ## 1. Overview
 This schema is designed for a single-tenant logical structure within Supabase (PostgreSQL). Every user-owned entity is associated with a `user_id` that references the `auth.users` table. This enables strict data isolation and simple cascade deletion of user-owned data when an account is deleted.
 
+### Account Deletion
+When a user deletes their account via the API (`POST /api/v1/auth/delete-account`), the `auth.users` record is deleted. All user-owned data is automatically cascade-deleted via `ON DELETE CASCADE` foreign key constraints, including:
+- All series owned by the user
+- All books owned by the user
+- All chapters owned by the user
+- All notes owned by the user
+- All search logs for the user
+- All search error logs for the user
+
+This ensures complete data removal and prevents orphaned records.
+
 ## 2. Extensions & Enums
 
 ### Extensions

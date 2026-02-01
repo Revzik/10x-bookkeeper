@@ -126,6 +126,34 @@ Common error codes:
 { "ok": true }
 ```
 
+#### POST `/auth/delete-account`
+- **Description**: Delete the currently authenticated user's account and all associated data. This action is permanent and cannot be undone.
+- **Request**:
+
+```json
+{}
+```
+
+- **Response 200**:
+
+```json
+{ "ok": true }
+```
+
+- **Success codes**:
+  - `200 OK`
+- **Error codes**:
+  - `401 AUTHENTICATION_REQUIRED` (user not authenticated)
+  - `500 INTERNAL_ERROR`
+
+**Cascade behavior**: Deleting the user account cascades to delete all user-owned data:
+- All series owned by the user
+- All books owned by the user
+- All chapters owned by the user (via `books.user_id → auth.users.id`)
+- All notes owned by the user (via `chapters.user_id → auth.users.id`)
+- All search logs for the user
+- All search error logs for the user
+
 ---
 
 ### 2.3 Series

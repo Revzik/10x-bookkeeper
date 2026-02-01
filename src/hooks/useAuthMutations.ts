@@ -32,6 +32,7 @@ export const useAuthMutations = () => {
   const [isRequestingReset, setIsRequestingReset] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   /**
    * Maps API errors to form-friendly error structure
@@ -181,16 +182,40 @@ export const useAuthMutations = () => {
     }
   };
 
+  /**
+   * Deletes the current user's account and all associated data
+   *
+   * This is a destructive operation that:
+   * 1. Deletes the user's auth.users record
+   * 2. Cascades to delete all user-owned data (series, books, chapters, notes, search logs)
+   * 3. This action cannot be undone
+   *
+   * Security: Requires authenticated session. Email confirmation is enforced client-side.
+   */
+  const deleteAccount = async (): Promise<MutationResult<void>> => {
+    setIsDeletingAccount(true);
+    try {
+      await apiClient.postJson<Record<string, never>, { ok: boolean }>("/auth/delete-account", {});
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: mapApiError(error) };
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   return {
     login,
     signup,
     requestPasswordReset,
     resetPassword,
     logout,
+    deleteAccount,
     isLoggingIn,
     isSigningUp,
     isRequestingReset,
     isResettingPassword,
     isLoggingOut,
+    isDeletingAccount,
   };
 };

@@ -8,8 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, User, LogOut } from "lucide-react";
+import { ChevronLeft, User, LogOut, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { DeleteAccountDialog } from "@/components/shared/DeleteAccountDialog";
 import { apiClient } from "@/lib/api/client";
 import { useT } from "@/i18n/react";
 import { withLocalePath, type Locale } from "@/i18n";
@@ -38,6 +39,8 @@ interface AppHeaderProps {
 export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderProps) => {
   const { t, locale } = useT();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const libraryPath = withLocalePath(locale, "/library");
   const loginPath = withLocalePath(locale, "/login");
 
@@ -122,7 +125,7 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
           <ThemeToggle />
 
           {/* User dropdown menu */}
-          <DropdownMenu>
+          <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0" aria-label={t("header.userMenu")}>
                 <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
@@ -146,10 +149,27 @@ export const AppHeader = ({ showBackToLibrary = false, userEmail }: AppHeaderPro
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>{loggingOut ? t("header.loggingOut") : t("header.logOut")}</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  setDeleteDialogOpen(true);
+                }}
+                disabled={loggingOut}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>{t("header.deleteAccount")}</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Delete Account Dialog */}
+      {userEmail && (
+        <DeleteAccountDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} userEmail={userEmail} />
+      )}
     </header>
   );
 };

@@ -9,6 +9,7 @@
     "account": "Konto",
     "loggingOut": "Wylogowywanie...",
     "logOut": "Wyloguj się",
+    "deleteAccount": "Usuń konto",
     "userMenu": "Menu użytkownika",
     "language": {
       "label": "Język",
@@ -339,6 +340,18 @@
       "deleting": "Usuwanie...",
       "deleteEverything": "Usuń wszystko",
       "deleteConfirm": "Usuń serię"
+    },
+    "account": {
+      "deleteTitle": "Usuń konto",
+      "deleteDescription": "Ta akcja trwale usunie Twoje konto i wszystkie powiązane dane.",
+      "deleteWarningTitle": "Ostrzeżenie: Ta akcja jest nieodwracalna!",
+      "deleteWarningBody": "Usunięcie konta spowoduje trwałe usunięcie wszystkich serii, książek, rozdziałów, notatek i historii wyszukiwania. Nie można tego cofnąć.",
+      "deleteEmailLabel": "Wpisz swój e-mail ({email}), aby potwierdzić:",
+      "deleteEmailMismatch": "E-mail się nie zgadza. Wpisz dokładnie swój adres e-mail, aby potwierdzić.",
+      "deleteError": "Nie udało się usunąć konta. Spróbuj ponownie.",
+      "cancel": "Anuluj",
+      "deleting": "Usuwanie konta...",
+      "deleteConfirm": "Usuń moje konto"
     }
   },
   "apiErrors": {

@@ -22,7 +22,25 @@ export const prerender = false;
  */
 
 const code = Astro.url.searchParams.get("code");
+const callbackError = Astro.url.searchParams.get("error");
+const callbackErrorCode = Astro.url.searchParams.get("error_code");
+const callbackErrorDescription = Astro.url.searchParams.get("error_description");
 const next = Astro.url.searchParams.get("next") || "/library";
+
+// Handle errors from Supabase (e.g., expired links, invalid tokens)
+if (callbackError) {
+  // eslint-disable-next-line no-console
+  console.error("Auth callback error from Supabase:", {
+    error: callbackError,
+    errorCode: callbackErrorCode,
+    errorDescription: callbackErrorDescription,
+  });
+
+  // For password reset errors, redirect to forgot-password page
+  const isPasswordReset = next.includes("reset-password");
+  const redirectPath = isPasswordReset ? "/forgot-password" : "/login";
+  return Astro.redirect(`${redirectPath}?error=callback_failed`);
+}
 
 // If no code provided, redirect to login with error
 if (!code) {
@@ -37,11 +55,11 @@ const supabase = createSupabaseServerInstance({
 });
 
 // Exchange the code for a session
-const { error } = await supabase.auth.exchangeCodeForSession(code);
+const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
-if (error) {
+if (exchangeError) {
   // Log minimal error info (without full stack trace)
-  console.error("Auth callback failed:", error.message || "Unknown error");
+  console.error("Auth callback failed:", exchangeError.message || "Unknown error");
   // Redirect to login with error for auth issues
   // For password reset, redirect to forgot-password instead
   const isPasswordReset = next.includes("reset-password");

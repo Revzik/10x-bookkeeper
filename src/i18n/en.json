@@ -9,6 +9,7 @@
     "account": "Account",
     "loggingOut": "Logging out...",
     "logOut": "Log out",
+    "deleteAccount": "Delete account",
     "userMenu": "User menu",
     "language": {
       "label": "Language",
@@ -339,6 +340,18 @@
       "deleting": "Deleting...",
       "deleteEverything": "Delete Everything",
       "deleteConfirm": "Delete Series"
+    },
+    "account": {
+      "deleteTitle": "Delete Account",
+      "deleteDescription": "This action will permanently delete your account and all associated data.",
+      "deleteWarningTitle": "Warning: This action is irreversible!",
+      "deleteWarningBody": "Deleting your account will permanently remove all your series, books, chapters, notes, and search history. This cannot be undone.",
+      "deleteEmailLabel": "Type your email ({email}) to confirm:",
+      "deleteEmailMismatch": "Email does not match. Please type your exact email address to confirm.",
+      "deleteError": "Failed to delete account. Please try again.",
+      "cancel": "Cancel",
+      "deleting": "Deleting account...",
+      "deleteConfirm": "Delete My Account"
     }
   },
   "apiErrors": {
