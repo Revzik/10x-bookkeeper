@@ -1,5 +1,4 @@
 import type { SupabaseClientType as SupabaseClientTypeBase } from "../../db/supabase.client";
-import { OPENROUTER_API_KEY } from "astro:env/server";
 import type { AiQuerySimpleCommand, AiQueryResponseDtoSimple, NoteListItemDto, ErrorSource } from "../../types";
 import { NotFoundError } from "../errors";
 import { verifyBookExists } from "./books.service";
@@ -141,7 +140,7 @@ const buildNotesContext = (notes: NoteListItemDto[], locale: Locale): string => 
  * @throws Error if OPENROUTER_API_KEY is not configured
  */
 function initializeOpenRouterService(): OpenRouterService {
-  const apiKey = OPENROUTER_API_KEY;
+  const apiKey = import.meta.env.OPENROUTER_API_KEY;
 
   if (!apiKey || apiKey.trim().length === 0) {
     throw new Error("OPENROUTER_API_KEY environment variable is not configured");

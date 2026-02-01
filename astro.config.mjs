@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, envField } from "astro/config";
+import { defineConfig } from "astro/config";
 
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
@@ -24,12 +24,4 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: "passthrough",
   }),
-  env: {
-    schema: {
-      APP_BASE_URL: envField.string({ context: "server", access: "public", optional: true }),
-      SUPABASE_URL: envField.string({ context: "server", access: "secret" }),
-      SUPABASE_KEY: envField.string({ context: "server", access: "secret" }),
-      OPENROUTER_API_KEY: envField.string({ context: "server", access: "secret" }),
-    },
-  },
 });
