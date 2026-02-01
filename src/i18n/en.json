@@ -358,6 +358,7 @@
     "unexpected": "An unexpected error occurred.",
     "conflictEmail": "An account with this email already exists.",
     "rateLimited": "Too many requests. Please try again later.",
+    "signupRateLimited": "Too many signup attempts for this email. Please wait an hour and try again, or use a different email address.",
     "resetLinkActive": "A reset link is already active. Use the latest email or wait a bit and try again.",
     "authFailed": "Authentication failed",
     "notFound": "Resource not found",

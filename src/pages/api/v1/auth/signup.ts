@@ -59,6 +59,10 @@ export async function POST(context: APIContext): Promise<Response> {
         return apiError(409, "CONFLICT", "apiErrors.conflictEmail");
       }
 
+      if (error.message.includes("rate limit") || error.message.includes("too many requests")) {
+        return apiError(429, "RATE_LIMITED", "apiErrors.signupRateLimited");
+      }
+
       if (error.message.includes("Password")) {
         return apiError(400, "VALIDATION_ERROR", "apiErrors.passwordInvalid");
       }

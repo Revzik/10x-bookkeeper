@@ -358,6 +358,7 @@
     "unexpected": "Wystąpił nieoczekiwany błąd.",
     "conflictEmail": "Konto z tym adresem e-mail już istnieje.",
     "rateLimited": "Zbyt wiele żądań. Spróbuj ponownie później.",
+    "signupRateLimited": "Zbyt wiele prób rejestracji dla tego adresu e-mail. Poczekaj godzinę i spróbuj ponownie lub użyj innego adresu e-mail.",
     "resetLinkActive": "Link do resetu jest już aktywny. Użyj najnowszego e-maila lub poczekaj chwilę i spróbuj ponownie.",
     "authFailed": "Uwierzytelnienie nie powiodło się",
     "notFound": "Nie znaleziono zasobu",
