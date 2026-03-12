@@ -304,23 +304,6 @@
       "deleting": "Usuwanie...",
       "deleteConfirm": "Usuń książkę"
     },
-    "note": {
-      "addTitle": "Dodaj notatkę",
-      "addDescription": "Utwórz nową notatkę dla rozdziału tej książki.",
-      "chapterLabel": "Rozdział",
-      "chapterPlaceholder": "Wybierz rozdział",
-      "contentLabel": "Treść",
-      "contentPlaceholder": "Wpisz treść notatki...",
-      "create": "Utwórz notatkę",
-      "creating": "Tworzenie...",
-      "deleteTitle": "Usuń notatkę",
-      "deleteDescription": "Czy na pewno chcesz usunąć tę notatkę z {title}?",
-      "deleteWarningTitle": "Ostrzeżenie:",
-      "deleteWarningBody": "To trwale usunie tę notatkę. Nie można tego cofnąć.",
-      "deleteError": "Nie udało się usunąć notatki",
-      "deleting": "Usuwanie...",
-      "deleteConfirm": "Usuń notatkę"
-    },
     "series": {
       "addTitle": "Dodaj serię",
       "editTitle": "Edytuj serię",
@@ -353,6 +336,24 @@
       "deleting": "Usuwanie konta...",
       "deleteConfirm": "Usuń moje konto"
     }
+  },
+  "note": {
+    "bookTitleLabel": "Książka",
+    "addTitle": "Dodaj notatkę",
+    "addDescription": "Utwórz nową notatkę dla rozdziału tej książki.",
+    "chapterLabel": "Rozdział",
+    "chapterPlaceholder": "Wybierz rozdział",
+    "contentLabel": "Treść",
+    "contentPlaceholder": "Wpisz treść notatki...",
+    "create": "Utwórz notatkę",
+    "creating": "Tworzenie...",
+    "deleteTitle": "Usuń notatkę",
+    "deleteDescription": "Czy na pewno chcesz usunąć tę notatkę z {title}?",
+    "deleteWarningTitle": "Ostrzeżenie:",
+    "deleteWarningBody": "To trwale usunie tę notatkę. Nie można tego cofnąć.",
+    "deleteError": "Nie udało się usunąć notatki",
+    "deleting": "Usuwanie...",
+    "deleteConfirm": "Usuń notatkę"
   },
   "apiErrors": {
     "unexpected": "Wystąpił nieoczekiwany błąd.",

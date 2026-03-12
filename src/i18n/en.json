@@ -304,23 +304,6 @@
       "deleting": "Deleting...",
       "deleteConfirm": "Delete Book"
     },
-    "note": {
-      "addTitle": "Add note",
-      "addDescription": "Create a new note for this book chapter.",
-      "chapterLabel": "Chapter",
-      "chapterPlaceholder": "Select a chapter",
-      "contentLabel": "Content",
-      "contentPlaceholder": "Enter your note content...",
-      "create": "Create Note",
-      "creating": "Creating...",
-      "deleteTitle": "Delete Note",
-      "deleteDescription": "Are you sure you want to delete this note from {title}?",
-      "deleteWarningTitle": "Warning:",
-      "deleteWarningBody": "This will permanently delete this note. This action cannot be undone.",
-      "deleteError": "Failed to delete note",
-      "deleting": "Deleting...",
-      "deleteConfirm": "Delete Note"
-    },
     "series": {
       "addTitle": "Add Series",
       "editTitle": "Edit Series",
@@ -353,6 +336,24 @@
       "deleting": "Deleting account...",
       "deleteConfirm": "Delete My Account"
     }
+  },
+  "note": {
+    "bookTitleLabel": "Book",
+    "addTitle": "Add note",
+    "addDescription": "Create a new note for this book chapter.",
+    "chapterLabel": "Chapter",
+    "chapterPlaceholder": "Select a chapter",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Enter your note content...",
+    "create": "Create Note",
+    "creating": "Creating...",
+    "deleteTitle": "Delete Note",
+    "deleteDescription": "Are you sure you want to delete this note from {title}?",
+    "deleteWarningTitle": "Warning:",
+    "deleteWarningBody": "This will permanently delete this note. This action cannot be undone.",
+    "deleteError": "Failed to delete note",
+    "deleting": "Deleting...",
+    "deleteConfirm": "Delete Note"
   },
   "apiErrors": {
     "unexpected": "An unexpected error occurred.",

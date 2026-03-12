@@ -1,0 +1,16 @@
+---
+import Layout from "../../../../layouts/Layout.astro";
+import AddNotePage from "../../../../components/note/AddNotePage";
+
+export const prerender = false;
+
+const { bookId } = Astro.params;
+
+if (!bookId) {
+  return new Response("Book ID is required", { status: 400 });
+}
+---
+
+<Layout title="Add Note — Bookkeeper">
+  <AddNotePage client:only="react" bookId={bookId} locale={Astro.currentLocale} />
+</Layout>

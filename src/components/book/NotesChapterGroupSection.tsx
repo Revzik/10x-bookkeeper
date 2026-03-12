@@ -1,5 +1,5 @@
 import type { ChapterListItemViewModel, NoteListItemViewModel } from "@/types";
-import { NoteCard } from "@/components/book/NoteCard";
+import { NoteCard } from "./NoteCard";
 import { useT } from "@/i18n/react";
 
 interface NotesChapterGroupSectionProps {
