@@ -101,7 +101,7 @@ export const NoteForm = ({
         <Controller
           control={control}
           name="chapter_id"
-          render={({ field }: { field: any }) => (
+          render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
               <SelectTrigger
                 id="note-chapter"
