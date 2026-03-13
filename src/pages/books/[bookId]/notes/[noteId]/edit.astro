@@ -1,0 +1,16 @@
+---
+import Layout from "../../../../../layouts/Layout.astro";
+import EditNotePage from "../../../../../components/note/EditNotePage";
+
+export const prerender = false;
+
+const { bookId, noteId } = Astro.params;
+
+if (!bookId || !noteId) {
+  return new Response("Book ID and Note ID are required", { status: 400 });
+}
+---
+
+<Layout title="Edit Note — Bookkeeper">
+  <EditNotePage client:only="react" bookId={bookId} noteId={noteId} locale={Astro.currentLocale} />
+</Layout>

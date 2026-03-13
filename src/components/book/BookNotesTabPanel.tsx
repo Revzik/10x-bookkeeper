@@ -1,15 +1,15 @@
-import { useState, useMemo, useEffect } from "react";
-import type { NoteListItemViewModel, ChapterListItemViewModel, ChapterSelectOptionViewModel } from "@/types";
+import { useMemo, useEffect, useState } from "react";
+import type { ChapterListItemViewModel, ChapterSelectOptionViewModel } from "@/types";
 import { useBookUrlState } from "./hooks/useBookUrlState";
 import { useChaptersList } from "./hooks/useChaptersList";
-import { useNotesList } from "./hooks/useNotesList";
+import { useNotesList } from "@/components/book/hooks/useNotesList";
 import { BookNotesHeaderRow } from "./BookNotesHeaderRow";
 import { BookNotesList } from "./BookNotesList";
-import { AddNoteDialog } from "./AddNoteDialog";
-import { ViewEditNoteDialog } from "./ViewEditNoteDialog";
 import { InlineBanner } from "@/components/library/InlineBanner";
 import { PaginationControls } from "@/components/library/PaginationControls";
+import { ViewNoteDialog } from "./ViewNoteDialog";
 import { useT } from "@/i18n/react";
+import { withLocalePath } from "@/i18n";
 
 interface BookNotesTabPanelProps {
   bookId: string;
@@ -22,12 +22,13 @@ interface BookNotesTabPanelProps {
  * Features:
  * - Filter notes by chapter (All chapters or specific chapter)
  * - Paginated notes list grouped by chapter
- * - Create/view/edit/delete notes via NoteDialog
+ * - Create/view/edit/delete notes via dedicated pages
  * - URL-backed state for filters and pagination
  */
 export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanelProps) => {
-  const { t } = useT();
+  const { t, locale } = useT();
   const { notesQuery, setNotesQuery } = useBookUrlState();
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   // Fetch chapters for filter dropdown and chapter title lookup
   const {
@@ -56,11 +57,6 @@ export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanel
     }
   }, [chaptersVersion, refetchChapters]);
 
-  // Dialog state
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isViewEditDialogOpen, setIsViewEditDialogOpen] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<NoteListItemViewModel | null>(null);
-
   // Build chapter options for dropdown (includes "All chapters")
   const chapterOptions: ChapterSelectOptionViewModel[] = useMemo(() => {
     const options: ChapterSelectOptionViewModel[] = [{ value: "all", label: t("book.notes.allChapters") }];
@@ -75,15 +71,6 @@ export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanel
 
     return options;
   }, [chapters, t]);
-
-  // Build chapter options for dialog (excludes "All chapters")
-  const chapterOptionsForDialog: ChapterSelectOptionViewModel[] = useMemo(() => {
-    return chapters.map((chapter) => ({
-      value: chapter.id,
-      label: chapter.title,
-      chapterId: chapter.id,
-    }));
-  }, [chapters]);
 
   // Build chaptersById lookup for note grouping
   const chaptersById = useMemo(() => {
@@ -101,25 +88,25 @@ export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanel
 
   // Dialog handlers
   const handleOpenAdd = () => {
-    setIsAddDialogOpen(true);
+    window.location.href = `${withLocalePath(locale, `/books/${bookId}/notes/add`)}${window.location.search}`;
   };
 
   const handleOpenNote = (noteId: string) => {
-    const note = notes.find((n) => n.id === noteId);
-    if (note) {
-      setSelectedNote(note);
-      setIsViewEditDialogOpen(true);
+    setSelectedNoteId(noteId);
+  };
+
+  const handleCloseNote = () => {
+    setSelectedNoteId(null);
+  };
+
+  const handleEditNote = () => {
+    if (selectedNoteId) {
+      window.location.href = `${withLocalePath(locale, `/books/${bookId}/notes/${selectedNoteId}/edit`)}${window.location.search}`;
     }
   };
 
-  const handleNoteCreated = () => {
-    setIsAddDialogOpen(false);
-    refetchNotes();
-  };
-
-  const handleNoteUpdated = () => {
-    setIsViewEditDialogOpen(false);
-    setSelectedNote(null);
+  const handleNoteDeleted = () => {
+    setSelectedNoteId(null);
     refetchNotes();
   };
 
@@ -143,8 +130,15 @@ export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanel
   const isAddDisabled = chapters.length === 0;
   const addDisabledReason = isAddDisabled ? t("book.notes.addDisabledReason") : undefined;
 
-  // Get chapter title for dialog (when viewing existing note)
-  const selectedNoteChapterTitle = selectedNote ? chaptersById[selectedNote.chapterId]?.title : undefined;
+  const selectedNote = useMemo(() => {
+    if (!selectedNoteId) return null;
+    return notes.find((n) => n.id === selectedNoteId) || null;
+  }, [notes, selectedNoteId]);
+
+  const selectedNoteChapterTitle = useMemo(() => {
+    if (!selectedNote) return "";
+    return chaptersById[selectedNote.chapterId]?.title || "";
+  }, [chaptersById, selectedNote]);
 
   return (
     <div className="space-y-4">
@@ -178,24 +172,14 @@ export const BookNotesTabPanel = ({ bookId, chaptersVersion }: BookNotesTabPanel
         <PaginationControls meta={meta} onPageChange={handlePageChange} onSizeChange={handleSizeChange} />
       )}
 
-      {/* Add note dialog */}
-      <AddNoteDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        chapterOptions={chapterOptionsForDialog}
-        initialChapterId={notesQuery.chapter_id}
-        onCreated={handleNoteCreated}
-      />
-
-      {/* View/Edit note dialog */}
       {selectedNote && (
-        <ViewEditNoteDialog
-          open={isViewEditDialogOpen}
-          onOpenChange={setIsViewEditDialogOpen}
+        <ViewNoteDialog
+          open={true}
+          onOpenChange={(open) => !open && handleCloseNote()}
           note={selectedNote}
-          chapterOptions={chapterOptionsForDialog}
-          chapterTitle={selectedNoteChapterTitle || t("book.notes.unknownChapter")}
-          onUpdated={handleNoteUpdated}
+          chapterTitle={selectedNoteChapterTitle}
+          onDeleted={handleNoteDeleted}
+          onEdit={handleEditNote}
         />
       )}
     </div>
